@@ -94,5 +94,24 @@ export async function POST(request: Request) {
     .update({ admin_notified_at: new Date().toISOString() })
     .eq("id", bookingId)
 
+  // Гость дозаполнил заявку до конца — убираем более ранний Telegram-пинг о
+  // незавершённом контакте, чтобы не дублировать уведомление.
+  const { data: staleLead } = await supabase
+    .from("leads")
+    .select("id, telegram_message_id")
+    .eq("contact_value", booking.contact_value)
+    .not("telegram_message_id", "is", null)
+    .maybeSingle()
+
+  if (staleLead?.telegram_message_id) {
+    await fetch(`https://api.telegram.org/bot${botToken}/deleteMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, message_id: staleLead.telegram_message_id }),
+    }).catch(() => {})
+
+    await supabase.from("leads").update({ telegram_message_id: null }).eq("id", staleLead.id)
+  }
+
   return Response.json({ ok: true })
 }

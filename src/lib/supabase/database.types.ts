@@ -302,6 +302,7 @@ export type Database = {
           id: string
           notified_at: string | null
           source: string | null
+          telegram_message_id: number | null
           tour_interest: string | null
           updated_at: string
         }
@@ -313,6 +314,7 @@ export type Database = {
           id?: string
           notified_at?: string | null
           source?: string | null
+          telegram_message_id?: number | null
           tour_interest?: string | null
           updated_at?: string
         }
@@ -324,6 +326,7 @@ export type Database = {
           id?: string
           notified_at?: string | null
           source?: string | null
+          telegram_message_id?: number | null
           tour_interest?: string | null
           updated_at?: string
         }

@@ -63,8 +63,6 @@ export function RequestPageClient({
     if (value.length < 5 || submittedBookingId || lastCapturedLead.current === value) return
     lastCapturedLead.current = value
 
-    // Уведомление о незавершённом контакте шлёт cron-развёртка (api/cron/sweep-leads)
-    // спустя пару минут — и только если гость не дозаполнил заявку до конца.
     const supabase = createClient()
     supabase
       .rpc("save_lead", {
@@ -73,7 +71,15 @@ export function RequestPageClient({
         p_tour_interest: items.map((i) => i.tourTitle).join(", ") || null,
         p_source: "request_page",
       })
-      .then(() => {})
+      .then(({ data: isNew }) => {
+        if (isNew) {
+          fetch("/api/notify-lead", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contactValue: value }),
+          }).catch(() => {})
+        }
+      })
   }
 
   const itemsSubtotalUsd = useMemo(
