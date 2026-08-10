@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { TourPageClient } from "@/components/tour/tour-page-client"
 import { getTourPageData } from "@/lib/site-data"
+import { getReviewsForTour } from "@/lib/reviews-data"
 
 const loadTour = cache(getTourPageData)
 
@@ -30,5 +31,9 @@ export default async function TourPage({
   const data = await loadTour(slug)
   if (!data) notFound()
 
-  return <TourPageClient tour={data.tour} guides={data.guides} settings={data.settings} />
+  const reviews = await getReviewsForTour(data.tour.id)
+
+  return (
+    <TourPageClient tour={data.tour} guides={data.guides} settings={data.settings} reviews={reviews} />
+  )
 }

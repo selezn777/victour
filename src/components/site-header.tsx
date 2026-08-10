@@ -95,6 +95,9 @@ export function SiteHeader({
                 <a href="#catalog" className="rounded-md px-2 py-2 text-sm hover:bg-muted">
                   Туры
                 </a>
+                <Link href="/reviews" className="rounded-md px-2 py-2 text-sm hover:bg-muted">
+                  Отзывы
+                </Link>
                 <span className="px-2 py-2 text-sm text-muted-foreground">
                   $1 = {formatVndFromUsd(1, settings.usdVndRate)}
                 </span>

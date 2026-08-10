@@ -6,6 +6,8 @@ import { SignOutButton } from "@/components/sign-out-button"
 import { BookingActions } from "@/components/admin/booking-actions"
 import { PaymentRequisites } from "@/components/admin/payment-requisites"
 import { LeadsList } from "@/components/admin/leads-list"
+import { ReviewsAdminList } from "@/components/admin/reviews-admin-list"
+import { getAllReviews } from "@/lib/reviews-data"
 
 export const metadata: Metadata = {
   title: "Заявки — админка ВикТур",
@@ -61,7 +63,7 @@ function formatDateTime(iso: string): string {
 export default async function AdminBookingsPage() {
   const supabase = await createClient()
 
-  const [{ data: bookings, error }, { data: settingsRows }, { data: leads }] = await Promise.all([
+  const [{ data: bookings, error }, { data: settingsRows }, { data: leads }, reviews] = await Promise.all([
     supabase
       .from("bookings")
       .select(
@@ -74,6 +76,7 @@ export default async function AdminBookingsPage() {
       .select("id, contact_channel, contact_value, tour_interest, created_at")
       .eq("contacted", false)
       .order("created_at", { ascending: false }),
+    getAllReviews(),
   ])
 
   const settingsByKey = new Map(
@@ -97,6 +100,7 @@ export default async function AdminBookingsPage() {
       <div className="mt-6">
         <PaymentRequisites amountRub={depositRub} />
         <LeadsList leads={leads ?? []} />
+        <ReviewsAdminList reviews={reviews} />
       </div>
 
       {error && <p className="text-sm text-destructive">{error.message}</p>}

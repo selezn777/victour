@@ -26,6 +26,7 @@ export type SiteSettings = {
 }
 
 export type PrimaryGuide = {
+  id: string
   name: string
   whatsapp: string | null
   telegram: string | null
@@ -242,7 +243,7 @@ export async function getHomepageData(): Promise<{
     supabase.from("settings").select("key, value"),
     supabase
       .from("guides")
-      .select("name, whatsapp, telegram, instagram")
+      .select("id, name, whatsapp, telegram, instagram")
       .eq("is_active", true)
       .order("sort_order", { ascending: true })
       .limit(1)

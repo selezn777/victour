@@ -6,17 +6,23 @@ import { HeroSection } from "@/components/hero-section"
 import { DiscountsSection } from "@/components/discounts-section"
 import { TourCatalog } from "@/components/tour-catalog"
 import { SiteFooter } from "@/components/site-footer"
+import { ReviewsSection } from "@/components/reviews/reviews-section"
 import { useFavorites } from "@/hooks/use-favorites"
 import type { CatalogTour, PrimaryGuide, SiteSettings } from "@/lib/site-data"
+import type { Review, TourOption } from "@/lib/reviews-data"
 
 export function HomeClient({
   tours,
   settings,
   guide,
+  guideReviews,
+  tourOptions,
 }: {
   tours: CatalogTour[]
   settings: SiteSettings
   guide: PrimaryGuide | null
+  guideReviews: Review[]
+  tourOptions: TourOption[]
 }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [favoritesOnly, setFavoritesOnly] = useState(false)
@@ -58,6 +64,20 @@ export function HomeClient({
               : "Ничего не найдено. Попробуйте другой запрос."
           }
         />
+
+        {guide && (
+          <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+            <ReviewsSection
+              title={`Отзывы о гиде ${guide.name}`}
+              reviews={guideReviews}
+              tours={tourOptions}
+              guideId={guide.id}
+              guideName={guide.name}
+              hideTarget="guide"
+              emptyMessage="Пока нет отзывов о гиде — станьте первым."
+            />
+          </div>
+        )}
       </main>
       <SiteFooter guide={guide} />
     </>

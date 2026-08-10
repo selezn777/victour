@@ -9,17 +9,21 @@ import { TourPriceTable } from "@/components/tour/tour-price-table"
 import { TourTicketOptions } from "@/components/tour/tour-ticket-options"
 import { TourBookingPanel } from "@/components/tour/tour-booking-panel"
 import { SiteFooter } from "@/components/site-footer"
+import { ReviewsSection } from "@/components/reviews/reviews-section"
 import { useFavorites } from "@/hooks/use-favorites"
 import type { SiteSettings, TourDetail, TourGuide } from "@/lib/site-data"
+import type { Review } from "@/lib/reviews-data"
 
 export function TourPageClient({
   tour,
   guides,
   settings,
+  reviews,
 }: {
   tour: TourDetail
   guides: TourGuide[]
   settings: SiteSettings
+  reviews: Review[]
 }) {
   const { toggle, isFavorite } = useFavorites()
   const [guestCount, setGuestCount] = useState(2)
@@ -43,6 +47,17 @@ export function TourPageClient({
               <TourItinerary itinerary={tour.itinerary} isTwoDay={tour.isDalatTwoDay} />
               <TourPriceTable tiers={tour.pricingTiers} settings={settings} selectedGuestCount={guestCount} />
               {tour.ticketOptions.length > 0 && <TourTicketOptions options={tour.ticketOptions} />}
+
+              <ReviewsSection
+                title="Отзывы об этом туре"
+                reviews={reviews}
+                tours={[]}
+                guideId={primaryGuide?.id ?? null}
+                guideName={primaryGuide?.name ?? null}
+                lockedTourId={tour.id}
+                hideTarget="tour"
+                emptyMessage="Пока нет отзывов об этом туре — станьте первым."
+              />
             </div>
 
             <div className="lg:sticky lg:top-20">

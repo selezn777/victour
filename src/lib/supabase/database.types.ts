@@ -311,6 +311,63 @@ export type Database = {
           },
         ]
       }
+      reviews: {
+        Row: {
+          admin_notified_at: string | null
+          audio_url: string | null
+          author_name: string
+          created_at: string
+          guide_id: string | null
+          id: string
+          photo_url: string | null
+          rating: number
+          text: string | null
+          tour_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_notified_at?: string | null
+          audio_url?: string | null
+          author_name: string
+          created_at?: string
+          guide_id?: string | null
+          id?: string
+          photo_url?: string | null
+          rating: number
+          text?: string | null
+          tour_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_notified_at?: string | null
+          audio_url?: string | null
+          author_name?: string
+          created_at?: string
+          guide_id?: string | null
+          id?: string
+          photo_url?: string | null
+          rating?: number
+          text?: string | null
+          tour_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_guide_id_fkey"
+            columns: ["guide_id"]
+            isOneToOne: false
+            referencedRelation: "guides"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       settings: {
         Row: {
           key: string
