@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useMemo, useState } from "react"
+import { sendGAEvent } from "@next/third-parties/google"
 import { Button } from "@/components/ui/button"
 import { BookingCalendar } from "@/components/tour/booking-calendar"
 import { formatRubFromUsd, formatUsd, formatVndFromUsd } from "@/lib/format"
@@ -73,6 +74,12 @@ export function TourBookingPanel({
     }
     setError(null)
     setAddedToPackage(true)
+    sendGAEvent("event", "add_to_package", {
+      tour_slug: tour.slug,
+      tour_title: tour.title,
+      value: groupTotalUsd,
+      currency: "USD",
+    })
   }
 
   return (

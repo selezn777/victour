@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { sendGAEvent } from "@next/third-parties/google"
 import { XIcon } from "lucide-react"
 import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -149,6 +150,12 @@ export function RequestPageClient({
     setSubmittedBookingId(data)
     clear()
     setSubmitting(false)
+
+    sendGAEvent("event", "generate_lead", {
+      value: totals.totalUsd,
+      currency: "USD",
+      tour_count: items.length,
+    })
 
     fetch("/api/notify-booking", {
       method: "POST",
