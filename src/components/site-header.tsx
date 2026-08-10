@@ -95,6 +95,9 @@ export function SiteHeader({
                 <a href="#catalog" className="rounded-md px-2 py-2 text-sm hover:bg-muted">
                   Туры
                 </a>
+                <Link href="/guides" className="rounded-md px-2 py-2 text-sm hover:bg-muted">
+                  Гиды
+                </Link>
                 <Link href="/reviews" className="rounded-md px-2 py-2 text-sm hover:bg-muted">
                   Отзывы
                 </Link>
@@ -109,28 +112,10 @@ export function SiteHeader({
                 </span>
               </nav>
               {guide && (
-                <div className="mt-auto flex flex-col gap-1 border-t border-border p-4 text-sm">
-                  <span className="text-muted-foreground">Гид {guide.name}</span>
-                  {guide.whatsapp && (
-                    <a
-                      className="hover:underline"
-                      href={`https://wa.me/${guide.whatsapp.replace(/[^\d]/g, "")}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      WhatsApp
-                    </a>
-                  )}
-                  {guide.telegram && (
-                    <a
-                      className="hover:underline"
-                      href={`https://t.me/${guide.telegram.replace(/^@/, "")}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Telegram
-                    </a>
-                  )}
+                <div className="mt-auto border-t border-border p-4">
+                  <Link href={`/guides/${guide.id}`} className="text-sm text-primary hover:underline">
+                    Гид {guide.name} →
+                  </Link>
                 </div>
               )}
             </SheetContent>

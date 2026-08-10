@@ -249,36 +249,45 @@ export type Database = {
         Row: {
           bio: Json | null
           created_at: string
+          gallery_urls: string[]
           id: string
           instagram: string | null
           is_active: boolean
           name: string
           phone: string | null
+          photo_url: string | null
           sort_order: number
+          specialties: string[]
           telegram: string | null
           whatsapp: string | null
         }
         Insert: {
           bio?: Json | null
           created_at?: string
+          gallery_urls?: string[]
           id?: string
           instagram?: string | null
           is_active?: boolean
           name: string
           phone?: string | null
+          photo_url?: string | null
           sort_order?: number
+          specialties?: string[]
           telegram?: string | null
           whatsapp?: string | null
         }
         Update: {
           bio?: Json | null
           created_at?: string
+          gallery_urls?: string[]
           id?: string
           instagram?: string | null
           is_active?: boolean
           name?: string
           phone?: string | null
+          photo_url?: string | null
           sort_order?: number
+          specialties?: string[]
           telegram?: string | null
           whatsapp?: string | null
         }

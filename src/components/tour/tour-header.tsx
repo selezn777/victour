@@ -66,6 +66,9 @@ export function TourHeader({
                 <Link href="/#catalog" className="rounded-md px-2 py-2 text-sm hover:bg-muted">
                   Все туры
                 </Link>
+                <Link href="/guides" className="rounded-md px-2 py-2 text-sm hover:bg-muted">
+                  Гиды
+                </Link>
                 <span className="px-2 py-2 text-sm text-muted-foreground">
                   $1 = {formatVndFromUsd(1, settings.usdVndRate)}
                 </span>
@@ -74,28 +77,10 @@ export function TourHeader({
                 </span>
               </nav>
               {guide && (
-                <div className="mt-auto flex flex-col gap-1 border-t border-border p-4 text-sm">
-                  <span className="text-muted-foreground">Гид {guide.name}</span>
-                  {guide.whatsapp && (
-                    <a
-                      className="hover:underline"
-                      href={`https://wa.me/${guide.whatsapp.replace(/[^\d]/g, "")}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      WhatsApp
-                    </a>
-                  )}
-                  {guide.telegram && (
-                    <a
-                      className="hover:underline"
-                      href={`https://t.me/${guide.telegram.replace(/^@/, "")}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Telegram
-                    </a>
-                  )}
+                <div className="mt-auto border-t border-border p-4">
+                  <Link href={`/guides/${guide.id}`} className="text-sm text-primary hover:underline">
+                    Гид {guide.name} →
+                  </Link>
                 </div>
               )}
             </SheetContent>
