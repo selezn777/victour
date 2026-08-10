@@ -7,6 +7,7 @@ import { BookingActions } from "@/components/admin/booking-actions"
 import { PaymentRequisites } from "@/components/admin/payment-requisites"
 import { LeadsList } from "@/components/admin/leads-list"
 import { ReviewsAdminList } from "@/components/admin/reviews-admin-list"
+import { FaqAdminList, type AdminFaqItem } from "@/components/admin/faq-admin-list"
 import { getAllReviews } from "@/lib/reviews-data"
 
 export const metadata: Metadata = {
@@ -63,21 +64,34 @@ function formatDateTime(iso: string): string {
 export default async function AdminBookingsPage() {
   const supabase = await createClient()
 
-  const [{ data: bookings, error }, { data: settingsRows }, { data: leads }, reviews] = await Promise.all([
-    supabase
-      .from("bookings")
-      .select(
-        "id, status, payment_status, guest_name, contact_channel, contact_value, hotel, notes, total_usd, prepayment_usd, created_at, booking_items(date, date_end, adults, children, tours(title), guides(name))",
-      )
-      .order("created_at", { ascending: false }),
-    supabase.from("settings").select("key, value"),
-    supabase
-      .from("leads")
-      .select("id, contact_channel, contact_value, tour_interest, created_at")
-      .eq("contacted", false)
-      .order("created_at", { ascending: false }),
-    getAllReviews(),
-  ])
+  const [{ data: bookings, error }, { data: settingsRows }, { data: leads }, { data: faqItems }, reviews] =
+    await Promise.all([
+      supabase
+        .from("bookings")
+        .select(
+          "id, status, payment_status, guest_name, contact_channel, contact_value, hotel, notes, total_usd, prepayment_usd, created_at, booking_items(date, date_end, adults, children, tours(title), guides(name))",
+        )
+        .order("created_at", { ascending: false }),
+      supabase.from("settings").select("key, value"),
+      supabase
+        .from("leads")
+        .select("id, contact_channel, contact_value, tour_interest, created_at")
+        .eq("contacted", false)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("faq_items")
+        .select("id, question, answer, created_at, tours(title)")
+        .order("created_at", { ascending: false }),
+      getAllReviews(),
+    ])
+
+  const faqItemsForAdmin: AdminFaqItem[] = (faqItems ?? []).map((item) => ({
+    id: item.id,
+    question: item.question,
+    answer: item.answer,
+    tour_title: (item.tours as unknown as { title: { ru: string } } | null)?.title.ru ?? null,
+    created_at: item.created_at,
+  }))
 
   const settingsByKey = new Map(
     (settingsRows ?? []).map((s) => [s.key, s.value as Record<string, unknown>]),
@@ -100,6 +114,7 @@ export default async function AdminBookingsPage() {
       <div className="mt-6">
         <PaymentRequisites amountRub={depositRub} />
         <LeadsList leads={leads ?? []} />
+        <FaqAdminList items={faqItemsForAdmin} />
         <ReviewsAdminList reviews={reviews} />
       </div>
 

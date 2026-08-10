@@ -172,6 +172,47 @@ export type Database = {
         }
         Relationships: []
       }
+      faq_items: {
+        Row: {
+          admin_notified_at: string | null
+          answer: string | null
+          answered_at: string | null
+          created_at: string
+          id: string
+          is_seed: boolean
+          question: string
+          tour_id: string | null
+        }
+        Insert: {
+          admin_notified_at?: string | null
+          answer?: string | null
+          answered_at?: string | null
+          created_at?: string
+          id?: string
+          is_seed?: boolean
+          question: string
+          tour_id?: string | null
+        }
+        Update: {
+          admin_notified_at?: string | null
+          answer?: string | null
+          answered_at?: string | null
+          created_at?: string
+          id?: string
+          is_seed?: boolean
+          question?: string
+          tour_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faq_items_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guide_availability: {
         Row: {
           date: string
@@ -469,6 +510,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_answer_faq: {
+        Args: { p_answer: string; p_id: string }
+        Returns: undefined
+      }
       admin_confirm_payment: {
         Args: { p_booking_id: string }
         Returns: undefined
@@ -480,6 +525,10 @@ export type Database = {
       admin_set_booking_status: {
         Args: { p_booking_id: string; p_status: string }
         Returns: undefined
+      }
+      ask_faq_question: {
+        Args: { p_question: string; p_tour_id: string }
+        Returns: string
       }
       create_booking: {
         Args: { p_booking: Json; p_items: Json }

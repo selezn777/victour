@@ -10,20 +10,26 @@ import { TourTicketOptions } from "@/components/tour/tour-ticket-options"
 import { TourBookingPanel } from "@/components/tour/tour-booking-panel"
 import { SiteFooter } from "@/components/site-footer"
 import { ReviewsSection } from "@/components/reviews/reviews-section"
+import { FaqSection } from "@/components/faq/faq-section"
 import { useFavorites } from "@/hooks/use-favorites"
 import type { SiteSettings, TourDetail, TourGuide } from "@/lib/site-data"
-import type { Review } from "@/lib/reviews-data"
+import type { Review, TourOption } from "@/lib/reviews-data"
+import type { FaqItem } from "@/lib/faq-data"
 
 export function TourPageClient({
   tour,
   guides,
   settings,
   reviews,
+  faq,
+  tours,
 }: {
   tour: TourDetail
   guides: TourGuide[]
   settings: SiteSettings
   reviews: Review[]
+  faq: FaqItem[]
+  tours: TourOption[]
 }) {
   const { toggle, isFavorite } = useFavorites()
   const [guestCount, setGuestCount] = useState(2)
@@ -57,6 +63,14 @@ export function TourPageClient({
                 lockedTourId={tour.id}
                 hideTarget="tour"
                 emptyMessage="Пока нет отзывов об этом туре — станьте первым."
+              />
+
+              <FaqSection
+                title="Вопросы и ответы"
+                items={faq}
+                tours={tours}
+                lockedTourId={tour.id}
+                emptyMessage="Вопросов пока нет — задайте свой."
               />
             </div>
 
