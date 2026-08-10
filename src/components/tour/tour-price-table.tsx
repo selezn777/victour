@@ -1,64 +1,61 @@
-import { formatRubFromUsd, formatUsd, formatVndFromUsd } from "@/lib/format"
-import type { SiteSettings, TourPricingTier } from "@/lib/site-data"
+import { formatUsd } from "@/lib/format"
+import type { TourPricingTier } from "@/lib/site-data"
 import { cn } from "@/lib/utils"
 
 export function TourPriceTable({
   tiers,
-  settings,
   selectedGuestCount,
+  onSelectGuestCount,
 }: {
   tiers: TourPricingTier[]
-  settings: SiteSettings
   selectedGuestCount?: number
+  onSelectGuestCount?: (count: number) => void
 }) {
-  const hasChildPrice = tiers.some((t) => t.priceChildUsd != null)
+  const selectedTier = tiers.find((t) => t.guestCount === selectedGuestCount) ?? tiers[0]
 
   return (
     <section>
-      <h2 className="font-heading text-xl font-semibold sm:text-2xl">Цена</h2>
+      <h2 className="font-heading text-xl font-semibold sm:text-2xl">Цена за человека</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Чем больше гостей в компании — тем ниже цена с человека. Группа платит один раз, сумма делится на всех.
+        Нажмите на число гостей — группа платит один раз, сумма делится на всех. Чем больше компания, тем дешевле с человека.
       </p>
 
-      <div className="mt-5 overflow-x-auto rounded-xl border border-border">
-        <table className="w-full min-w-[420px] text-sm">
-          <thead>
-            <tr className="border-b border-border bg-muted/40 text-left text-xs text-muted-foreground uppercase">
-              <th className="px-4 py-3 font-medium">Гостей</th>
-              <th className="px-4 py-3 font-medium">Взрослый</th>
-              {hasChildPrice && <th className="px-4 py-3 font-medium">Ребёнок</th>}
-              <th className="px-4 py-3 font-medium">Группа</th>
-              <th className="px-4 py-3 font-medium">В рублях / чел</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tiers.map((tier) => (
-              <tr
-                key={tier.guestCount}
-                className={cn(
-                  "border-b border-border last:border-0",
-                  tier.guestCount === selectedGuestCount && "bg-primary/5",
-                )}
-              >
-                <td className="px-4 py-3 font-medium">{tier.guestCount}</td>
-                <td className="px-4 py-3">{formatUsd(tier.priceAdultUsd)}</td>
-                {hasChildPrice && (
-                  <td className="px-4 py-3">
-                    {tier.priceChildUsd != null ? formatUsd(tier.priceChildUsd) : "—"}
-                  </td>
-                )}
-                <td className="px-4 py-3">{formatUsd(tier.priceAdultUsd * tier.guestCount)}</td>
-                <td className="px-4 py-3 text-muted-foreground">
-                  {formatRubFromUsd(tier.priceAdultUsd, settings.usdRubRate, settings.rubMarkupPct)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-4">
+        {tiers.map((tier) => {
+          const selected = tier.guestCount === selectedGuestCount
+          return (
+            <button
+              key={tier.guestCount}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onSelectGuestCount?.(tier.guestCount)}
+              className={cn(
+                "rounded-xl border p-3 text-center transition-colors",
+                selected ? "border-primary bg-primary/5" : "border-border hover:bg-muted",
+                onSelectGuestCount && "cursor-pointer",
+              )}
+            >
+              <div className="text-xs text-muted-foreground">{tier.guestCount} гостей</div>
+              <div className="mt-1 font-heading text-lg font-semibold text-primary">
+                {formatUsd(tier.priceAdultUsd)}
+              </div>
+              <div className="text-[11px] text-muted-foreground">за человека</div>
+              {tier.priceChildUsd != null && (
+                <div className="mt-0.5 text-[11px] text-muted-foreground">
+                  ребёнок {formatUsd(tier.priceChildUsd)}
+                </div>
+              )}
+            </button>
+          )
+        })}
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">
-        Ориентир в VND: {formatVndFromUsd(tiers[0]?.priceAdultUsd ?? 0, settings.usdVndRate)} за человека при {tiers[0]?.guestCount} гостях.
-      </p>
+
+      {selectedTier && (
+        <p className="mt-3 text-sm text-muted-foreground">
+          Группа из {selectedTier.guestCount}: {formatUsd(selectedTier.priceAdultUsd * selectedTier.guestCount)}{" "}
+          — сумма и способ оплаты видны справа в блоке брони.
+        </p>
+      )}
     </section>
   )
 }

@@ -158,7 +158,10 @@ export function TourBookingPanel({
       </div>
 
       <div className="mt-5 flex items-baseline justify-between border-t border-border pt-4">
-        <span className="text-sm text-muted-foreground">Итого за группу</span>
+        <div>
+          <span className="text-sm text-muted-foreground">Итого за группу</span>
+          <div className="text-xs text-muted-foreground">{formatUsd(priceAdultUsd)} за человека</div>
+        </div>
         <div className="text-right">
           <div className="font-heading text-xl font-semibold text-primary">
             {formatUsd(groupTotalUsd)}

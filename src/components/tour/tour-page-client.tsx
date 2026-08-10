@@ -50,7 +50,11 @@ export function TourPageClient({
             <div className="flex flex-col gap-10">
               <TourIncludesExcludes includes={tour.includes} excludes={tour.excludes} />
               <TourItinerary itinerary={tour.itinerary} isTwoDay={tour.isDalatTwoDay} />
-              <TourPriceTable tiers={tour.pricingTiers} settings={settings} selectedGuestCount={guestCount} />
+              <TourPriceTable
+                tiers={tour.pricingTiers}
+                selectedGuestCount={guestCount}
+                onSelectGuestCount={setGuestCount}
+              />
               {tour.ticketOptions.length > 0 && <TourTicketOptions options={tour.ticketOptions} />}
 
               <ReviewsSection
