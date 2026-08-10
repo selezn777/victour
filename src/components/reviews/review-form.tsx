@@ -183,7 +183,7 @@ export function ReviewForm({
             id="review-tour"
             value={tourId}
             onChange={(e) => setTourId(e.target.value)}
-            className="mt-1.5 h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+            className="mt-1.5 h-11 w-full rounded-lg border border-input bg-transparent px-3.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
           >
             <option value="">Не выбран</option>
             {tours.map((t) => (

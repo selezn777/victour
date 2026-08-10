@@ -16,13 +16,15 @@ export type Review = {
   photoUrl: string | null
   audioUrl: string | null
   createdAt: string
+  tourId: string | null
   tourTitle: string | null
   tourSlug: string | null
+  guideId: string | null
   guideName: string | null
 }
 
 const REVIEW_SELECT =
-  "id, author_name, rating, text, photo_url, audio_url, created_at, tours(title, slug), guides(name)"
+  "id, author_name, rating, text, photo_url, audio_url, created_at, tour_id, guide_id, tours(title, slug), guides(name)"
 
 type ReviewRow = {
   id: string
@@ -32,6 +34,8 @@ type ReviewRow = {
   photo_url: string | null
   audio_url: string | null
   created_at: string
+  tour_id: string | null
+  guide_id: string | null
   tours: { title: { ru: string }; slug: string } | null
   guides: { name: string } | null
 }
@@ -45,8 +49,10 @@ function mapReview(row: ReviewRow): Review {
     photoUrl: row.photo_url,
     audioUrl: row.audio_url,
     createdAt: row.created_at,
+    tourId: row.tour_id,
     tourTitle: row.tours?.title.ru ?? null,
     tourSlug: row.tours?.slug ?? null,
+    guideId: row.guide_id,
     guideName: row.guides?.name ?? null,
   }
 }
