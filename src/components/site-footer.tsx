@@ -3,7 +3,7 @@ import type { PrimaryGuide } from "@/lib/site-data"
 const PHOTO_CREDITS = [
   { title: "Toyota Alphard (2023) interior", author: "芯正", license: "CC BY-SA 4.0", url: "https://commons.wikimedia.org/wiki/File:Toyota_Alphard(2023)_interior_2.jpg" },
   { title: "Po Nagar towers, Nha Trang", author: "Ms Sarah Welch", license: "CC0", url: "https://commons.wikimedia.org/wiki/File:04052023_Ponagar_Hindu_temples_complex,_Nha_Trang_Vietnam_-_150.jpg" },
-  { title: "Dien Cape Lighthouse (Đại Lãnh)", author: "Christophe95", license: "CC BY-SA 4.0", url: "https://commons.wikimedia.org/wiki/File:Dien_Cape_Lighthouse.jpg" },
+  { title: "Bai Mon Beach (у маяка Đại Lãnh)", author: "Christophe95", license: "CC BY-SA 4.0", url: "https://commons.wikimedia.org/wiki/File:Bai_Mon_Beach_1.jpg" },
   { title: "Hon Mun island", author: "Nguyen Hung Vu", license: "CC BY 2.0", url: "https://commons.wikimedia.org/wiki/File:Hon_Mun_island_(H%C3%B2n_Mun),_Cam_Ranh,_Nha_Trang,_Vi%E1%BB%87t_Nam_20140518_105634_(taken_with_Samsung_Galaxy_Note_3).jpg" },
   { title: "Hon Tam Resort", author: "Phạm Thúy An", license: "CC BY-SA 4.0", url: "https://commons.wikimedia.org/wiki/File:Hon_Tam_Resort_-_Nha_Trang.jpg" },
   { title: "Da Lat — Xuan Huong Lake", author: "P. Hughes", license: "CC BY 4.0", url: "https://commons.wikimedia.org/wiki/File:Da_Lat_-_Xuan_Huong_Lake.jpg" },
