@@ -6,6 +6,7 @@ import { XIcon } from "lucide-react"
 import { useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { PhoneInput } from "@/components/ui/phone-input"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AccountMenu } from "@/components/account-menu"
 import { usePackage, type PackageItem } from "@/hooks/use-package"
@@ -47,6 +48,7 @@ export function RequestPageClient({
   const [guestName, setGuestName] = useState("")
   const [contactChannel, setContactChannel] = useState<string>(CONTACT_CHANNELS[0].code)
   const [contactValue, setContactValue] = useState("")
+  const [contactMode, setContactMode] = useState<"phone" | "handle">("phone")
   const [notes, setNotes] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -61,6 +63,8 @@ export function RequestPageClient({
     if (value.length < 5 || submittedBookingId || lastCapturedLead.current === value) return
     lastCapturedLead.current = value
 
+    // Уведомление о незавершённом контакте шлёт cron-развёртка (api/cron/sweep-leads)
+    // спустя пару минут — и только если гость не дозаполнил заявку до конца.
     const supabase = createClient()
     supabase
       .rpc("save_lead", {
@@ -69,15 +73,7 @@ export function RequestPageClient({
         p_tour_interest: items.map((i) => i.tourTitle).join(", ") || null,
         p_source: "request_page",
       })
-      .then(({ data: isNew }) => {
-        if (isNew) {
-          fetch("/api/notify-lead", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contactValue: value }),
-          }).catch(() => {})
-        }
-      })
+      .then(() => {})
   }
 
   const itemsSubtotalUsd = useMemo(
@@ -199,7 +195,7 @@ export function RequestPageClient({
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="mx-auto flex h-14 max-w-3xl items-center gap-4 px-4 sm:h-16 sm:px-6">
+        <div className="mx-auto flex h-14 max-w-4xl items-center gap-4 px-4 sm:h-16 sm:px-6">
           <Link href="/" className="shrink-0 font-heading text-lg font-semibold tracking-tight sm:text-xl">
             ВикТур
           </Link>
@@ -213,9 +209,9 @@ export function RequestPageClient({
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
         {submittedBookingId ? (
-          <section className="rounded-2xl border border-border bg-card p-6 text-center sm:p-10">
+          <section className="rounded-2xl border border-border bg-card p-8 text-center shadow-sm sm:p-12">
             <h1 className="font-heading text-2xl font-semibold sm:text-3xl">Заявка принята</h1>
             <p className="mt-3 text-muted-foreground">
               Проверяем доступность гида на выбранные даты и свяжемся с вами в{" "}
@@ -229,7 +225,7 @@ export function RequestPageClient({
             </Button>
           </section>
         ) : items.length === 0 ? (
-          <section className="rounded-2xl border border-border bg-card p-6 text-center sm:p-10">
+          <section className="rounded-2xl border border-border bg-card p-8 text-center shadow-sm sm:p-12">
             <h1 className="font-heading text-2xl font-semibold sm:text-3xl">Заявка пуста</h1>
             <p className="mt-3 text-muted-foreground">
               Добавьте один или несколько туров со страницы тура, чтобы собрать пакет.
@@ -246,7 +242,7 @@ export function RequestPageClient({
               {items.map((item) => (
                 <div
                   key={item.tourSlug}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-5 shadow-sm"
                 >
                   <div>
                     <div className="font-medium">{item.tourTitle}</div>
@@ -273,7 +269,7 @@ export function RequestPageClient({
             </section>
 
             {surcharges.length > 0 && (
-              <section className="mt-6 rounded-xl border border-border bg-card p-4">
+              <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
                 <span className="text-sm font-medium">Доплаты (не входят в пакетную скидку)</span>
                 <div className="mt-2 flex flex-col gap-2">
                   {surcharges.map((s) => (
@@ -294,7 +290,7 @@ export function RequestPageClient({
               </section>
             )}
 
-            <section className="mt-6 rounded-xl border border-border bg-card p-4">
+            <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Сумма туров</span>
                 <span>{formatUsd(totals.subtotalUsd)}</span>
@@ -337,7 +333,7 @@ export function RequestPageClient({
               </p>
             </section>
 
-            <section className="mt-6 rounded-xl border border-border bg-card p-4">
+            <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
               <div className="flex items-center justify-center gap-2">
                 {[1, 2, 3].map((s) => (
                   <span
@@ -373,17 +369,39 @@ export function RequestPageClient({
                         </button>
                       ))}
                     </div>
-                    <Input
-                      autoFocus
-                      className="mt-2"
-                      value={contactValue}
-                      onChange={(e) => setContactValue(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && goToStep2()}
-                      placeholder="Номер телефона или ник"
-                    />
-                    <p className="mt-1.5 text-xs text-muted-foreground">
-                      Спрашиваем первым — если что-то пойдёт не так, сможем сами написать вам.
-                    </p>
+                    {contactMode === "phone" ? (
+                      <PhoneInput
+                        autoFocus
+                        className="mt-2"
+                        value={contactValue}
+                        onChange={setContactValue}
+                        onKeyDown={(e) => e.key === "Enter" && goToStep2()}
+                      />
+                    ) : (
+                      <Input
+                        autoFocus
+                        className="mt-2 h-12 text-base"
+                        value={contactValue}
+                        onChange={(e) => setContactValue(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && goToStep2()}
+                        placeholder="Ник в WhatsApp / Telegram / VK"
+                      />
+                    )}
+                    <div className="mt-1.5 flex items-center justify-between gap-2">
+                      <p className="text-xs text-muted-foreground">
+                        Спрашиваем первым — если что-то пойдёт не так, сможем сами написать вам.
+                      </p>
+                      <button
+                        type="button"
+                        className="shrink-0 text-xs text-primary underline-offset-2 hover:underline"
+                        onClick={() => {
+                          setContactValue("")
+                          setContactMode((m) => (m === "phone" ? "handle" : "phone"))
+                        }}
+                      >
+                        {contactMode === "phone" ? "Указать ник" : "Указать телефон"}
+                      </button>
+                    </div>
                   </div>
                   <Button type="button" size="lg" className="w-full" disabled={!step1Valid} onClick={goToStep2}>
                     Далее
