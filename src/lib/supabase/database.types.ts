@@ -319,6 +319,7 @@ export type Database = {
           short_description: Json
           slug: string
           sort_order: number
+          ticket_options: Json
           title: Json
           updated_at: string
         }
@@ -335,6 +336,7 @@ export type Database = {
           short_description: Json
           slug: string
           sort_order?: number
+          ticket_options?: Json
           title: Json
           updated_at?: string
         }
@@ -351,6 +353,7 @@ export type Database = {
           short_description?: Json
           slug?: string
           sort_order?: number
+          ticket_options?: Json
           title?: Json
           updated_at?: string
         }
