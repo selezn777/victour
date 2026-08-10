@@ -1,11 +1,22 @@
 "use client"
 
+import Link from "next/link"
 import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { BookingCalendar } from "@/components/tour/booking-calendar"
 import { formatRubFromUsd, formatUsd, formatVndFromUsd } from "@/lib/format"
+import { datesUsedByOtherItems, usePackage } from "@/hooks/use-package"
 import type { SiteSettings, TourDetail, TourGuide } from "@/lib/site-data"
 import { cn } from "@/lib/utils"
+
+function isoDatePlusOne(iso: string): string {
+  const d = new Date(`${iso}T00:00:00`)
+  d.setDate(d.getDate() + 1)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${m}-${day}`
+}
 
 export function TourBookingPanel({
   tour,
@@ -20,12 +31,18 @@ export function TourBookingPanel({
   selectedGuestCount: number
   onGuestCountChange: (updater: (count: number) => number) => void
 }) {
+  const { items, addItem } = usePackage()
   const [guideId, setGuideId] = useState(guides[0]?.id ?? null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [confirmed, setConfirmed] = useState(false)
+  const [addedToPackage, setAddedToPackage] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const guide = guides.find((g) => g.id === guideId) ?? null
-  const bookedDates = useMemo(() => new Set(guide?.bookedDates ?? []), [guide])
+  const bookedDates = useMemo(() => {
+    const dates = new Set(guide?.bookedDates ?? [])
+    for (const d of datesUsedByOtherItems(items, tour.slug)) dates.add(d)
+    return dates
+  }, [guide, items, tour.slug])
 
   const priceAdultUsd =
     tour.pricingTiers.find((t) => t.guestCount === selectedGuestCount)?.priceAdultUsd ?? 0
@@ -33,12 +50,29 @@ export function TourBookingPanel({
 
   function handleSelectDate(date: string) {
     setSelectedDate(date)
-    setConfirmed(false)
+    setAddedToPackage(false)
+    setError(null)
   }
 
   function handleSubmit() {
     if (!guide || !selectedDate) return
-    setConfirmed(true)
+    const result = addItem({
+      tourId: tour.id,
+      tourSlug: tour.slug,
+      tourTitle: tour.title,
+      guideId: guide.id,
+      guideName: guide.name,
+      date: selectedDate,
+      dateEnd: tour.durationDays === 2 ? isoDatePlusOne(selectedDate) : null,
+      adults: selectedGuestCount,
+      priceAdultUsd,
+    })
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    setError(null)
+    setAddedToPackage(true)
   }
 
   return (
@@ -57,7 +91,8 @@ export function TourBookingPanel({
                 onClick={() => {
                   setGuideId(g.id)
                   setSelectedDate(null)
-                  setConfirmed(false)
+                  setAddedToPackage(false)
+                  setError(null)
                 }}
                 className={cn(
                   "rounded-full border px-3 py-1.5 text-sm transition-colors",
@@ -138,10 +173,18 @@ export function TourBookingPanel({
         Добавить в заявку
       </Button>
 
-      {confirmed && selectedDate && guide && (
+      {error && (
+        <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+
+      {addedToPackage && !error && (
         <p className="mt-3 rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary">
-          Выбор сохранён: {tour.title}, {selectedGuestCount} гостей, гид {guide.name}, дата с{" "}
-          {selectedDate}. Оформление и оплата заявки — на следующем шаге.
+          Добавлено в заявку: {tour.title}, {selectedGuestCount} гостей, дата с {selectedDate}.{" "}
+          <Link href="/request" className="font-medium underline underline-offset-2">
+            Перейти к заявке
+          </Link>
         </p>
       )}
     </section>

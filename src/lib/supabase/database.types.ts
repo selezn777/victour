@@ -364,7 +364,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_booking: {
+        Args: { p_booking: Json; p_items: Json }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

@@ -61,6 +61,7 @@ export type TourGuide = {
 }
 
 export type TourDetail = {
+  id: string
   slug: string
   title: string
   shortDescription: string
@@ -86,7 +87,7 @@ export async function getTourPageData(slug: string): Promise<{
     supabase
       .from("tours")
       .select(
-        "slug, title, short_description, duration_label, duration_days, is_dalat_two_day, hero_image_url, itinerary, includes, excludes, ticket_options, pricing_tiers(guest_count, price_adult_usd, price_child_usd)",
+        "id, slug, title, short_description, duration_label, duration_days, is_dalat_two_day, hero_image_url, itinerary, includes, excludes, ticket_options, pricing_tiers(guest_count, price_adult_usd, price_child_usd)",
       )
       .eq("slug", slug)
       .maybeSingle(),
@@ -123,6 +124,7 @@ export async function getTourPageData(slug: string): Promise<{
   }[]
 
   const tour: TourDetail = {
+    id: row.id,
     slug: row.slug,
     title: title.ru,
     shortDescription: shortDescription.ru,
@@ -177,6 +179,49 @@ export async function getTourPageData(slug: string): Promise<{
   }
 
   return { tour, guides, settings }
+}
+
+export type Surcharge = {
+  code: string
+  name: string
+  amountVnd: number
+  unit: string
+}
+
+export async function getRequestPageData(): Promise<{
+  settings: SiteSettings
+  surcharges: Surcharge[]
+}> {
+  const supabase = publicClient()
+
+  const [settingsRes, surchargesRes] = await Promise.all([
+    supabase.from("settings").select("key, value"),
+    supabase.from("surcharges").select("code, name, amount_vnd, unit").eq("is_active", true),
+  ])
+
+  if (settingsRes.error) throw settingsRes.error
+  if (surchargesRes.error) throw surchargesRes.error
+
+  const byKey = new Map(settingsRes.data.map((s) => [s.key, s.value as Record<string, unknown>]))
+  const settings: SiteSettings = {
+    usdVndRate: (byKey.get("usd_vnd_rate")?.rate as number) ?? 26000,
+    usdRubRate: (byKey.get("usd_rub_rate")?.rate as number) ?? 82,
+    rubMarkupPct: (byKey.get("rub_markup_pct")?.pct as number) ?? 8,
+    packageDiscounts: (byKey.get("package_discounts") as Record<string, number>) ?? {
+      "2": 5,
+      "3": 10,
+      "4": 15,
+    },
+  }
+
+  const surcharges: Surcharge[] = surchargesRes.data.map((s) => ({
+    code: s.code,
+    name: (s.name as { ru: string }).ru,
+    amountVnd: s.amount_vnd,
+    unit: s.unit,
+  }))
+
+  return { settings, surcharges }
 }
 
 export async function getHomepageData(): Promise<{

@@ -8,6 +8,10 @@ export function formatVndFromUsd(usd: number, vndRate: number): string {
   return `${usdToVnd(usd, vndRate).toLocaleString("ru-RU")} ₫`
 }
 
+export function formatVnd(vnd: number): string {
+  return `${Math.round(vnd).toLocaleString("ru-RU")} ₫`
+}
+
 export function formatRubFromUsd(usd: number, rubRate: number, markupPct: number): string {
   return `${Math.round(usdToRub(usd, rubRate, markupPct)).toLocaleString("ru-RU")} ₽`
 }
