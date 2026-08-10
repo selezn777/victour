@@ -112,14 +112,14 @@ export function ReviewForm({
 
   if (done) {
     return (
-      <div className="rounded-xl border border-border bg-card p-4 text-sm">
+      <div className="rounded-xl border border-border bg-card p-5 shadow-sm text-sm">
         Спасибо за отзыв! Он уже опубликован.
       </div>
     )
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
+    <form onSubmit={onSubmit} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5 shadow-sm">
       <h3 className="font-heading text-base font-semibold">Оставить отзыв</h3>
 
       <StarRatingInput value={rating} onChange={setRating} />

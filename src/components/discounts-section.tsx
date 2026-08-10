@@ -15,7 +15,7 @@ export function DiscountsSection({ packageDiscounts }: { packageDiscounts: Recor
           {tiers.map(([count, pct]) => (
             <div
               key={count}
-              className="rounded-xl border border-border bg-card px-3 py-4 text-center"
+              className="rounded-xl border border-border bg-card px-4 py-5 text-center shadow-sm"
             >
               <div className="font-heading text-2xl font-semibold text-primary sm:text-3xl">
                 −{pct}%

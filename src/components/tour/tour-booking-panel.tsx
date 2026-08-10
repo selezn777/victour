@@ -83,7 +83,7 @@ export function TourBookingPanel({
   }
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+    <section className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
       <h2 className="font-heading text-xl font-semibold sm:text-2xl">Забронировать</h2>
 
       {guides.length > 1 && (

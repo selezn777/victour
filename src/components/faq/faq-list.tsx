@@ -16,7 +16,7 @@ export function FaqList({
   return (
     <div className="flex flex-col gap-2">
       {items.map((item) => (
-        <details key={item.id} className="rounded-xl border border-border bg-card p-4">
+        <details key={item.id} className="rounded-xl border border-border bg-card p-5 shadow-sm">
           <summary className="cursor-pointer text-sm font-medium">
             {item.question}
             {showTourTitle && item.tourTitle && (

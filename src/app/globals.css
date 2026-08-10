@@ -46,6 +46,11 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --shadow-color: 0 0% 0%;
+  --shadow-xs: 0 1px 2px 0 hsl(var(--shadow-color) / 0.04);
+  --shadow-sm: 0 1px 3px 0 hsl(var(--shadow-color) / 0.06), 0 1px 2px -1px hsl(var(--shadow-color) / 0.06);
+  --shadow-md: 0 4px 10px -2px hsl(var(--shadow-color) / 0.08), 0 2px 4px -2px hsl(var(--shadow-color) / 0.06);
+  --shadow-lg: 0 10px 24px -6px hsl(var(--shadow-color) / 0.1), 0 4px 8px -4px hsl(var(--shadow-color) / 0.06);
 }
 
 :root {
@@ -72,7 +77,7 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  --radius: 1rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -127,4 +132,46 @@
   html {
     @apply font-sans;
   }
+}
+
+.phone-input {
+  height: 2.75rem;
+  width: 100%;
+  gap: 0.5rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-input);
+  background: transparent;
+  padding: 0 0.875rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.phone-input:has(.PhoneInputInput:focus) {
+  border-color: var(--color-ring);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-ring) 50%, transparent);
+}
+.phone-input .PhoneInputInput {
+  height: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  color: var(--color-foreground);
+}
+.phone-input .PhoneInputInput::placeholder {
+  color: var(--color-muted-foreground);
+}
+.phone-input .PhoneInputCountry {
+  gap: 0.4rem;
+}
+.phone-input .PhoneInputCountrySelect {
+  height: 100%;
+  cursor: pointer;
+}
+.phone-input .PhoneInputCountryIcon {
+  --PhoneInputCountryFlag-height: 1.1em;
+  box-shadow: none;
+  border-radius: 2px;
+}
+.phone-input .PhoneInputCountrySelectArrow {
+  color: var(--color-muted-foreground);
+  opacity: 1;
 }

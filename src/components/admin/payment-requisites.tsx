@@ -21,7 +21,7 @@ export function PaymentRequisites({ amountRub }: { amountRub: number }) {
   }
 
   return (
-    <details className="mb-6 rounded-xl border border-border bg-card p-4">
+    <details className="mb-6 rounded-xl border border-border bg-card p-5 shadow-sm">
       <summary className="cursor-pointer text-sm font-medium">
         Реквизиты для предоплаты (переслать гостю лично)
       </summary>

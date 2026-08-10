@@ -29,7 +29,7 @@ export function FaqAdminList({ items }: { items: AdminFaqItem[] }) {
   if (items.length === 0) return null
 
   return (
-    <details className="mb-6 rounded-xl border border-border bg-card p-4" open={pending.length > 0}>
+    <details className="mb-6 rounded-xl border border-border bg-card p-5 shadow-sm" open={pending.length > 0}>
       <summary className="cursor-pointer text-sm font-medium">
         Вопросы гостей ({items.length}){pending.length > 0 ? ` — ${pending.length} без ответа` : ""}
       </summary>

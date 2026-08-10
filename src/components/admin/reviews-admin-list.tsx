@@ -20,7 +20,7 @@ export function ReviewsAdminList({ reviews }: { reviews: Review[] }) {
   if (reviews.length === 0) return null
 
   return (
-    <details className="mb-6 rounded-xl border border-border bg-card p-4">
+    <details className="mb-6 rounded-xl border border-border bg-card p-5 shadow-sm">
       <summary className="cursor-pointer text-sm font-medium">Отзывы ({reviews.length})</summary>
       <div className="mt-4 flex flex-col gap-2">
         {reviews.map((review) => (

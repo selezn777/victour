@@ -55,14 +55,14 @@ export function FaqQuestionForm({
 
   if (done) {
     return (
-      <div className="rounded-xl border border-border bg-card p-4 text-sm">
+      <div className="rounded-xl border border-border bg-card p-5 shadow-sm text-sm">
         Спасибо! Виктор ответит лично, и вопрос появится здесь в FAQ.
       </div>
     )
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
+    <form onSubmit={onSubmit} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5 shadow-sm">
       <h3 className="font-heading text-base font-semibold">Задать вопрос</h3>
 
       <textarea

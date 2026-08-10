@@ -33,7 +33,7 @@ export function LeadsList({ leads }: { leads: Lead[] }) {
   if (leads.length === 0) return null
 
   return (
-    <details className="mb-6 rounded-xl border border-border bg-card p-4" open>
+    <details className="mb-6 rounded-xl border border-border bg-card p-5 shadow-sm" open>
       <summary className="cursor-pointer text-sm font-medium">
         Незавершённые контакты ({leads.length}) — оставили контакт, но не отправили заявку
       </summary>
