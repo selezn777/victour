@@ -183,7 +183,10 @@ export default async function AdminBookingsPage() {
             )}
 
             <p className="mt-2 text-sm">
-              Итого {formatUsd(booking.total_usd)} · предоплата {formatUsd(booking.prepayment_usd)}
+              Итого {formatUsd(booking.total_usd)} ·{" "}
+              {booking.payment_status === "confirmed"
+                ? `предоплата ${formatUsd(booking.prepayment_usd)} получена`
+                : `к предоплате ${formatUsd(booking.prepayment_usd)}`}
             </p>
 
             {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}

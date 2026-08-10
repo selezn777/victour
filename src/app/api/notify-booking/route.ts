@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     "",
     items,
     "",
-    `Итого: $${booking.total_usd} · предоплата: $${booking.prepayment_usd}`,
+    `Итого: $${booking.total_usd}`,
     booking.notes ? `\nКомментарий: ${booking.notes}` : "",
   ]
     .filter(Boolean)
