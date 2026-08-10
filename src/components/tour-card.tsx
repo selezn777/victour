@@ -18,7 +18,7 @@ export function TourCard({
   onToggleFavorite: () => void
 }) {
   return (
-    <article className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card">
+    <article className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-300 hover:shadow-lg hover:shadow-black/5">
       <div className="relative aspect-4/3 w-full overflow-hidden bg-muted">
         {tour.heroImageUrl && (
           <Image
@@ -42,13 +42,15 @@ export function TourCard({
       </div>
 
       <div className="flex flex-1 flex-col gap-2 p-4">
-        <h3 className="font-heading text-base font-semibold">{tour.title}</h3>
+        <h3 className="font-heading text-lg leading-snug font-semibold">{tour.title}</h3>
         <p className="text-sm text-muted-foreground">{tour.shortDescription}</p>
 
         <div className="mt-auto flex items-center justify-between pt-3">
           <div className="flex flex-col">
             <span className="text-xs text-muted-foreground">{tour.durationLabel}</span>
-            <span className="text-sm font-medium">от {formatUsd(tour.priceFromUsd)} / чел</span>
+            <span className="text-sm font-medium text-primary">
+              от {formatUsd(tour.priceFromUsd)} / чел
+            </span>
           </div>
           <Button
             variant="outline"

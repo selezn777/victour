@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react"
 import { SiteHeader } from "@/components/site-header"
 import { HeroSection } from "@/components/hero-section"
+import { DiscountsSection } from "@/components/discounts-section"
 import { TourCatalog } from "@/components/tour-catalog"
 import { SiteFooter } from "@/components/site-footer"
 import { useFavorites } from "@/hooks/use-favorites"
@@ -45,7 +46,8 @@ export function HomeClient({
         favoritesCount={favorites.length}
       />
       <main className="flex-1">
-        <HeroSection packageDiscounts={settings.packageDiscounts} />
+        <HeroSection />
+        <DiscountsSection packageDiscounts={settings.packageDiscounts} />
         <TourCatalog
           tours={visibleTours}
           isFavorite={isFavorite}
