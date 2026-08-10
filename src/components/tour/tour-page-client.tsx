@@ -8,7 +8,6 @@ import { TourIncludesExcludes } from "@/components/tour/tour-includes-excludes"
 import { TourPriceTable } from "@/components/tour/tour-price-table"
 import { TourTicketOptions } from "@/components/tour/tour-ticket-options"
 import { TourBookingPanel } from "@/components/tour/tour-booking-panel"
-import { SiteFooter } from "@/components/site-footer"
 import { ReviewsSection } from "@/components/reviews/reviews-section"
 import { FaqSection } from "@/components/faq/faq-section"
 import { useFavorites } from "@/hooks/use-favorites"
@@ -86,7 +85,6 @@ export function TourPageClient({
           </div>
         </div>
       </main>
-      <SiteFooter guide={primaryGuide} />
     </>
   )
 }

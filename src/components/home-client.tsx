@@ -5,7 +5,6 @@ import { SiteHeader } from "@/components/site-header"
 import { HeroSection } from "@/components/hero-section"
 import { DiscountsSection } from "@/components/discounts-section"
 import { TourCatalog } from "@/components/tour-catalog"
-import { SiteFooter } from "@/components/site-footer"
 import { ReviewsSection } from "@/components/reviews/reviews-section"
 import { useFavorites } from "@/hooks/use-favorites"
 import type { CatalogTour, PrimaryGuide, SiteSettings } from "@/lib/site-data"
@@ -79,7 +78,6 @@ export function HomeClient({
           </div>
         )}
       </main>
-      <SiteFooter guide={guide} />
     </>
   )
 }
