@@ -18,6 +18,11 @@ const STATUS_LABELS: Record<string, string> = {
   completed: "Завершено",
 }
 
+const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  unpaid: "Предоплата: ожидаем реквизиты от менеджера",
+  confirmed: "Предоплата: получена",
+}
+
 function formatDate(iso: string): string {
   return new Date(`${iso}T00:00:00`).toLocaleDateString("ru-RU", {
     day: "2-digit",
@@ -35,7 +40,7 @@ export default async function AccountPage() {
   const { data: bookings } = await supabase
     .from("bookings")
     .select(
-      "id, status, created_at, total_usd, currency, prepayment_usd, booking_items(date, date_end, tours(slug, title))",
+      "id, status, payment_status, created_at, total_usd, currency, prepayment_usd, booking_items(date, date_end, tours(slug, title))",
     )
     .eq("user_id", user!.id)
     .order("created_at", { ascending: false })
@@ -91,6 +96,11 @@ export default async function AccountPage() {
                     </li>
                   ))}
                 </ul>
+                {booking.status !== "cancelled" && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {PAYMENT_STATUS_LABELS[booking.payment_status] ?? booking.payment_status}
+                  </p>
+                )}
               </div>
             ))}
           </div>

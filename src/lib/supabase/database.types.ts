@@ -112,6 +112,8 @@ export type Database = {
           hotel: string
           id: string
           notes: string | null
+          payment_confirmed_at: string | null
+          payment_status: string
           prepayment_usd: number
           status: string
           subtotal_usd: number
@@ -134,6 +136,8 @@ export type Database = {
           hotel: string
           id?: string
           notes?: string | null
+          payment_confirmed_at?: string | null
+          payment_status?: string
           prepayment_usd?: number
           status?: string
           subtotal_usd?: number
@@ -156,6 +160,8 @@ export type Database = {
           hotel?: string
           id?: string
           notes?: string | null
+          payment_confirmed_at?: string | null
+          payment_status?: string
           prepayment_usd?: number
           status?: string
           subtotal_usd?: number
@@ -234,6 +240,42 @@ export type Database = {
           sort_order?: number
           telegram?: string | null
           whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          contact_channel: string
+          contact_value: string
+          contacted: boolean
+          created_at: string
+          id: string
+          notified_at: string | null
+          source: string | null
+          tour_interest: string | null
+          updated_at: string
+        }
+        Insert: {
+          contact_channel: string
+          contact_value: string
+          contacted?: boolean
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          source?: string | null
+          tour_interest?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contact_channel?: string
+          contact_value?: string
+          contacted?: boolean
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          source?: string | null
+          tour_interest?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -370,6 +412,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_confirm_payment: {
+        Args: { p_booking_id: string }
+        Returns: undefined
+      }
+      admin_mark_lead_contacted: {
+        Args: { p_lead_id: string }
+        Returns: undefined
+      }
       admin_set_booking_status: {
         Args: { p_booking_id: string; p_status: string }
         Returns: undefined
@@ -379,6 +429,15 @@ export type Database = {
         Returns: string
       }
       is_admin: { Args: never; Returns: boolean }
+      save_lead: {
+        Args: {
+          p_contact_channel: string
+          p_contact_value: string
+          p_source: string
+          p_tour_interest: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

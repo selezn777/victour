@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { sendGAEvent } from "@next/third-parties/google"
 import { XIcon } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -20,11 +20,6 @@ const CONTACT_CHANNELS = [
   { code: "telegram", label: "Telegram" },
   { code: "max", label: "MAX" },
   { code: "vk", label: "ВКонтакте" },
-] as const
-
-const PREPAYMENT_METHODS = [
-  { code: "transfer", label: "Перевод" },
-  { code: "card", label: "Карта" },
 ] as const
 
 function formatDate(iso: string): string {
@@ -52,11 +47,38 @@ export function RequestPageClient({
   const [guestName, setGuestName] = useState("")
   const [contactChannel, setContactChannel] = useState<string>(CONTACT_CHANNELS[0].code)
   const [contactValue, setContactValue] = useState("")
-  const [prepaymentMethod, setPrepaymentMethod] = useState<string>(PREPAYMENT_METHODS[0].code)
   const [notes, setNotes] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submittedBookingId, setSubmittedBookingId] = useState<string | null>(null)
+  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const lastCapturedLead = useRef<string | null>(null)
+
+  // Гость мог оставить контакт и не дозаполнить заявку — сохраняем его, чтобы
+  // не терять первый заход и иметь возможность потом самим дожать бронь.
+  function captureLead() {
+    const value = contactValue.trim()
+    if (value.length < 5 || submittedBookingId || lastCapturedLead.current === value) return
+    lastCapturedLead.current = value
+
+    const supabase = createClient()
+    supabase
+      .rpc("save_lead", {
+        p_contact_channel: contactChannel,
+        p_contact_value: value,
+        p_tour_interest: items.map((i) => i.tourTitle).join(", ") || null,
+        p_source: "request_page",
+      })
+      .then(({ data: isNew }) => {
+        if (isNew) {
+          fetch("/api/notify-lead", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contactValue: value }),
+          }).catch(() => {})
+        }
+      })
+  }
 
   const itemsSubtotalUsd = useMemo(
     () => items.reduce((sum, item) => sum + itemGroupTotalUsd(item), 0),
@@ -82,7 +104,7 @@ export function RequestPageClient({
     [itemsSubtotalUsd, items.length, settings.packageDiscounts, surchargeUsd],
   )
 
-  const prepaymentUsd = calculatePrepayment(totals.totalUsd)
+  const prepaymentUsd = calculatePrepayment(settings.depositUsd)
 
   const canSubmit =
     items.length > 0 &&
@@ -90,6 +112,15 @@ export function RequestPageClient({
     guestName.trim().length > 0 &&
     contactValue.trim().length > 0 &&
     !submitting
+
+  const step1Valid = contactValue.trim().length > 0
+  const step2Valid = hotel.trim().length > 0 && guestName.trim().length > 0
+
+  function goToStep2() {
+    if (!step1Valid) return
+    captureLead()
+    setStep(2)
+  }
 
   function toggleSurcharge(code: string) {
     setSelectedSurcharges((prev) => {
@@ -127,7 +158,6 @@ export function RequestPageClient({
           usdVndRate: settings.usdVndRate,
           usdRubRate: settings.usdRubRate,
           rubMarkupPct: settings.rubMarkupPct,
-          prepaymentMethod,
         },
       },
       p_items: items.map((item) => ({
@@ -189,7 +219,10 @@ export function RequestPageClient({
             <h1 className="font-heading text-2xl font-semibold sm:text-3xl">Заявка принята</h1>
             <p className="mt-3 text-muted-foreground">
               Проверяем доступность гида на выбранные даты и свяжемся с вами в{" "}
-              {CONTACT_CHANNELS.find((c) => c.code === contactChannel)?.label} в ближайшее время.
+              {CONTACT_CHANNELS.find((c) => c.code === contactChannel)?.label} в ближайшее время —
+              пришлём реквизиты для предоплаты{" "}
+              {formatRubFromUsd(prepaymentUsd, settings.usdRubRate, settings.rubMarkupPct)}.
+              Остальное — наличными при встрече.
             </p>
             <Button size="lg" className="mt-6" nativeButton={false} render={<Link href="/" />}>
               На главную
@@ -290,95 +323,166 @@ export function RequestPageClient({
                   </div>
                 </div>
               </div>
-              <div className="mt-2 flex justify-between text-sm text-muted-foreground">
-                <span>Предоплата (30%, мин. $80)</span>
-                <span>{formatUsd(prepaymentUsd)}</span>
-              </div>
-            </section>
-
-            <section className="mt-6 flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
-              <div>
-                <label className="text-sm font-medium" htmlFor="hotel">Отель</label>
-                <Input id="hotel" className="mt-1.5" value={hotel} onChange={(e) => setHotel(e.target.value)} placeholder="Название отеля" />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium" htmlFor="guestName">Имя</label>
-                <Input id="guestName" className="mt-1.5" value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Как к вам обращаться" />
-              </div>
-
-              <div>
-                <span className="text-sm font-medium">Канал связи</span>
-                <div className="mt-1.5 flex flex-wrap gap-2">
-                  {CONTACT_CHANNELS.map((c) => (
-                    <button
-                      key={c.code}
-                      type="button"
-                      aria-pressed={contactChannel === c.code}
-                      onClick={() => setContactChannel(c.code)}
-                      className={cn(
-                        "rounded-full border px-3 py-1.5 text-sm transition-colors",
-                        contactChannel === c.code
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border hover:bg-muted",
-                      )}
-                    >
-                      {c.label}
-                    </button>
-                  ))}
-                </div>
-                <Input
-                  className="mt-2"
-                  value={contactValue}
-                  onChange={(e) => setContactValue(e.target.value)}
-                  placeholder="Номер телефона или ник"
-                />
-              </div>
-
-              <div>
-                <span className="text-sm font-medium">Способ предоплаты</span>
-                <div className="mt-1.5 flex flex-wrap gap-2">
-                  {PREPAYMENT_METHODS.map((m) => (
-                    <button
-                      key={m.code}
-                      type="button"
-                      aria-pressed={prepaymentMethod === m.code}
-                      onClick={() => setPrepaymentMethod(m.code)}
-                      className={cn(
-                        "rounded-full border px-3 py-1.5 text-sm transition-colors",
-                        prepaymentMethod === m.code
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border hover:bg-muted",
-                      )}
-                    >
-                      {m.label}
-                    </button>
-                  ))}
+              <div className="mt-3 flex items-center justify-between rounded-lg bg-primary/10 px-3 py-2.5">
+                <span className="text-sm font-medium">Предоплата для брони</span>
+                <div className="text-right">
+                  <div className="font-heading text-lg font-semibold text-primary">
+                    {formatRubFromUsd(prepaymentUsd, settings.usdRubRate, settings.rubMarkupPct)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">≈ {formatUsd(prepaymentUsd)}</div>
                 </div>
               </div>
-
-              <div>
-                <label className="text-sm font-medium" htmlFor="notes">Пожелания</label>
-                <textarea
-                  id="notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={3}
-                  placeholder="Необязательно"
-                  className="mt-1.5 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-base outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
-                />
-              </div>
-            </section>
-
-            {submitError && (
-              <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {submitError}
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Никаких крупных предоплат — остальное наличными при встрече.
               </p>
-            )}
+            </section>
 
-            <Button type="button" size="lg" className="mt-4 w-full" disabled={!canSubmit} onClick={handleSubmit}>
-              {submitting ? "Отправляем…" : "Отправить заявку"}
-            </Button>
+            <section className="mt-6 rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center justify-center gap-2">
+                {[1, 2, 3].map((s) => (
+                  <span
+                    key={s}
+                    className={cn(
+                      "h-1.5 w-8 rounded-full transition-colors",
+                      s <= step ? "bg-primary" : "bg-muted",
+                    )}
+                  />
+                ))}
+              </div>
+              <p className="mt-2 text-center text-xs text-muted-foreground">Шаг {step} из 3</p>
+
+              {step === 1 && (
+                <div className="mt-4 flex flex-col gap-4">
+                  <div>
+                    <span className="text-sm font-medium">Как с вами связаться?</span>
+                    <div className="mt-1.5 flex flex-wrap gap-2">
+                      {CONTACT_CHANNELS.map((c) => (
+                        <button
+                          key={c.code}
+                          type="button"
+                          aria-pressed={contactChannel === c.code}
+                          onClick={() => setContactChannel(c.code)}
+                          className={cn(
+                            "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                            contactChannel === c.code
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border hover:bg-muted",
+                          )}
+                        >
+                          {c.label}
+                        </button>
+                      ))}
+                    </div>
+                    <Input
+                      autoFocus
+                      className="mt-2"
+                      value={contactValue}
+                      onChange={(e) => setContactValue(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && goToStep2()}
+                      placeholder="Номер телефона или ник"
+                    />
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      Спрашиваем первым — если что-то пойдёт не так, сможем сами написать вам.
+                    </p>
+                  </div>
+                  <Button type="button" size="lg" className="w-full" disabled={!step1Valid} onClick={goToStep2}>
+                    Далее
+                  </Button>
+                </div>
+              )}
+
+              {step === 2 && (
+                <div className="mt-4 flex flex-col gap-4">
+                  <div>
+                    <label className="text-sm font-medium" htmlFor="guestName">Как к вам обращаться?</label>
+                    <Input
+                      autoFocus
+                      id="guestName"
+                      className="mt-1.5"
+                      value={guestName}
+                      onChange={(e) => setGuestName(e.target.value)}
+                      placeholder="Имя"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium" htmlFor="hotel">Где вас забрать?</label>
+                    <Input
+                      id="hotel"
+                      className="mt-1.5"
+                      value={hotel}
+                      onChange={(e) => setHotel(e.target.value)}
+                      placeholder="Название отеля"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="button" size="lg" variant="outline" onClick={() => setStep(1)}>
+                      Назад
+                    </Button>
+                    <Button
+                      type="button"
+                      size="lg"
+                      className="flex-1"
+                      disabled={!step2Valid}
+                      onClick={() => setStep(3)}
+                    >
+                      Далее
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {step === 3 && (
+                <div className="mt-4 flex flex-col gap-4">
+                  <div>
+                    <label className="text-sm font-medium" htmlFor="notes">Пожелания</label>
+                    <textarea
+                      id="notes"
+                      autoFocus
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      rows={3}
+                      placeholder="Необязательно"
+                      className="mt-1.5 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-base outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+                    />
+                  </div>
+
+                  <div className="rounded-lg bg-muted/60 px-3 py-3 text-sm">
+                    <p className="font-medium">Что будет дальше</p>
+                    <ol className="mt-2 flex flex-col gap-1.5 text-muted-foreground">
+                      <li>1. Проверяем даты у гида — обычно в течение часа.</li>
+                      <li>
+                        2. Пишем вам в{" "}
+                        {CONTACT_CHANNELS.find((c) => c.code === contactChannel)?.label} с реквизитами
+                        для предоплаты.
+                      </li>
+                      <li>3. Вы подтверждаете бронь.</li>
+                      <li>4. Остальное — наличными при встрече.</li>
+                    </ol>
+                  </div>
+
+                  {submitError && (
+                    <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                      {submitError}
+                    </p>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Button type="button" size="lg" variant="outline" onClick={() => setStep(2)}>
+                      Назад
+                    </Button>
+                    <Button
+                      type="button"
+                      size="lg"
+                      className="flex-1"
+                      disabled={!canSubmit}
+                      onClick={handleSubmit}
+                    >
+                      {submitting ? "Отправляем…" : "Отправить заявку"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </section>
           </>
         )}
       </main>

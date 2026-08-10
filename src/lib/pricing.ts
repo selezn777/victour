@@ -45,9 +45,9 @@ export function calculatePackageTotal(params: {
   return { subtotalUsd: round2(itemsSubtotalUsd), discountPct, discountUsd, surchargeUsd: round2(surchargeUsd), totalUsd }
 }
 
-/** Минимальная предоплата: 30%, но не менее $80. */
-export function calculatePrepayment(totalUsd: number, pct = 30, minUsd = 80): number {
-  return round2(Math.max((totalUsd * pct) / 100, minUsd))
+/** Предоплата — фиксированная небольшая сумма (не процент от заявки), задаётся в settings. */
+export function calculatePrepayment(depositUsd: number): number {
+  return round2(depositUsd)
 }
 
 export function usdToVnd(usd: number, vndRate: number): number {

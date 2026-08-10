@@ -22,6 +22,7 @@ export type SiteSettings = {
   usdRubRate: number
   rubMarkupPct: number
   packageDiscounts: Record<string, number>
+  depositUsd: number
 }
 
 export type PrimaryGuide = {
@@ -176,6 +177,7 @@ export async function getTourPageData(slug: string): Promise<{
       "3": 10,
       "4": 15,
     },
+    depositUsd: (byKey.get("deposit_usd")?.amount as number) ?? 80,
   }
 
   return { tour, guides, settings }
@@ -212,6 +214,7 @@ export async function getRequestPageData(): Promise<{
       "3": 10,
       "4": 15,
     },
+    depositUsd: (byKey.get("deposit_usd")?.amount as number) ?? 80,
   }
 
   const surcharges: Surcharge[] = surchargesRes.data.map((s) => ({
@@ -278,6 +281,7 @@ export async function getHomepageData(): Promise<{
       "3": 10,
       "4": 15,
     },
+    depositUsd: (byKey.get("deposit_usd")?.amount as number) ?? 80,
   }
 
   return { tours, settings, guide: guideRes.data }

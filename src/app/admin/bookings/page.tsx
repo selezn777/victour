@@ -1,8 +1,11 @@
 import type { Metadata } from "next"
 import { createClient } from "@/lib/supabase/server"
 import { formatUsd } from "@/lib/format"
+import { usdToRub } from "@/lib/pricing"
 import { SignOutButton } from "@/components/sign-out-button"
 import { BookingActions } from "@/components/admin/booking-actions"
+import { PaymentRequisites } from "@/components/admin/payment-requisites"
+import { LeadsList } from "@/components/admin/leads-list"
 
 export const metadata: Metadata = {
   title: "Заявки — админка ВикТур",
@@ -14,6 +17,21 @@ const STATUS_LABELS: Record<string, string> = {
   alt_proposed: "Предложена другая дата",
   cancelled: "Отклонено",
   completed: "Завершено",
+}
+
+const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  unpaid: "Предоплата не получена",
+  confirmed: "Предоплата получена",
+}
+
+/** Подсказка для Виктора: если отменить заявку сейчас, удерживается ли предоплата (<24ч до тура). */
+function refundHint(earliestDate: string | null): string | null {
+  if (!earliestDate) return null
+  const hoursUntil = (new Date(`${earliestDate}T00:00:00`).getTime() - Date.now()) / 3_600_000
+  if (hoursUntil < 0) return null
+  return hoursUntil < 24
+    ? "Если отменить сейчас: предоплата удерживается (<24ч до тура)"
+    : "Если отменить сейчас: предоплата возвращается полностью"
 }
 
 const CONTACT_LABELS: Record<string, string> = {
@@ -43,12 +61,28 @@ function formatDateTime(iso: string): string {
 export default async function AdminBookingsPage() {
   const supabase = await createClient()
 
-  const { data: bookings, error } = await supabase
-    .from("bookings")
-    .select(
-      "id, status, guest_name, contact_channel, contact_value, hotel, notes, total_usd, prepayment_usd, created_at, booking_items(date, date_end, adults, children, tours(title), guides(name))",
-    )
-    .order("created_at", { ascending: false })
+  const [{ data: bookings, error }, { data: settingsRows }, { data: leads }] = await Promise.all([
+    supabase
+      .from("bookings")
+      .select(
+        "id, status, payment_status, guest_name, contact_channel, contact_value, hotel, notes, total_usd, prepayment_usd, created_at, booking_items(date, date_end, adults, children, tours(title), guides(name))",
+      )
+      .order("created_at", { ascending: false }),
+    supabase.from("settings").select("key, value"),
+    supabase
+      .from("leads")
+      .select("id, contact_channel, contact_value, tour_interest, created_at")
+      .eq("contacted", false)
+      .order("created_at", { ascending: false }),
+  ])
+
+  const settingsByKey = new Map(
+    (settingsRows ?? []).map((s) => [s.key, s.value as Record<string, unknown>]),
+  )
+  const depositUsd = (settingsByKey.get("deposit_usd")?.amount as number) ?? 80
+  const usdRubRate = (settingsByKey.get("usd_rub_rate")?.rate as number) ?? 82
+  const rubMarkupPct = (settingsByKey.get("rub_markup_pct")?.pct as number) ?? 8
+  const depositRub = usdToRub(depositUsd, usdRubRate, rubMarkupPct)
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
@@ -60,14 +94,28 @@ export default async function AdminBookingsPage() {
         <SignOutButton />
       </div>
 
-      {error && <p className="mt-6 text-sm text-destructive">{error.message}</p>}
+      <div className="mt-6">
+        <PaymentRequisites amountRub={depositRub} />
+        <LeadsList leads={leads ?? []} />
+      </div>
+
+      {error && <p className="text-sm text-destructive">{error.message}</p>}
 
       {!error && (!bookings || bookings.length === 0) && (
         <p className="mt-6 text-sm text-muted-foreground">Заявок пока нет.</p>
       )}
 
       <div className="mt-6 flex flex-col gap-4">
-        {bookings?.map((booking) => (
+        {bookings?.map((booking) => {
+          const earliestDate = booking.booking_items
+            .map((i) => i.date)
+            .sort()[0] as string | undefined
+          const hint =
+            booking.status === "pending" || booking.status === "confirmed"
+              ? refundHint(earliestDate ?? null)
+              : null
+
+          return (
           <div key={booking.id} className="rounded-xl border border-border p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -76,9 +124,20 @@ export default async function AdminBookingsPage() {
                   {formatDateTime(booking.created_at)}
                 </span>
               </div>
-              <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium">
-                {STATUS_LABELS[booking.status] ?? booking.status}
-              </span>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                    booking.payment_status === "confirmed"
+                      ? "bg-primary/10 text-primary"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {PAYMENT_STATUS_LABELS[booking.payment_status] ?? booking.payment_status}
+                </span>
+                <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium">
+                  {STATUS_LABELS[booking.status] ?? booking.status}
+                </span>
+              </div>
             </div>
 
             <p className="mt-2 text-sm text-muted-foreground">
@@ -108,11 +167,18 @@ export default async function AdminBookingsPage() {
               Итого {formatUsd(booking.total_usd)} · предоплата {formatUsd(booking.prepayment_usd)}
             </p>
 
+            {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+
             <div className="mt-3">
-              <BookingActions bookingId={booking.id} status={booking.status} />
+              <BookingActions
+                bookingId={booking.id}
+                status={booking.status}
+                paymentStatus={booking.payment_status}
+              />
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
     </main>
   )
