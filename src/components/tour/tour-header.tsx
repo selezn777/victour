@@ -5,6 +5,7 @@ import { HeartIcon, MenuIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { AccountMenu } from "@/components/account-menu"
 import { formatRubFromUsd, formatVndFromUsd } from "@/lib/format"
 import type { SiteSettings, TourGuide } from "@/lib/site-data"
 import { cn } from "@/lib/utils"
@@ -50,6 +51,8 @@ export function TourHeader({
           </Button>
 
           <ThemeToggle />
+
+          <AccountMenu />
 
           <Sheet>
             <SheetTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Меню" />}>

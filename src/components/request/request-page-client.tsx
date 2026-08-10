@@ -6,6 +6,7 @@ import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { AccountMenu } from "@/components/account-menu"
 import { usePackage, type PackageItem } from "@/hooks/use-package"
 import { calculatePackageTotal, calculatePrepayment } from "@/lib/pricing"
 import { formatRubFromUsd, formatUsd, formatVnd, formatVndFromUsd } from "@/lib/format"
@@ -148,6 +149,14 @@ export function RequestPageClient({
     setSubmittedBookingId(data)
     clear()
     setSubmitting(false)
+
+    fetch("/api/notify-booking", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bookingId: data }),
+    }).catch(() => {
+      // best-effort — гость всё равно видит подтверждение, Виктор увидит заявку в админке
+    })
   }
 
   return (
@@ -160,8 +169,9 @@ export function RequestPageClient({
           <Link href="/#catalog" className="text-sm text-muted-foreground hover:text-foreground hover:underline">
             Все туры
           </Link>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-1">
             <ThemeToggle />
+            <AccountMenu />
           </div>
         </div>
       </header>

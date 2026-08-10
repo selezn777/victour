@@ -99,6 +99,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          admin_notified_at: string | null
           adults_total: number
           children_total: number
           contact_channel: string
@@ -117,8 +118,10 @@ export type Database = {
           surcharge_usd: number
           total_usd: number
           updated_at: string
+          user_id: string | null
         }
         Insert: {
+          admin_notified_at?: string | null
           adults_total?: number
           children_total?: number
           contact_channel: string
@@ -137,8 +140,10 @@ export type Database = {
           surcharge_usd?: number
           total_usd?: number
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
+          admin_notified_at?: string | null
           adults_total?: number
           children_total?: number
           contact_channel?: string
@@ -157,6 +162,7 @@ export type Database = {
           surcharge_usd?: number
           total_usd?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -364,10 +370,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_set_booking_status: {
+        Args: { p_booking_id: string; p_status: string }
+        Returns: undefined
+      }
       create_booking: {
         Args: { p_booking: Json; p_items: Json }
         Returns: string
       }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
