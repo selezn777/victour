@@ -1,3 +1,5 @@
+import { Reveal } from "@/components/motion/reveal"
+
 export function DiscountsSection({ packageDiscounts }: { packageDiscounts: Record<string, number> }) {
   const tiers = Object.entries(packageDiscounts).sort(([a], [b]) => Number(a) - Number(b))
 
@@ -12,16 +14,15 @@ export function DiscountsSection({ packageDiscounts }: { packageDiscounts: Recor
         </p>
 
         <div className="mt-5 grid grid-cols-3 gap-3 sm:max-w-lg">
-          {tiers.map(([count, pct]) => (
-            <div
-              key={count}
-              className="rounded-xl border border-border bg-card px-4 py-5 text-center shadow-sm"
-            >
-              <div className="font-heading text-2xl font-semibold text-primary sm:text-3xl">
-                −{pct}%
+          {tiers.map(([count, pct], i) => (
+            <Reveal key={count} delay={i * 0.08} y={12}>
+              <div className="rounded-xl border border-border bg-card px-4 py-5 text-center shadow-sm transition-transform hover:scale-105">
+                <div className="font-heading text-2xl font-semibold text-primary sm:text-3xl">
+                  −{pct}%
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground sm:text-sm">{count} тура</div>
               </div>
-              <div className="mt-1 text-xs text-muted-foreground sm:text-sm">{count} тура</div>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>

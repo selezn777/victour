@@ -17,7 +17,7 @@ export function TourPriceTable({
     <section>
       <h2 className="font-heading text-xl font-semibold sm:text-2xl">Цена за человека</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Нажмите на число гостей — группа платит один раз, сумма делится на всех. Чем больше компания, тем дешевле с человека.
+        Нажмите на число гостей: группа платит один раз, а сумма делится на всех. Чем больше компания, тем дешевле выходит каждому.
       </p>
 
       <div className="mt-5 grid grid-cols-4 gap-2">
@@ -52,12 +52,12 @@ export function TourPriceTable({
 
       {selectedTier && (
         <p className="mt-3 text-sm text-muted-foreground">
-          Группа из {selectedTier.guestCount}: {formatUsd(selectedTier.priceAdultUsd * selectedTier.guestCount)}{" "}
-          — сумма и способ оплаты видны справа в блоке брони.
+          Группа из {selectedTier.guestCount} платит {formatUsd(selectedTier.priceAdultUsd * selectedTier.guestCount)}.
+          Способ оплаты подскажем в блоке брони справа.
         </p>
       )}
       <p className="mt-1 text-xs text-muted-foreground">
-        Больше {tiers[tiers.length - 1]?.guestCount} человек — считаем индивидуально (другой автобус), напишите нам в заявке.
+        Гостей больше {tiers[tiers.length - 1]?.guestCount}? Тут уже понадобится другой автобус, посчитаем для вас индивидуально — просто напишите в заявке.
       </p>
     </section>
   )
