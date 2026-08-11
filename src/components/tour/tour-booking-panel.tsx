@@ -136,8 +136,8 @@ export function TourBookingPanel({
             type="button"
             variant="outline"
             size="icon-sm"
-            disabled={selectedGuestCount >= 8}
-            onClick={() => onGuestCountChange((c) => Math.min(8, c + 1))}
+            disabled={selectedGuestCount >= 9}
+            onClick={() => onGuestCountChange((c) => Math.min(9, c + 1))}
             aria-label="Больше гостей"
           >
             +
