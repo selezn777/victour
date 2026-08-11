@@ -204,7 +204,7 @@ export function RequestPageClient({
           <Link href="/" className="shrink-0 font-heading text-lg font-semibold tracking-tight sm:text-xl">
             ВикТур
           </Link>
-          <Link href="/#catalog" className="text-sm text-muted-foreground hover:text-foreground hover:underline">
+          <Link href="/tours" className="text-sm text-muted-foreground hover:text-foreground hover:underline">
             Все туры
           </Link>
           <div className="ml-auto flex items-center gap-1">
@@ -234,7 +234,7 @@ export function RequestPageClient({
             <p className="mt-3 text-muted-foreground">
               Добавьте один или несколько туров со страницы тура, чтобы собрать пакет.
             </p>
-            <Button size="lg" className="mt-6" nativeButton={false} render={<Link href="/#catalog" />}>
+            <Button size="lg" className="mt-6" nativeButton={false} render={<Link href="/tours" />}>
               К турам
             </Button>
           </section>

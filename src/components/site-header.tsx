@@ -89,7 +89,7 @@ export function SiteHeader({
                 <SheetTitle>ВикТур</SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col gap-1 px-4">
-                <a href="#catalog" className="rounded-md px-2 py-2 text-sm hover:bg-muted">
+                <a href="/tours" className="rounded-md px-2 py-2 text-sm hover:bg-muted">
                   Туры
                 </a>
                 <Link href="/guides" className="rounded-md px-2 py-2 text-sm hover:bg-muted">

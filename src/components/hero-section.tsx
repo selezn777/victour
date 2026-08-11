@@ -78,7 +78,7 @@ export function HeroSection() {
         </ul>
 
         <FadeUp delay={0.75} visible={mounted}>
-          <Button size="lg" className="mt-6 sm:mt-8" nativeButton={false} render={<Link href="#catalog" />}>
+          <Button size="lg" className="mt-6 sm:mt-8" nativeButton={false} render={<Link href="/tours" />}>
             Смотреть туры
           </Button>
         </FadeUp>

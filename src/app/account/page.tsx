@@ -70,7 +70,7 @@ export default async function AccountPage() {
         {!bookings || bookings.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">
             Пока нет заявок.{" "}
-            <Link href="/#catalog" className="underline hover:no-underline">
+            <Link href="/tours" className="underline hover:no-underline">
               Выбрать тур
             </Link>
           </p>

@@ -28,7 +28,7 @@ export function TourHeader({
         </Link>
 
         <Link
-          href="/#catalog"
+          href="/tours"
           className="ml-1 text-sm text-muted-foreground hover:text-foreground hover:underline sm:ml-4"
         >
           Все туры
@@ -60,7 +60,7 @@ export function TourHeader({
                 <SheetTitle>ВикТур</SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col gap-1 px-4">
-                <Link href="/#catalog" className="rounded-md px-2 py-2 text-sm hover:bg-muted">
+                <Link href="/tours" className="rounded-md px-2 py-2 text-sm hover:bg-muted">
                   Все туры
                 </Link>
                 <Link href="/guides" className="rounded-md px-2 py-2 text-sm hover:bg-muted">
