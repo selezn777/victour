@@ -5,7 +5,10 @@ import { Reveal } from "@/components/motion/reveal"
 
 export function CuratedSection() {
   return (
-    <Reveal y={0} className="relative h-[78vh] min-h-[460px] w-full overflow-hidden sm:h-[86vh]">
+    <Reveal
+      y={0}
+      className="relative h-[78vh] min-h-[460px] w-full snap-start snap-always overflow-hidden sm:h-[86vh]"
+    >
       <Image
         src="https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/nyachang-avtorskiy-b2ZHevFPr4gfLIEw3aV2oZPHvsRbs9.jpg"
         alt="Золотая пагода в Нячанге — один из пяти отобранных маршрутов"

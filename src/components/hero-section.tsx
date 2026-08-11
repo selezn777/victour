@@ -48,7 +48,7 @@ export function HeroSection() {
   }, [])
 
   return (
-    <section className="relative flex h-[calc(100svh-3.5rem)] min-h-[560px] flex-col justify-end overflow-hidden sm:h-[calc(100svh-4rem)]">
+    <section className="relative flex h-[calc(100svh-3.5rem)] min-h-[560px] snap-start snap-always flex-col justify-end overflow-hidden sm:h-[calc(100svh-4rem)]">
       <Image
         src="/images/hero/premium-van-interior.jpg"
         alt="Премиальный салон минивэна с массажными креслами для private-туров"
