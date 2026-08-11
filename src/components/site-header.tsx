@@ -12,7 +12,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { AccountMenu } from "@/components/account-menu"
 import { formatRubFromUsd, formatVndFromUsd } from "@/lib/format"
 import type { PrimaryGuide, SiteSettings } from "@/lib/site-data"
@@ -76,8 +75,6 @@ export function SiteHeader({
               </Badge>
             )}
           </Button>
-
-          <ThemeToggle />
 
           <AccountMenu />
 

@@ -7,7 +7,6 @@ import { useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { PhoneInput } from "@/components/ui/phone-input"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { AccountMenu } from "@/components/account-menu"
 import { usePackage, type PackageItem } from "@/hooks/use-package"
 import { calculatePackageTotal, calculatePrepayment } from "@/lib/pricing"
@@ -209,7 +208,6 @@ export function RequestPageClient({
             Все туры
           </Link>
           <div className="ml-auto flex items-center gap-1">
-            <ThemeToggle />
             <AccountMenu />
           </div>
         </div>
