@@ -15,6 +15,7 @@ function CatalogCta() {
 }
 
 function PhotoBlock({
+  kicker,
   eyebrow,
   title,
   body,
@@ -22,6 +23,7 @@ function PhotoBlock({
   imageAlt,
   imagePosition,
 }: {
+  kicker?: string
   eyebrow: string
   title: string
   body: string
@@ -29,6 +31,7 @@ function PhotoBlock({
   imageAlt: string
   imagePosition?: string
 }) {
+  const TitleTag = kicker ? "h1" : "h3"
   return (
     <Reveal
       y={0}
@@ -38,14 +41,22 @@ function PhotoBlock({
         src={imageSrc}
         alt={imageAlt}
         fill
+        priority={!!kicker}
         style={imagePosition ? { objectPosition: imagePosition } : undefined}
         className="object-cover"
         sizes="100vw"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-black/10" />
       <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-3xl px-5 pb-12 sm:px-10 sm:pb-20">
+        {kicker && (
+          <p className="mb-3 font-heading text-2xl leading-none font-semibold text-white italic sm:text-3xl">
+            {kicker}
+          </p>
+        )}
         <span className="text-xs font-medium tracking-wide text-primary uppercase">{eyebrow}</span>
-        <h3 className="mt-2 font-heading text-3xl leading-tight font-semibold text-white sm:text-5xl">{title}</h3>
+        <TitleTag className="mt-2 font-heading text-3xl leading-tight font-semibold text-white sm:text-5xl">
+          {title}
+        </TitleTag>
         <p className="mt-4 max-w-xl text-base text-white/85 sm:text-lg">{body}</p>
       </div>
     </Reveal>
@@ -89,6 +100,7 @@ export function AdvantagesSection() {
   return (
     <section className="relative overflow-hidden">
       <PhotoBlock
+        kicker="Вьетнам без чужих"
         eyebrow="Компания"
         title="Это ваш день, и в нём больше никого"
         body="Никто не опаздывает к автобусу и не тащит всех в дьюти-фри. Программа собрана под вашу компанию — от встречи в отеле до прощания вечером."

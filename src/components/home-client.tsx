@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation"
 import { SiteHeader } from "@/components/site-header"
-import { HeroSection } from "@/components/hero-section"
 import { AdvantagesSection } from "@/components/advantages-section"
 import { DiscountsSection } from "@/components/discounts-section"
 import { CuratedSection } from "@/components/curated-section"
@@ -33,7 +32,6 @@ export function HomeClient({
         favoritesCount={0}
       />
       <main className="flex-1">
-        <HeroSection />
         <AdvantagesSection />
         <DiscountsSection packageDiscounts={settings.packageDiscounts} />
         <CuratedSection />
