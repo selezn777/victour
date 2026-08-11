@@ -1,20 +1,10 @@
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Reveal } from "@/components/motion/reveal"
 import { Glow } from "@/components/glow"
+import { SlideDeck } from "@/components/slide-deck"
 
-function CatalogCta() {
-  return (
-    <div className="flex justify-center bg-background py-10">
-      <Button size="lg" nativeButton={false} render={<Link href="/tours" />}>
-        Выбрать тур
-      </Button>
-    </div>
-  )
-}
-
-function PhotoBlock({
+function PhotoSlide({
   kicker,
   eyebrow,
   title,
@@ -22,6 +12,7 @@ function PhotoBlock({
   imageSrc,
   imageAlt,
   imagePosition,
+  cta,
 }: {
   kicker?: string
   eyebrow: string
@@ -30,13 +21,11 @@ function PhotoBlock({
   imageSrc: string
   imageAlt: string
   imagePosition?: string
+  cta?: boolean
 }) {
-  const TitleTag = kicker ? "h1" : "h3"
+  const TitleTag = kicker ? "h1" : "h2"
   return (
-    <Reveal
-      y={0}
-      className="relative h-[78vh] min-h-[460px] w-full snap-start snap-always overflow-hidden sm:h-[86vh]"
-    >
+    <div className="relative h-full w-full">
       <Image
         src={imageSrc}
         alt={imageAlt}
@@ -58,12 +47,17 @@ function PhotoBlock({
           {title}
         </TitleTag>
         <p className="mt-4 max-w-xl text-base text-white/85 sm:text-lg">{body}</p>
+        {cta && (
+          <Button size="lg" className="mt-6" nativeButton={false} render={<Link href="/tours" />}>
+            Выбрать тур
+          </Button>
+        )}
       </div>
-    </Reveal>
+    </div>
   )
 }
 
-function QuoteBlock({
+function QuoteSlide({
   eyebrow,
   title,
   body,
@@ -77,64 +71,83 @@ function QuoteBlock({
   quoteAuthor: string
 }) {
   return (
-    <Reveal className="relative mx-auto max-w-2xl px-4 py-20 text-center sm:py-28">
+    <div className="relative flex h-full w-full items-center justify-center px-4">
       <Glow side="left" />
-      <span className="relative text-xs font-medium tracking-wide text-primary uppercase">{eyebrow}</span>
-      <h3 className="relative mt-2 font-heading text-2xl leading-tight font-semibold sm:text-3xl">{title}</h3>
-      <p className="relative mt-3 text-base text-muted-foreground">{body}</p>
-      <blockquote className="relative mx-auto mt-6 max-w-md rounded-2xl border border-border bg-card p-6 text-left shadow-lg">
-        <span aria-hidden className="font-heading text-5xl leading-none text-primary/30">
-          “
-        </span>
-        <p className="-mt-3 text-sm text-foreground/90 italic">{quote}</p>
-        <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-sm">🙂</span>
-          {quoteAuthor}
-        </p>
-      </blockquote>
-    </Reveal>
+      <div className="relative mx-auto max-w-2xl text-center">
+        <span className="text-xs font-medium tracking-wide text-primary uppercase">{eyebrow}</span>
+        <h2 className="mt-2 font-heading text-2xl leading-tight font-semibold sm:text-3xl">{title}</h2>
+        <p className="mt-3 text-base text-muted-foreground">{body}</p>
+        <blockquote className="relative mx-auto mt-6 max-w-md rounded-2xl border border-border bg-card p-6 text-left shadow-lg">
+          <span aria-hidden className="font-heading text-5xl leading-none text-primary/30">
+            “
+          </span>
+          <p className="-mt-3 text-sm text-foreground/90 italic">{quote}</p>
+          <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-sm">🙂</span>
+            {quoteAuthor}
+          </p>
+        </blockquote>
+      </div>
+    </div>
   )
 }
 
 export function AdvantagesSection() {
   return (
-    <section className="relative overflow-hidden">
-      <PhotoBlock
-        kicker="Вьетнам без чужих"
-        eyebrow="Компания"
-        title="Это ваш день, и в нём больше никого"
-        body="Никто не опаздывает к автобусу и не тащит всех в дьюти-фри. Программа собрана под вашу компанию — от встречи в отеле до прощания вечером."
-        imageSrc="/images/tours/mayak-dai-lan.jpg"
-        imageAlt="Пляж у маяка Дай Лань, где кроме вас почти никого нет"
-      />
-
-      <CatalogCta />
-
-      <QuoteBlock
-        eyebrow="Гид"
-        title="С вами говорит Виктор, а не заезженная методичка"
-        body="Он ведёт лично вас: шутит там, где смешно, копает глубже там, где вам действительно интересно. Никакого текста наизусть — живой разговор всю дорогу."
-        quote="Внимательный, знающий и с отличным чувством юмора"
-        quoteAuthor="Nikeshka Sunny, отзыв о туре в Далат"
-      />
-
-      <PhotoBlock
-        eyebrow="Еда"
-        title="Проголодались — просто скажите"
-        body="Никаких столовых по расписанию тур-группы. Уличная лепёшка с рынка, кофе прямо с фермы — куда захочется, туда и заедем."
-        imageSrc="/images/tours/dalat-2-dnya.jpg"
-        imageAlt="Далат, куда заезжаем по своему желанию, а не по расписанию тур-группы"
-      />
-
-      <CatalogCta />
-
-      <PhotoBlock
-        eyebrow="Темп"
-        title="Спешить нас с вами точно не заставят"
-        body="Никакой обязательной лавки, где гиду капает процент с ваших покупок. Понравилось место — сидим сколько хочется. Маршрут подстраивается под вас, а не наоборот."
-        imageSrc="/images/tours/severnye-ostrova.jpg"
-        imageAlt="Северные острова, тихая бухта в стороне от туристических троп"
-      />
-    </section>
+    <SlideDeck
+      slides={[
+        <PhotoSlide
+          key="transport"
+          kicker="Вьетнам без чужих"
+          eyebrow="Транспорт"
+          title="Забудьте, каким должен быть трансфер в отпуске"
+          body="Кожаные кресла с массажем и кондиционер, который реально спасает от вьетнамской жары, а не просто гудит для вида. Обычно с дороги все приезжают помятыми и раздражёнными. Наши гости выходят из машины будто их только что подвезли до дома, а не через три часа тряски."
+          imageSrc="/images/hero/premium-van-interior.jpg"
+          imageAlt="Салон премиального минивэна с кожаными креслами"
+          imagePosition="30% 50%"
+        />,
+        <PhotoSlide
+          key="company"
+          eyebrow="Компания"
+          title="Это ваш день, и в нём больше никого"
+          body="Никто не опаздывает к автобусу и не тащит всех в дьюти-фри. Программа собрана под вашу компанию — от встречи в отеле до прощания вечером."
+          imageSrc="/images/tours/mayak-dai-lan.jpg"
+          imageAlt="Пляж у маяка Дай Лань, где кроме вас почти никого нет"
+        />,
+        <QuoteSlide
+          key="guide"
+          eyebrow="Гид"
+          title="С вами говорит Виктор, а не заезженная методичка"
+          body="Он ведёт лично вас: шутит там, где смешно, копает глубже там, где вам действительно интересно. Никакого текста наизусть — живой разговор всю дорогу."
+          quote="Внимательный, знающий и с отличным чувством юмора"
+          quoteAuthor="Nikeshka Sunny, отзыв о туре в Далат"
+        />,
+        <PhotoSlide
+          key="food"
+          eyebrow="Еда"
+          title="Проголодались — просто скажите"
+          body="Никаких столовых по расписанию тур-группы. Уличная лепёшка с рынка, кофе прямо с фермы — куда захочется, туда и заедем."
+          imageSrc="/images/tours/dalat-2-dnya.jpg"
+          imageAlt="Далат, куда заезжаем по своему желанию, а не по расписанию тур-группы"
+        />,
+        <PhotoSlide
+          key="pace"
+          eyebrow="Темп"
+          title="Спешить нас с вами точно не заставят"
+          body="Никакой обязательной лавки, где гиду капает процент с ваших покупок. Понравилось место — сидим сколько хочется. Маршрут подстраивается под вас, а не наоборот."
+          imageSrc="/images/tours/severnye-ostrova.jpg"
+          imageAlt="Северные острова, тихая бухта в стороне от туристических троп"
+        />,
+        <PhotoSlide
+          key="curated"
+          eyebrow="Отбор"
+          title="Пять туров, а не тридцать пять"
+          body="Могли бы предложить маршрут на любой вкус и бюджет. Вместо этого — всего пять, и за каждым личная проверка: безопасный транспорт, продуманный комфорт, программа без лишней спешки. Никакого конвейера — так проще ручаться, что поездка получится хорошей."
+          imageSrc="https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/nyachang-avtorskiy-b2ZHevFPr4gfLIEw3aV2oZPHvsRbs9.jpg"
+          imageAlt="Золотая пагода в Нячанге — один из пяти отобранных маршрутов"
+          cta
+        />,
+      ]}
+    />
   )
 }

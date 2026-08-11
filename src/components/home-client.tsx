@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation"
 import { SiteHeader } from "@/components/site-header"
 import { AdvantagesSection } from "@/components/advantages-section"
 import { DiscountsSection } from "@/components/discounts-section"
-import { CuratedSection } from "@/components/curated-section"
 import { FeaturedReviews } from "@/components/featured-reviews"
 import type { PrimaryGuide, SiteSettings } from "@/lib/site-data"
 import type { Review } from "@/lib/reviews-data"
@@ -34,7 +33,6 @@ export function HomeClient({
       <main className="flex-1">
         <AdvantagesSection />
         <DiscountsSection packageDiscounts={settings.packageDiscounts} />
-        <CuratedSection />
         <FeaturedReviews reviews={guideReviews} guideName={guide?.name ?? null} />
       </main>
     </>
