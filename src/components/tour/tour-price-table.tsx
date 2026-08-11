@@ -20,7 +20,7 @@ export function TourPriceTable({
         Нажмите на число гостей — группа платит один раз, сумма делится на всех. Чем больше компания, тем дешевле с человека.
       </p>
 
-      <div className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-4">
+      <div className="mt-5 grid grid-cols-4 gap-2">
         {tiers.map((tier) => {
           const selected = tier.guestCount === selectedGuestCount
           return (
@@ -56,6 +56,9 @@ export function TourPriceTable({
           — сумма и способ оплаты видны справа в блоке брони.
         </p>
       )}
+      <p className="mt-1 text-xs text-muted-foreground">
+        Больше {tiers[tiers.length - 1]?.guestCount} человек — считаем индивидуально (другой автобус), напишите нам в заявке.
+      </p>
     </section>
   )
 }
