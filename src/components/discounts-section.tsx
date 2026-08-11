@@ -1,11 +1,13 @@
 import { Reveal } from "@/components/motion/reveal"
+import { Glow } from "@/components/glow"
 
 export function DiscountsSection({ packageDiscounts }: { packageDiscounts: Record<string, number> }) {
   const tiers = Object.entries(packageDiscounts).sort(([a], [b]) => Number(a) - Number(b))
 
   return (
-    <section className="border-b border-border bg-muted/30">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+    <section className="relative overflow-hidden border-b border-border bg-muted/30">
+      <Glow side="right" className="opacity-70" />
+      <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
         <h2 className="font-heading text-lg font-semibold sm:text-xl">
           Больше туров в пакете — больше скидка
         </h2>

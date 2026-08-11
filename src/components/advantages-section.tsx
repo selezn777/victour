@@ -2,7 +2,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Reveal } from "@/components/motion/reveal"
-import { cn } from "@/lib/utils"
+import { Glow } from "@/components/glow"
 
 function CatalogCta() {
   return (
@@ -48,6 +48,7 @@ function PhotoBlock({
     <div
       className={`relative grid grid-cols-1 items-center gap-6 sm:grid-cols-2 sm:gap-10 ${reverse ? "sm:[&>*:first-child]:order-2" : ""}`}
     >
+      <Glow side={reverse ? "right" : "left"} />
       <div className="relative aspect-4/3 w-full overflow-hidden rounded-2xl bg-muted shadow-lg ring-1 ring-white/10">
         <Image
           src={imageSrc}
@@ -85,6 +86,7 @@ function TextBlock({
 }) {
   return (
     <div className="relative mx-auto max-w-2xl text-center">
+      <Glow side="left" />
       <BlockNumber n={n} />
       <span className="relative text-xs font-medium tracking-wide text-primary uppercase">{eyebrow}</span>
       <h3 className="relative mt-2 font-heading text-2xl leading-tight font-semibold sm:text-3xl">{title}</h3>
@@ -107,22 +109,9 @@ function TextBlock({
   )
 }
 
-function Glow({ className }: { className: string }) {
-  return (
-    <div
-      aria-hidden
-      className={cn("pointer-events-none absolute -z-10 size-[36rem] rounded-full blur-[110px]", className)}
-    />
-  )
-}
-
 export function AdvantagesSection() {
   return (
     <section className="relative mx-auto max-w-5xl overflow-hidden px-4 py-14 sm:px-6 sm:py-20">
-      <Glow className="top-0 left-1/2 -translate-x-[70%] bg-primary/10" />
-      <Glow className="top-[60%] right-0 translate-x-1/3 bg-primary/[0.07]" />
-      <Glow className="bottom-0 left-0 -translate-x-1/3 bg-primary/[0.06]" />
-
       <div className="flex flex-col gap-16 sm:gap-24">
         <Reveal>
           <PhotoBlock

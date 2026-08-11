@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { ReviewCard } from "@/components/reviews/review-card"
 import { Reveal } from "@/components/motion/reveal"
+import { Glow } from "@/components/glow"
 import type { Review } from "@/lib/reviews-data"
 
 export function FeaturedReviews({ reviews, guideName }: { reviews: Review[]; guideName: string | null }) {
@@ -9,7 +10,8 @@ export function FeaturedReviews({ reviews, guideName }: { reviews: Review[]; gui
   if (featured.length === 0) return null
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+    <section className="relative mx-auto max-w-6xl overflow-hidden px-4 py-14 sm:px-6 sm:py-20">
+      <Glow side="left" />
       <Reveal>
         <div className="text-center">
           <h2 className="font-heading text-2xl font-semibold sm:text-3xl">
