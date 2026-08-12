@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { TourHeader } from "@/components/tour/tour-header"
 import { TourHero } from "@/components/tour/tour-hero"
-import { TourGallery } from "@/components/tour/tour-gallery"
 import { TourItinerary } from "@/components/tour/tour-itinerary"
 import { TourIncludesExcludes } from "@/components/tour/tour-includes-excludes"
 import { TourPriceTable } from "@/components/tour/tour-price-table"
@@ -49,7 +48,6 @@ export function TourPageClient({
         <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_360px] lg:items-start lg:gap-12">
             <div className="flex flex-col gap-10">
-              <TourGallery urls={tour.galleryUrls} title={tour.title} />
               <TourIncludesExcludes includes={tour.includes} excludes={tour.excludes} />
               <TourItinerary itinerary={tour.itinerary} isTwoDay={tour.isDalatTwoDay} />
               <TourPriceTable
