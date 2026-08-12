@@ -15,7 +15,7 @@ function TourCtaButton() {
 }
 
 function PhotoSlide({
-  kicker,
+  isFirst,
   eyebrow,
   title,
   body,
@@ -23,7 +23,7 @@ function PhotoSlide({
   imageAlt,
   imagePosition,
 }: {
-  kicker?: string
+  isFirst?: boolean
   eyebrow: string
   title: string
   body: string
@@ -31,7 +31,7 @@ function PhotoSlide({
   imageAlt: string
   imagePosition?: string
 }) {
-  const TitleTag = kicker ? "h1" : "h2"
+  const TitleTag = isFirst ? "h1" : "h2"
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="relative h-[42%] shrink-0 overflow-hidden sm:h-[46%]">
@@ -39,16 +39,16 @@ function PhotoSlide({
           src={imageSrc}
           alt={imageAlt}
           fill
-          priority={!!kicker}
+          priority={!!isFirst}
           style={imagePosition ? { objectPosition: imagePosition } : undefined}
           className="kenburns-img object-cover"
           sizes="100vw"
         />
       </div>
       <div className="flex flex-1 flex-col overflow-y-auto px-5 pt-4 pb-6 sm:px-10 sm:pt-6">
-        {kicker && (
-          <p className="mb-1.5 font-heading text-xl leading-none font-semibold italic sm:text-2xl">{kicker}</p>
-        )}
+        <p className="mb-1.5 font-heading text-xl leading-none font-semibold italic sm:text-2xl">
+          Вьетнам без чужих
+        </p>
         <span className="text-xs font-medium tracking-widest text-primary uppercase">{eyebrow}</span>
         <TitleTag className="mt-1.5 max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {title}
@@ -77,6 +77,9 @@ function QuoteSlide({
     <div className="relative flex h-full w-full items-center justify-center overflow-y-auto px-5 py-16">
       <Glow side="left" />
       <div className="relative mx-auto flex max-w-2xl flex-col items-center text-center">
+        <p className="mb-1.5 font-heading text-xl leading-none font-semibold italic sm:text-2xl">
+          Вьетнам без чужих
+        </p>
         <span className="text-xs font-medium tracking-widest text-primary uppercase">{eyebrow}</span>
         <h2 className="mt-2.5 font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">{title}</h2>
         <p className="mt-3 text-base leading-relaxed text-muted-foreground">{body}</p>
@@ -102,7 +105,7 @@ export function AdvantagesSection() {
       slides={[
         <PhotoSlide
           key="transport"
-          kicker="Вьетнам без чужих"
+          isFirst
           eyebrow="Транспорт"
           title="Забудьте, каким должен быть трансфер в отпуске"
           body="Кожаные кресла с массажем и кондиционер, который реально спасает от вьетнамской жары, а не просто гудит для вида. Обычно с дороги все приезжают помятыми и раздражёнными. Наши гости выходят из машины будто их только что подвезли до дома, а не через три часа тряски."
