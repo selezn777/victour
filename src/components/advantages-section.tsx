@@ -7,31 +7,22 @@ function TourCtaButton() {
   return (
     <Link
       href="/tours"
-      className="mt-5 inline-flex w-fit items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 sm:px-8 sm:py-3.5 sm:text-base"
+      className="mt-6 inline-flex w-fit self-center items-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-sm font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 sm:px-10 sm:py-4 sm:text-base"
     >
       Выбрать тур <span aria-hidden>→</span>
     </Link>
   )
 }
 
-function PhotoSlide({
-  isFirst,
-  eyebrow,
-  title,
-  body,
+function IntroSlide({
   imageSrc,
   imageAlt,
   imagePosition,
 }: {
-  isFirst?: boolean
-  eyebrow: string
-  title: string
-  body: string
   imageSrc: string
   imageAlt: string
   imagePosition?: string
 }) {
-  const TitleTag = isFirst ? "h1" : "h2"
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="relative h-[42%] shrink-0 overflow-hidden sm:h-[46%]">
@@ -39,20 +30,60 @@ function PhotoSlide({
           src={imageSrc}
           alt={imageAlt}
           fill
-          priority={!!isFirst}
+          priority
+          style={imagePosition ? { objectPosition: imagePosition } : undefined}
+          className="kenburns-img object-cover"
+          sizes="100vw"
+        />
+      </div>
+      <div className="flex flex-1 flex-col overflow-y-auto px-5 pt-5 pb-6 sm:px-10 sm:pt-7">
+        <h1 className="max-w-xl font-heading text-3xl leading-[1.1] font-semibold sm:text-5xl">
+          Вьетнам без чужих
+        </h1>
+        <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+          Мы — лучшие в приватных турах по Вьетнаму. Только самый комфортный транспорт. Только
+          по-настоящему вкусная еда для вас. Здесь всё настроено на вашу волну.
+        </p>
+        <TourCtaButton />
+      </div>
+    </div>
+  )
+}
+
+function PhotoSlide({
+  eyebrow,
+  title,
+  body,
+  imageSrc,
+  imageAlt,
+  imagePosition,
+}: {
+  eyebrow: string
+  title: string
+  body: string
+  imageSrc: string
+  imageAlt: string
+  imagePosition?: string
+}) {
+  return (
+    <div className="flex h-full w-full flex-col overflow-hidden">
+      <div className="relative h-[42%] shrink-0 overflow-hidden sm:h-[46%]">
+        <Image
+          src={imageSrc}
+          alt={imageAlt}
+          fill
           style={imagePosition ? { objectPosition: imagePosition } : undefined}
           className="kenburns-img object-cover"
           sizes="100vw"
         />
       </div>
       <div className="flex flex-1 flex-col overflow-y-auto px-5 pt-4 pb-6 sm:px-10 sm:pt-6">
-        <p className="mb-1.5 font-heading text-xl leading-none font-semibold sm:text-2xl">
-          Вьетнам без чужих
-        </p>
-        <span className="text-xs font-medium tracking-widest text-primary uppercase">{eyebrow}</span>
-        <TitleTag className="mt-1.5 max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
+        <span className="font-heading text-lg font-semibold tracking-wide text-primary uppercase sm:text-xl">
+          {eyebrow}
+        </span>
+        <h2 className="mt-1.5 max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {title}
-        </TitleTag>
+        </h2>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">{body}</p>
         <TourCtaButton />
       </div>
@@ -77,11 +108,10 @@ function QuoteSlide({
     <div className="relative flex h-full w-full items-center justify-center overflow-y-auto px-5 py-16">
       <Glow side="left" />
       <div className="relative mx-auto flex max-w-2xl flex-col items-center text-center">
-        <p className="mb-1.5 font-heading text-xl leading-none font-semibold sm:text-2xl">
-          Вьетнам без чужих
-        </p>
-        <span className="text-xs font-medium tracking-widest text-primary uppercase">{eyebrow}</span>
-        <h2 className="mt-2.5 font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">{title}</h2>
+        <span className="font-heading text-lg font-semibold tracking-wide text-primary uppercase sm:text-xl">
+          {eyebrow}
+        </span>
+        <h2 className="mt-1.5 font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">{title}</h2>
         <p className="mt-3 text-base leading-relaxed text-muted-foreground">{body}</p>
         <blockquote className="relative mx-auto mt-6 max-w-md rounded-2xl border border-border bg-card p-6 text-left shadow-lg">
           <span aria-hidden className="font-heading text-5xl leading-none text-primary/30">
@@ -103,9 +133,14 @@ export function AdvantagesSection() {
   return (
     <SlideDeck
       slides={[
+        <IntroSlide
+          key="intro"
+          imageSrc="/images/hero/premium-van-interior.jpg"
+          imageAlt="Салон премиального минивэна с кожаными креслами"
+          imagePosition="30% 50%"
+        />,
         <PhotoSlide
           key="transport"
-          isFirst
           eyebrow="Транспорт"
           title="Забудьте, каким должен быть трансфер в отпуске"
           body="Кожаные кресла с массажем и кондиционер, который реально спасает от вьетнамской жары, а не просто гудит для вида. Обычно с дороги все приезжают помятыми и раздражёнными. Наши гости выходят из машины будто их только что подвезли до дома, а не через три часа тряски."
