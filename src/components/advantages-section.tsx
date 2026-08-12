@@ -3,16 +3,14 @@ import Link from "next/link"
 import { Glow } from "@/components/glow"
 import { SlideDeck } from "@/components/slide-deck"
 
-function TourCtaBar() {
+function TourCtaButton() {
   return (
-    <div className="absolute inset-x-0 bottom-6 z-10 flex justify-center px-5 sm:bottom-8">
-      <Link
-        href="/tours"
-        className="flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-medium text-white shadow-lg backdrop-blur-md transition-colors hover:bg-white/20 sm:px-8 sm:py-3.5 sm:text-base"
-      >
-        Выбрать тур <span aria-hidden>→</span>
-      </Link>
-    </div>
+    <Link
+      href="/tours"
+      className="mt-5 inline-flex w-fit items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 sm:px-8 sm:py-3.5 sm:text-base"
+    >
+      Выбрать тур <span aria-hidden>→</span>
+    </Link>
   )
 }
 
@@ -35,30 +33,29 @@ function PhotoSlide({
 }) {
   const TitleTag = kicker ? "h1" : "h2"
   return (
-    <div className="relative h-full w-full overflow-hidden">
-      <Image
-        src={imageSrc}
-        alt={imageAlt}
-        fill
-        priority={!!kicker}
-        style={imagePosition ? { objectPosition: imagePosition } : undefined}
-        className="kenburns-img object-cover"
-        sizes="100vw"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black from-0% via-black/75 via-40% to-black/0 to-75%" />
-      <div className="absolute inset-x-0 bottom-16 mx-auto w-full max-w-3xl px-5 pb-6 sm:bottom-20 sm:px-10">
+    <div className="flex h-full w-full flex-col overflow-hidden">
+      <div className="relative h-[42%] shrink-0 overflow-hidden sm:h-[46%]">
+        <Image
+          src={imageSrc}
+          alt={imageAlt}
+          fill
+          priority={!!kicker}
+          style={imagePosition ? { objectPosition: imagePosition } : undefined}
+          className="kenburns-img object-cover"
+          sizes="100vw"
+        />
+      </div>
+      <div className="flex flex-1 flex-col overflow-y-auto px-5 pt-4 pb-6 sm:px-10 sm:pt-6">
         {kicker && (
-          <p className="mb-3 font-heading text-2xl leading-none font-semibold text-white italic sm:text-3xl">
-            {kicker}
-          </p>
+          <p className="mb-1.5 font-heading text-xl leading-none font-semibold italic sm:text-2xl">{kicker}</p>
         )}
         <span className="text-xs font-medium tracking-widest text-primary uppercase">{eyebrow}</span>
-        <TitleTag className="mt-2.5 font-heading text-3xl leading-[1.1] font-semibold text-white sm:text-5xl">
+        <TitleTag className="mt-1.5 max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {title}
         </TitleTag>
-        <p className="mt-4 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">{body}</p>
+        <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">{body}</p>
+        <TourCtaButton />
       </div>
-      <TourCtaBar />
     </div>
   )
 }
@@ -77,9 +74,9 @@ function QuoteSlide({
   quoteAuthor: string
 }) {
   return (
-    <div className="relative flex h-full w-full items-center justify-center px-5 pb-16 sm:pb-20">
+    <div className="relative flex h-full w-full items-center justify-center overflow-y-auto px-5 py-16">
       <Glow side="left" />
-      <div className="relative mx-auto max-w-2xl text-center">
+      <div className="relative mx-auto flex max-w-2xl flex-col items-center text-center">
         <span className="text-xs font-medium tracking-widest text-primary uppercase">{eyebrow}</span>
         <h2 className="mt-2.5 font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">{title}</h2>
         <p className="mt-3 text-base leading-relaxed text-muted-foreground">{body}</p>
@@ -93,8 +90,8 @@ function QuoteSlide({
             {quoteAuthor}
           </p>
         </blockquote>
+        <TourCtaButton />
       </div>
-      <TourCtaBar />
     </div>
   )
 }
