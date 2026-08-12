@@ -5,12 +5,14 @@ import { SlideDeck } from "@/components/slide-deck"
 
 function TourCtaBar() {
   return (
-    <Link
-      href="/tours"
-      className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2 border-t border-white/15 bg-white/[0.08] py-4 text-base font-medium text-white backdrop-blur-md transition-colors hover:bg-white/[0.15] sm:py-5 sm:text-lg"
-    >
-      Выбрать тур <span aria-hidden>→</span>
-    </Link>
+    <div className="absolute inset-x-0 bottom-6 z-10 flex justify-center px-5 sm:bottom-8">
+      <Link
+        href="/tours"
+        className="flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-medium text-white shadow-lg backdrop-blur-md transition-colors hover:bg-white/20 sm:px-8 sm:py-3.5 sm:text-base"
+      >
+        Выбрать тур <span aria-hidden>→</span>
+      </Link>
+    </div>
   )
 }
 
@@ -92,12 +94,7 @@ function QuoteSlide({
           </p>
         </blockquote>
       </div>
-      <Link
-        href="/tours"
-        className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2 border-t border-border bg-card py-4 text-base font-medium text-foreground transition-colors hover:bg-muted sm:py-5 sm:text-lg"
-      >
-        Выбрать тур <span aria-hidden>→</span>
-      </Link>
+      <TourCtaBar />
     </div>
   )
 }

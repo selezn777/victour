@@ -38,7 +38,7 @@ export function ReviewCard({ review, hideTarget }: { review: Review; hideTarget?
       {review.audioUrl && <audio controls src={review.audioUrl} className="h-9 w-full" />}
 
       {review.photoUrl && (
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg">
+        <div className="relative aspect-square w-full overflow-hidden rounded-lg">
           <Image src={review.photoUrl} alt="" fill className="object-cover" sizes="(min-width: 640px) 320px, 100vw" />
         </div>
       )}
