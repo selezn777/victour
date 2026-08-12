@@ -148,6 +148,21 @@
   background: var(--color-primary);
 }
 
+.tour-gallery-pagination .swiper-pagination-bullet {
+  width: 6px;
+  height: 6px;
+  background: var(--color-muted-foreground);
+  opacity: 0.4;
+  border-radius: 999px;
+  transition: width 0.25s, background-color 0.25s, opacity 0.25s;
+  cursor: pointer;
+}
+.tour-gallery-pagination .swiper-pagination-bullet-active {
+  width: 20px;
+  opacity: 1;
+  background: var(--color-primary);
+}
+
 @keyframes kenburns {
   from {
     transform: scale(1) translate(0, 0);

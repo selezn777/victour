@@ -71,6 +71,7 @@ export type TourDetail = {
   durationDays: number
   isDalatTwoDay: boolean
   heroImageUrl: string | null
+  galleryUrls: string[]
   itinerary: ItineraryItem[]
   includes: string[]
   excludes: string[]
@@ -89,7 +90,7 @@ export async function getTourPageData(slug: string): Promise<{
     supabase
       .from("tours")
       .select(
-        "id, slug, title, short_description, duration_label, duration_days, is_dalat_two_day, hero_image_url, itinerary, includes, excludes, ticket_options, pricing_tiers(guest_count, price_adult_usd, price_child_usd)",
+        "id, slug, title, short_description, duration_label, duration_days, is_dalat_two_day, hero_image_url, gallery_urls, itinerary, includes, excludes, ticket_options, pricing_tiers(guest_count, price_adult_usd, price_child_usd)",
       )
       .eq("slug", slug)
       .maybeSingle(),
@@ -134,6 +135,7 @@ export async function getTourPageData(slug: string): Promise<{
     durationDays: row.duration_days,
     isDalatTwoDay: row.is_dalat_two_day,
     heroImageUrl: row.hero_image_url,
+    galleryUrls: row.gallery_urls ?? [],
     itinerary: itinerary
       .map((i) => ({ day: i.day, title: i.title.ru, description: i.description.ru }))
       .sort((a, b) => a.day - b.day),

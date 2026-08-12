@@ -469,6 +469,7 @@ export type Database = {
           duration_days: number
           duration_label: Json
           excludes: Json
+          gallery_urls: string[]
           hero_image_url: string | null
           id: string
           includes: Json
@@ -486,6 +487,7 @@ export type Database = {
           duration_days?: number
           duration_label: Json
           excludes?: Json
+          gallery_urls?: string[]
           hero_image_url?: string | null
           id?: string
           includes?: Json
@@ -503,6 +505,7 @@ export type Database = {
           duration_days?: number
           duration_label?: Json
           excludes?: Json
+          gallery_urls?: string[]
           hero_image_url?: string | null
           id?: string
           includes?: Json
