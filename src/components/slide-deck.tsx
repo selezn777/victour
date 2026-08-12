@@ -35,9 +35,9 @@ export function SlideDeck({ slides }: { slides: ReactNode[] }) {
           {slide}
         </SwiperSlide>
       ))}
-      <div className="pointer-events-none absolute top-1/2 right-4 z-20 flex -translate-y-1/2 flex-col items-center gap-3 sm:right-6">
+      <div className="pointer-events-none absolute top-[19%] left-4 z-20 flex -translate-y-1/2 flex-col items-center gap-3 rounded-full border border-white/10 bg-black/20 px-2 py-3.5 backdrop-blur-sm sm:top-[21%] sm:left-6">
         <div className="slide-deck-pagination pointer-events-auto flex flex-col items-center gap-2.5" />
-        <span className="font-mono text-[11px] tabular-nums text-white/60">
+        <span key={active} className="slide-counter font-mono text-[11px] tabular-nums text-white/60">
           {active + 1}/{slides.length}
         </span>
       </div>

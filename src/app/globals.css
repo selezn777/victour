@@ -7,7 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-unbounded);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -134,18 +134,38 @@
   }
 }
 
+.slide-deck-pagination.swiper-pagination-vertical {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  transform: none !important;
+}
 .slide-deck-pagination .swiper-pagination-bullet {
   width: 6px;
   height: 6px;
   background: rgba(255, 255, 255, 0.4);
   opacity: 1;
   border-radius: 999px;
-  transition: height 0.25s, background-color 0.25s;
+  transition: height 0.4s ease, background-color 0.4s ease;
   cursor: pointer;
 }
 .slide-deck-pagination .swiper-pagination-bullet-active {
   height: 22px;
   background: var(--color-primary);
+}
+
+@keyframes slide-counter-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.slide-counter {
+  animation: slide-counter-in 0.4s ease-out;
 }
 
 .tour-hero-pagination .swiper-pagination-bullet {

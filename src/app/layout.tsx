@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Unbounded } from "next/font/google";
+import { Inter, Geist_Mono, Unbounded } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PackageBar } from "@/components/package-bar";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin", "cyrillic"],
 });
 
@@ -31,7 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="ru"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${unbounded.variable} h-full antialiased`}
+      className={`${inter.variable} ${geistMono.variable} ${unbounded.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark">
