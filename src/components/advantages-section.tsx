@@ -1,19 +1,16 @@
 import Image from "next/image"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { Glow } from "@/components/glow"
 import { SlideDeck } from "@/components/slide-deck"
 
-function TourCta() {
+function TourCtaBar() {
   return (
-    <Button
-      variant="outline"
-      className="mt-6 border-white/25 bg-white/[0.06] text-white backdrop-blur-md hover:border-white/45 hover:bg-white/15"
-      nativeButton={false}
-      render={<Link href="/tours" />}
+    <Link
+      href="/tours"
+      className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2 border-t border-white/15 bg-white/[0.08] py-4 text-base font-medium text-white backdrop-blur-md transition-colors hover:bg-white/[0.15] sm:py-5 sm:text-lg"
     >
-      Выбрать тур
-    </Button>
+      Выбрать тур <span aria-hidden>→</span>
+    </Link>
   )
 }
 
@@ -36,18 +33,18 @@ function PhotoSlide({
 }) {
   const TitleTag = kicker ? "h1" : "h2"
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full w-full overflow-hidden">
       <Image
         src={imageSrc}
         alt={imageAlt}
         fill
         priority={!!kicker}
         style={imagePosition ? { objectPosition: imagePosition } : undefined}
-        className="object-cover"
+        className="kenburns-img object-cover"
         sizes="100vw"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-black/10" />
-      <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-3xl pt-5 pr-14 pb-24 pl-5 sm:pt-10 sm:pr-10 sm:pb-28 sm:pl-10">
+      <div className="absolute inset-0 bg-gradient-to-t from-black from-0% via-black/75 via-40% to-black/0 to-75%" />
+      <div className="absolute inset-x-0 bottom-16 mx-auto w-full max-w-3xl px-5 pb-6 sm:bottom-20 sm:px-10">
         {kicker && (
           <p className="mb-3 font-heading text-2xl leading-none font-semibold text-white italic sm:text-3xl">
             {kicker}
@@ -58,8 +55,8 @@ function PhotoSlide({
           {title}
         </TitleTag>
         <p className="mt-4 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">{body}</p>
-        <TourCta />
       </div>
+      <TourCtaBar />
     </div>
   )
 }
@@ -78,7 +75,7 @@ function QuoteSlide({
   quoteAuthor: string
 }) {
   return (
-    <div className="relative flex h-full w-full items-center justify-center px-5 pr-14 sm:px-4">
+    <div className="relative flex h-full w-full items-center justify-center px-5 pb-16 sm:pb-20">
       <Glow side="left" />
       <div className="relative mx-auto max-w-2xl text-center">
         <span className="text-xs font-medium tracking-widest text-primary uppercase">{eyebrow}</span>
@@ -94,10 +91,13 @@ function QuoteSlide({
             {quoteAuthor}
           </p>
         </blockquote>
-        <div className="mt-6 flex justify-center">
-          <TourCta />
-        </div>
       </div>
+      <Link
+        href="/tours"
+        className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2 border-t border-border bg-card py-4 text-base font-medium text-foreground transition-colors hover:bg-muted sm:py-5 sm:text-lg"
+      >
+        Выбрать тур <span aria-hidden>→</span>
+      </Link>
     </div>
   )
 }
