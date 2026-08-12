@@ -37,15 +37,7 @@ export function ToursPageClient({
 
   return (
     <>
-      <SiteHeader
-        settings={settings}
-        guide={guide}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        favoritesOnly={favoritesOnly}
-        onToggleFavoritesOnly={() => setFavoritesOnly((v) => !v)}
-        favoritesCount={favorites.length}
-      />
+      <SiteHeader settings={settings} guide={guide} />
       <main className="flex-1">
         <TourCatalog
           tours={visibleTours}
@@ -56,6 +48,11 @@ export function ToursPageClient({
               ? "Пока нет избранных туров — нажмите на сердечко на карточке."
               : "Ничего не найдено. Попробуйте другой запрос."
           }
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          favoritesOnly={favoritesOnly}
+          onToggleFavoritesOnly={() => setFavoritesOnly((v) => !v)}
+          favoritesCount={favorites.length}
         />
       </main>
     </>

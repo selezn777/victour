@@ -1,6 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { SiteHeader } from "@/components/site-header"
 import { AdvantagesSection } from "@/components/advantages-section"
 import { DiscountsSection } from "@/components/discounts-section"
@@ -17,19 +16,9 @@ export function HomeClient({
   guide: PrimaryGuide | null
   guideReviews: Review[]
 }) {
-  const router = useRouter()
-
   return (
     <>
-      <SiteHeader
-        settings={settings}
-        guide={guide}
-        searchQuery=""
-        onSearchChange={(query) => router.push(query ? `/tours?q=${encodeURIComponent(query)}` : "/tours")}
-        favoritesOnly={false}
-        onToggleFavoritesOnly={() => router.push("/tours?favorites=1")}
-        favoritesCount={0}
-      />
+      <SiteHeader settings={settings} guide={guide} />
       <main className="flex-1">
         <AdvantagesSection />
         <DiscountsSection packageDiscounts={settings.packageDiscounts} />
