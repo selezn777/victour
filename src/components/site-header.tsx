@@ -10,7 +10,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import { AccountMenu } from "@/components/account-menu"
+import { AccountMenuRow } from "@/components/account-menu"
 import { formatRubFromUsd, formatVndFromUsd } from "@/lib/format"
 import type { PrimaryGuide, SiteSettings } from "@/lib/site-data"
 
@@ -23,17 +23,17 @@ export function SiteHeader({
 }) {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:h-20 sm:px-6">
+      <div className="mx-auto grid h-16 max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-4 sm:h-20 sm:px-6">
+        <span aria-hidden />
+
         <Link
           href="/"
-          className="font-heading text-xl font-semibold tracking-[0.02em] sm:text-2xl"
+          className="justify-self-center font-heading text-2xl font-medium sm:text-3xl"
         >
           ВикТур
         </Link>
 
-        <div className="flex items-center gap-1 sm:gap-2">
-          <AccountMenu />
-
+        <div className="flex items-center justify-self-end">
           <Sheet>
             <SheetTrigger
               render={<Button variant="ghost" size="icon-sm" aria-label="Меню" />}
@@ -45,6 +45,8 @@ export function SiteHeader({
                 <SheetTitle className="font-heading text-lg tracking-[0.02em]">ВикТур</SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col gap-1 px-4">
+                <AccountMenuRow />
+                <div className="my-2 border-t border-border" />
                 <Link
                   href="/tours"
                   className="rounded-md px-2 py-2.5 font-heading text-base hover:bg-muted"

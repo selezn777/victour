@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client"
 
 const ADMIN_EMAIL = "selezn.777@gmail.com"
 
-export function AccountMenu() {
+function useAccountEmail() {
   const [email, setEmail] = useState<string | null | undefined>(undefined)
 
   useEffect(() => {
@@ -19,6 +19,12 @@ export function AccountMenu() {
     })
     return () => subscription.subscription.unsubscribe()
   }, [])
+
+  return email
+}
+
+export function AccountMenu() {
+  const email = useAccountEmail()
 
   if (email === undefined) {
     return <Button variant="ghost" size="icon-sm" aria-hidden className="opacity-0" />
@@ -45,5 +51,35 @@ export function AccountMenu() {
     >
       {initial}
     </Button>
+  )
+}
+
+export function AccountMenuRow() {
+  const email = useAccountEmail()
+
+  if (!email) {
+    return (
+      <Link
+        href="/login"
+        className="flex items-center gap-2.5 rounded-md px-2 py-2.5 font-heading text-base hover:bg-muted"
+      >
+        <UserIcon className="size-4" />
+        Войти
+      </Link>
+    )
+  }
+
+  const href = email === ADMIN_EMAIL ? "/admin/bookings" : "/account"
+
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-2.5 rounded-md px-2 py-2.5 font-heading text-base hover:bg-muted"
+    >
+      <span className="flex size-6 items-center justify-center rounded-full bg-muted text-xs font-medium">
+        {email.charAt(0).toUpperCase()}
+      </span>
+      Личный кабинет
+    </Link>
   )
 }

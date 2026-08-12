@@ -23,7 +23,7 @@ export function SlideDeck({ slides }: { slides: ReactNode[] }) {
     <Swiper
       modules={[Mousewheel, Pagination, Keyboard]}
       direction="vertical"
-      speed={650}
+      speed={420}
       mousewheel={{ releaseOnEdges: true, sensitivity: 1 }}
       keyboard={{ enabled: true }}
       pagination={{ clickable: true, el: ".slide-deck-pagination" }}

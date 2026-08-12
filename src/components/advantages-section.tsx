@@ -46,7 +46,7 @@ function PhotoSlide({
         />
       </div>
       <div className="flex flex-1 flex-col overflow-y-auto px-5 pt-4 pb-6 sm:px-10 sm:pt-6">
-        <p className="mb-1.5 font-heading text-xl leading-none font-semibold italic sm:text-2xl">
+        <p className="mb-1.5 font-heading text-xl leading-none font-semibold sm:text-2xl">
           Вьетнам без чужих
         </p>
         <span className="text-xs font-medium tracking-widest text-primary uppercase">{eyebrow}</span>
@@ -77,7 +77,7 @@ function QuoteSlide({
     <div className="relative flex h-full w-full items-center justify-center overflow-y-auto px-5 py-16">
       <Glow side="left" />
       <div className="relative mx-auto flex max-w-2xl flex-col items-center text-center">
-        <p className="mb-1.5 font-heading text-xl leading-none font-semibold italic sm:text-2xl">
+        <p className="mb-1.5 font-heading text-xl leading-none font-semibold sm:text-2xl">
           Вьетнам без чужих
         </p>
         <span className="text-xs font-medium tracking-widest text-primary uppercase">{eyebrow}</span>
