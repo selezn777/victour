@@ -134,6 +134,20 @@
   }
 }
 
+.slide-deck-pagination .swiper-pagination-bullet {
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.4);
+  opacity: 1;
+  border-radius: 999px;
+  transition: height 0.25s, background-color 0.25s;
+  cursor: pointer;
+}
+.slide-deck-pagination .swiper-pagination-bullet-active {
+  height: 22px;
+  background: var(--color-primary);
+}
+
 .phone-input {
   height: 2.75rem;
   width: 100%;

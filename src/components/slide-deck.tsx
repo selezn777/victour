@@ -1,64 +1,46 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
+import { Swiper, SwiperSlide } from "swiper/react"
+import { Mousewheel, Pagination, Keyboard } from "swiper/modules"
+import type { Swiper as SwiperType } from "swiper/types"
 import type { ReactNode } from "react"
 
+import "swiper/css"
+import "swiper/css/pagination"
+
 /**
- * Полноэкранные слайды внутри обычного скролла страницы: контейнер растянут
- * на N экранов высоты, внутри — sticky-вьюпорт с кроссфейдом между слайдами
- * по прогрессу скролла. Это надёжнее CSS scroll-snap (mandatory ломался на
- * мобильных браузерах) и не перехватывает wheel/touch — скролл остаётся
- * полностью нативным, просто в каждый момент виден ровно один слайд.
+ * Полноэкранные слайды с жёсткой блокировкой "ровно один за раз" — колесо,
+ * тач-свайп и клавиатура листают строго по одному слайду, без проскакивания.
+ * На первом/последнем слайде дальнейший скролл в ту же сторону отпускает
+ * управление обычному скроллу страницы (releaseOnEdges). Точки и счётчик
+ * справа показывают прогресс — сколько слайдов и где ты сейчас.
  */
 export function SlideDeck({ slides }: { slides: ReactNode[] }) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [index, setIndex] = useState(0)
-
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-
-    let ticking = false
-
-    function update() {
-      ticking = false
-      if (!container) return
-      const rect = container.getBoundingClientRect()
-      const vh = window.innerHeight
-      const progress = -rect.top / vh
-      const next = Math.min(Math.max(Math.round(progress), 0), slides.length - 1)
-      setIndex((prev) => (prev === next ? prev : next))
-    }
-
-    function onScroll() {
-      if (ticking) return
-      ticking = true
-      requestAnimationFrame(update)
-    }
-
-    update()
-    window.addEventListener("scroll", onScroll, { passive: true })
-    window.addEventListener("resize", onScroll)
-    return () => {
-      window.removeEventListener("scroll", onScroll)
-      window.removeEventListener("resize", onScroll)
-    }
-  }, [slides.length])
+  const [active, setActive] = useState(0)
 
   return (
-    <div ref={containerRef} style={{ height: `${slides.length * 100}svh` }} className="relative">
-      <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
-        {slides.map((slide, i) => (
-          <div
-            key={i}
-            className="absolute inset-0 transition-opacity duration-500 ease-out"
-            style={{ opacity: i === index ? 1 : 0, pointerEvents: i === index ? "auto" : "none" }}
-            aria-hidden={i !== index}
-          >
-            {slide}
-          </div>
-        ))}
+    <Swiper
+      modules={[Mousewheel, Pagination, Keyboard]}
+      direction="vertical"
+      speed={650}
+      mousewheel={{ releaseOnEdges: true, sensitivity: 1 }}
+      keyboard={{ enabled: true }}
+      pagination={{ clickable: true, el: ".slide-deck-pagination" }}
+      onSlideChange={(swiper: SwiperType) => setActive(swiper.activeIndex)}
+      className="h-[100svh] w-full"
+    >
+      {slides.map((slide, i) => (
+        <SwiperSlide key={i} className="h-full w-full">
+          {slide}
+        </SwiperSlide>
+      ))}
+      <div className="pointer-events-none absolute top-1/2 right-4 z-20 flex -translate-y-1/2 flex-col items-center gap-3 sm:right-6">
+        <div className="slide-deck-pagination pointer-events-auto flex flex-col items-center gap-2.5" />
+        <span className="font-mono text-[11px] tabular-nums text-white/60">
+          {active + 1}/{slides.length}
+        </span>
       </div>
-    </div>
+    </Swiper>
   )
 }
