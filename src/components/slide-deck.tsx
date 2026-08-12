@@ -28,7 +28,7 @@ export function SlideDeck({ slides }: { slides: ReactNode[] }) {
       keyboard={{ enabled: true }}
       pagination={{ clickable: true, el: ".slide-deck-pagination" }}
       onSlideChange={(swiper: SwiperType) => setActive(swiper.activeIndex)}
-      className="h-[100svh] w-full"
+      className="h-[calc(100svh-3.5rem)] w-full sm:h-[calc(100svh-4rem)]"
     >
       {slides.map((slide, i) => (
         <SwiperSlide key={i} className="h-full w-full">

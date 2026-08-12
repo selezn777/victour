@@ -4,6 +4,19 @@ import { Button } from "@/components/ui/button"
 import { Glow } from "@/components/glow"
 import { SlideDeck } from "@/components/slide-deck"
 
+function TourCta() {
+  return (
+    <Button
+      variant="outline"
+      className="mt-6 border-white/25 bg-white/[0.06] text-white backdrop-blur-md hover:border-white/45 hover:bg-white/15"
+      nativeButton={false}
+      render={<Link href="/tours" />}
+    >
+      Выбрать тур
+    </Button>
+  )
+}
+
 function PhotoSlide({
   kicker,
   eyebrow,
@@ -12,7 +25,6 @@ function PhotoSlide({
   imageSrc,
   imageAlt,
   imagePosition,
-  cta,
 }: {
   kicker?: string
   eyebrow: string
@@ -21,7 +33,6 @@ function PhotoSlide({
   imageSrc: string
   imageAlt: string
   imagePosition?: string
-  cta?: boolean
 }) {
   const TitleTag = kicker ? "h1" : "h2"
   return (
@@ -36,22 +47,18 @@ function PhotoSlide({
         sizes="100vw"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-black/10" />
-      <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-3xl px-5 pb-12 sm:px-10 sm:pb-20">
+      <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-3xl pt-5 pr-14 pb-24 pl-5 sm:pt-10 sm:pr-10 sm:pb-28 sm:pl-10">
         {kicker && (
           <p className="mb-3 font-heading text-2xl leading-none font-semibold text-white italic sm:text-3xl">
             {kicker}
           </p>
         )}
-        <span className="text-xs font-medium tracking-wide text-primary uppercase">{eyebrow}</span>
-        <TitleTag className="mt-2 font-heading text-3xl leading-tight font-semibold text-white sm:text-5xl">
+        <span className="text-xs font-medium tracking-widest text-primary uppercase">{eyebrow}</span>
+        <TitleTag className="mt-2.5 font-heading text-3xl leading-[1.1] font-semibold text-white sm:text-5xl">
           {title}
         </TitleTag>
-        <p className="mt-4 max-w-xl text-base text-white/85 sm:text-lg">{body}</p>
-        {cta && (
-          <Button size="lg" className="mt-6" nativeButton={false} render={<Link href="/tours" />}>
-            Выбрать тур
-          </Button>
-        )}
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">{body}</p>
+        <TourCta />
       </div>
     </div>
   )
@@ -71,12 +78,12 @@ function QuoteSlide({
   quoteAuthor: string
 }) {
   return (
-    <div className="relative flex h-full w-full items-center justify-center px-4">
+    <div className="relative flex h-full w-full items-center justify-center px-5 pr-14 sm:px-4">
       <Glow side="left" />
       <div className="relative mx-auto max-w-2xl text-center">
-        <span className="text-xs font-medium tracking-wide text-primary uppercase">{eyebrow}</span>
-        <h2 className="mt-2 font-heading text-2xl leading-tight font-semibold sm:text-3xl">{title}</h2>
-        <p className="mt-3 text-base text-muted-foreground">{body}</p>
+        <span className="text-xs font-medium tracking-widest text-primary uppercase">{eyebrow}</span>
+        <h2 className="mt-2.5 font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">{title}</h2>
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground">{body}</p>
         <blockquote className="relative mx-auto mt-6 max-w-md rounded-2xl border border-border bg-card p-6 text-left shadow-lg">
           <span aria-hidden className="font-heading text-5xl leading-none text-primary/30">
             “
@@ -87,6 +94,9 @@ function QuoteSlide({
             {quoteAuthor}
           </p>
         </blockquote>
+        <div className="mt-6 flex justify-center">
+          <TourCta />
+        </div>
       </div>
     </div>
   )
@@ -145,7 +155,6 @@ export function AdvantagesSection() {
           body="Могли бы предложить маршрут на любой вкус и бюджет. Вместо этого — всего пять, и за каждым личная проверка: безопасный транспорт, продуманный комфорт, программа без лишней спешки. Никакого конвейера — так проще ручаться, что поездка получится хорошей."
           imageSrc="https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/nyachang-avtorskiy-b2ZHevFPr4gfLIEw3aV2oZPHvsRbs9.jpg"
           imageAlt="Золотая пагода в Нячанге — один из пяти отобранных маршрутов"
-          cta
         />,
       ]}
     />
