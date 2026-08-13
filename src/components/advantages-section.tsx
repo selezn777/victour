@@ -25,7 +25,7 @@ function IntroSlide({
 }) {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="relative h-[42%] shrink-0 overflow-hidden sm:h-[46%]">
+      <div className="relative h-[36%] shrink-0 overflow-hidden sm:h-[40%]">
         <Image
           src={imageSrc}
           alt={imageAlt}
@@ -67,7 +67,7 @@ function PhotoSlide({
 }) {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="relative h-[42%] shrink-0 overflow-hidden sm:h-[46%]">
+      <div className="relative h-[36%] shrink-0 overflow-hidden sm:h-[40%]">
         <Image
           src={imageSrc}
           alt={imageAlt}
@@ -85,6 +85,72 @@ function PhotoSlide({
           {title}
         </h2>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">{body}</p>
+        <TourCtaButton />
+      </div>
+    </div>
+  )
+}
+
+const CATALOG_TOURS = [
+  {
+    slug: "severnye-ostrova",
+    title: "Северные острова",
+    imageSrc: "/images/tours/severnye-ostrova.jpg",
+  },
+  {
+    slug: "hon-tam",
+    title: "Хон Там",
+    imageSrc: "/images/tours/hon-tam.jpg",
+  },
+  {
+    slug: "mayak-dai-lan",
+    title: "Маяк Дай Лань",
+    imageSrc: "/images/tours/mayak-dai-lan.jpg",
+  },
+  {
+    slug: "nyachang-avtorskiy",
+    title: "Авторский Нячанг",
+    imageSrc:
+      "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/nyachang-avtorskiy-b2ZHevFPr4gfLIEw3aV2oZPHvsRbs9.jpg",
+  },
+  {
+    slug: "dalat-2-dnya",
+    title: "Далат",
+    imageSrc: "/images/tours/dalat-2-dnya.jpg",
+  },
+]
+
+function ToursSlide() {
+  return (
+    <div className="flex h-full w-full flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col items-center overflow-y-auto px-5 pt-6 pb-6 text-center sm:px-10 sm:pt-8">
+        <span className="font-heading text-lg font-semibold tracking-wide text-primary uppercase sm:text-xl">
+          Туры
+        </span>
+        <h2 className="mt-1.5 max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
+          Пять маршрутов, а не каталог на любой вкус
+        </h2>
+        <div className="mt-4 grid w-full max-w-xl grid-cols-3 gap-2 sm:gap-3">
+          {CATALOG_TOURS.map((tour) => (
+            <Link
+              key={tour.slug}
+              href={`/tours/${tour.slug}`}
+              className="group relative aspect-3/4 overflow-hidden rounded-xl bg-muted first:col-span-3 first:aspect-[2.2/1] sm:first:aspect-[2.6/1]"
+            >
+              <Image
+                src={tour.imageSrc}
+                alt={tour.title}
+                fill
+                sizes="(min-width: 640px) 200px, 33vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+              <span className="absolute inset-x-0 bottom-0 p-2 text-left text-xs leading-tight font-semibold text-white sm:text-sm">
+                {tour.title}
+              </span>
+            </Link>
+          ))}
+        </div>
         <TourCtaButton />
       </div>
     </div>
@@ -147,14 +213,7 @@ export function AdvantagesSection() {
           imageAlt="Салон премиального минивэна с кожаными креслами"
           imagePosition="30% 50%"
         />,
-        <PhotoSlide
-          key="company"
-          eyebrow="Компания"
-          title="Это ваш день, и в нём больше никого"
-          body="Никто не опаздывает к автобусу и не тащит всех в дьюти-фри. Программа собрана под вашу компанию — от встречи в отеле до прощания вечером."
-          imageSrc="/images/tours/mayak-dai-lan.jpg"
-          imageAlt="Пляж у маяка Дай Лань, где кроме вас почти никого нет"
-        />,
+        <ToursSlide key="tours" />,
         <QuoteSlide
           key="guide"
           eyebrow="Гид"
@@ -162,6 +221,14 @@ export function AdvantagesSection() {
           body="Он ведёт лично вас: шутит там, где смешно, копает глубже там, где вам действительно интересно. Никакого текста наизусть — живой разговор всю дорогу."
           quote="Внимательный, знающий и с отличным чувством юмора"
           quoteAuthor="Nikeshka Sunny, отзыв о туре в Далат"
+        />,
+        <PhotoSlide
+          key="company"
+          eyebrow="Компания"
+          title="Это ваш день, и в нём больше никого"
+          body="Никто не опаздывает к автобусу и не тащит всех в дьюти-фри. Программа собрана под вашу компанию — от встречи в отеле до прощания вечером."
+          imageSrc="/images/tours/mayak-dai-lan.jpg"
+          imageAlt="Пляж у маяка Дай Лань, где кроме вас почти никого нет"
         />,
         <PhotoSlide
           key="food"
@@ -178,14 +245,6 @@ export function AdvantagesSection() {
           body="Никакой обязательной лавки, где гиду капает процент с ваших покупок. Понравилось место — сидим сколько хочется. Маршрут подстраивается под вас, а не наоборот."
           imageSrc="/images/tours/severnye-ostrova.jpg"
           imageAlt="Северные острова, тихая бухта в стороне от туристических троп"
-        />,
-        <PhotoSlide
-          key="curated"
-          eyebrow="Отбор"
-          title="Пять туров, а не тридцать пять"
-          body="Могли бы предложить маршрут на любой вкус и бюджет. Вместо этого — всего пять, и за каждым личная проверка: безопасный транспорт, продуманный комфорт, программа без лишней спешки. Никакого конвейера — так проще ручаться, что поездка получится хорошей."
-          imageSrc="https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/nyachang-avtorskiy-b2ZHevFPr4gfLIEw3aV2oZPHvsRbs9.jpg"
-          imageAlt="Золотая пагода в Нячанге — один из пяти отобранных маршрутов"
         />,
       ]}
     />
