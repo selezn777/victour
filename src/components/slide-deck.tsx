@@ -1,9 +1,7 @@
 "use client"
 
-import { useState } from "react"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Mousewheel, Pagination, Keyboard } from "swiper/modules"
-import type { Swiper as SwiperType } from "swiper/types"
 import type { ReactNode } from "react"
 
 import "swiper/css"
@@ -13,12 +11,10 @@ import "swiper/css/pagination"
  * Полноэкранные слайды с жёсткой блокировкой "ровно один за раз" — колесо,
  * тач-свайп и клавиатура листают строго по одному слайду, без проскакивания.
  * На первом/последнем слайде дальнейший скролл в ту же сторону отпускает
- * управление обычному скроллу страницы (releaseOnEdges). Точки и счётчик
- * справа показывают прогресс — сколько слайдов и где ты сейчас.
+ * управление обычному скроллу страницы (releaseOnEdges). Тонкая полоска
+ * точек сверху показывает прогресс, не перетягивая внимание с фото/текста.
  */
 export function SlideDeck({ slides }: { slides: ReactNode[] }) {
-  const [active, setActive] = useState(0)
-
   return (
     <Swiper
       modules={[Mousewheel, Pagination, Keyboard]}
@@ -27,7 +23,6 @@ export function SlideDeck({ slides }: { slides: ReactNode[] }) {
       mousewheel={{ releaseOnEdges: true, sensitivity: 1 }}
       keyboard={{ enabled: true }}
       pagination={{ clickable: true, el: ".slide-deck-pagination" }}
-      onSlideChange={(swiper: SwiperType) => setActive(swiper.activeIndex)}
       className="h-[calc(100svh-3.5rem)] w-full sm:h-[calc(100svh-4rem)]"
     >
       {slides.map((slide, i) => (
@@ -35,11 +30,8 @@ export function SlideDeck({ slides }: { slides: ReactNode[] }) {
           {slide}
         </SwiperSlide>
       ))}
-      <div className="pointer-events-none absolute top-[19%] left-4 z-20 flex -translate-y-1/2 flex-col items-center gap-3 rounded-full border border-white/10 bg-black/20 px-2 py-3.5 backdrop-blur-sm sm:top-[21%] sm:left-6">
-        <div className="slide-deck-pagination pointer-events-auto flex flex-col items-center gap-2.5" />
-        <span key={active} className="slide-counter font-mono text-[11px] tabular-nums text-white/60">
-          {active + 1}/{slides.length}
-        </span>
+      <div className="pointer-events-none absolute top-2.5 left-1/2 z-20 -translate-x-1/2 sm:top-3.5">
+        <div className="slide-deck-pagination pointer-events-auto flex items-center gap-1.5" />
       </div>
     </Swiper>
   )
