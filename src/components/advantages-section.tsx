@@ -7,9 +7,12 @@ function TourCtaButton() {
   return (
     <Link
       href="/tours"
-      className="mt-6 inline-flex w-fit self-center items-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-sm font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 sm:px-10 sm:py-4 sm:text-base"
+      className="group mt-6 flex w-full max-w-md items-center justify-center gap-3 self-center rounded-2xl bg-primary px-8 py-5 text-lg font-semibold text-primary-foreground shadow-[0_10px_40px_-8px] shadow-primary/60 ring-1 ring-primary-foreground/10 transition-all hover:scale-[1.02] hover:bg-primary/90 hover:shadow-primary/80 active:scale-[0.98] sm:py-6 sm:text-xl"
     >
-      Выбрать тур <span aria-hidden>→</span>
+      Выбрать тур
+      <span aria-hidden className="text-2xl transition-transform group-hover:translate-x-1 sm:text-3xl">
+        →
+      </span>
     </Link>
   )
 }
@@ -36,7 +39,7 @@ function IntroSlide({
           sizes="100vw"
         />
       </div>
-      <div className="flex flex-1 flex-col overflow-y-auto px-5 pt-5 pb-6 sm:px-10 sm:pt-7">
+      <div className="flex flex-1 flex-col items-center overflow-y-auto px-5 pt-5 pb-6 text-center sm:px-10 sm:pt-7">
         <h1 className="max-w-xl font-heading text-3xl leading-[1.1] font-semibold sm:text-5xl">
           Вьетнам без чужих
         </h1>
@@ -77,7 +80,7 @@ function PhotoSlide({
           sizes="100vw"
         />
       </div>
-      <div className="flex flex-1 flex-col overflow-y-auto px-5 pt-4 pb-6 sm:px-10 sm:pt-6">
+      <div className="flex flex-1 flex-col items-center overflow-y-auto px-5 pt-4 pb-6 text-center sm:px-10 sm:pt-6">
         <span className="font-heading text-lg font-semibold tracking-wide text-primary uppercase sm:text-xl">
           {eyebrow}
         </span>
@@ -135,9 +138,8 @@ export function AdvantagesSection() {
       slides={[
         <IntroSlide
           key="intro"
-          imageSrc="/images/hero/premium-van-interior.jpg"
-          imageAlt="Салон премиального минивэна с кожаными креслами"
-          imagePosition="30% 50%"
+          imageSrc="https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/mayak-dai-lan/gallery-2-0FWzyc7AaHZJfflkozhDvSyKItZnCR.jpg"
+          imageAlt="Бухта и маяк Дай Лань с высоты"
         />,
         <PhotoSlide
           key="transport"
