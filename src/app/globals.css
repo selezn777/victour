@@ -184,23 +184,6 @@
   background: var(--color-primary);
 }
 
-@keyframes kenburns {
-  from {
-    transform: scale(1) translate(0, 0);
-  }
-  to {
-    transform: scale(1.08) translate(-1.5%, -1%);
-  }
-}
-.kenburns-img {
-  transform: scale(1);
-}
-.swiper-slide-active .kenburns-img {
-  animation: kenburns 9s ease-out forwards;
-}
-.swiper-slide:not(.swiper-slide-active) .kenburns-img {
-  animation: none;
-}
 
 .phone-input {
   height: 2.75rem;

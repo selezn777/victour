@@ -32,7 +32,7 @@ function IntroSlide({
           fill
           priority
           style={imagePosition ? { objectPosition: imagePosition } : undefined}
-          className="kenburns-img object-cover"
+          className="object-cover"
           sizes="100vw"
         />
       </div>
@@ -73,7 +73,7 @@ function PhotoSlide({
           alt={imageAlt}
           fill
           style={imagePosition ? { objectPosition: imagePosition } : undefined}
-          className="kenburns-img object-cover"
+          className="object-cover"
           sizes="100vw"
         />
       </div>
