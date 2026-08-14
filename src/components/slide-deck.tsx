@@ -30,7 +30,7 @@ export function SlideDeck({ slides }: { slides: ReactNode[] }) {
           {slide}
         </SwiperSlide>
       ))}
-      <div className="pointer-events-none absolute top-[40%] left-4 z-20 sm:top-[44%] sm:left-6">
+      <div className="pointer-events-none absolute top-[40%] left-3 z-20 sm:top-[44%] sm:left-5">
         <div className="slide-deck-pagination pointer-events-auto flex flex-col items-center gap-2" />
       </div>
     </Swiper>
