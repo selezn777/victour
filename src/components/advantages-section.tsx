@@ -65,6 +65,21 @@ function visibleCountForWidth(width: number) {
 
 type Phase = "idle" | "priming" | "open"
 
+// Полноразмерный вариант (sizes=100vw) — это ДРУГОЙ файл/URL у Next/Image, чем маленькая
+// плитка (sizes~12vw), так что готовность тайла в кэше ничего не значит для раскрытия.
+// На медленной мобильной сети скачивание не укладывалось в фиксированный PRIME_MS — браузер
+// держит на экране ПРЕДЫДУЩУЮ картинку, пока новая не догрузится, и раскрытие стартовало по
+// таймеру раньше, чем реально сменился src: подмигнула одна плитка, а открылось предыдущее
+// фото. Раскрытие теперь ждёт реальной загрузки (плюс минимум PRIME_MS ради самого моргания).
+function preloadImage(src: string) {
+  return new Promise<void>((resolve) => {
+    const img = new window.Image()
+    img.onload = () => resolve()
+    img.onerror = () => resolve()
+    img.src = src
+  })
+}
+
 function PhotoCollage() {
   const [phase, setPhase] = useState<Phase>("idle")
   const [target, setTarget] = useState(0)
@@ -81,6 +96,7 @@ function PhotoCollage() {
     const after = (fn: () => void, ms: number) => {
       timers.push(setTimeout(fn, ms))
     }
+    const wait = (ms: number) => new Promise<void>((resolve) => after(resolve, ms))
 
     const runCycle = () => {
       if (cancelled) return
@@ -92,7 +108,7 @@ function PhotoCollage() {
       step += 1
       setTarget(idx)
       setPhase("priming")
-      after(() => {
+      Promise.all([preloadImage(COLLAGE_PHOTOS[idx]), wait(PRIME_MS)]).then(() => {
         if (cancelled) return
         setPhase("open")
         after(() => {
@@ -100,7 +116,7 @@ function PhotoCollage() {
           setPhase("idle")
           after(runCycle, GAP_MS)
         }, HOLD_MS)
-      }, PRIME_MS)
+      })
     }
 
     after(runCycle, GAP_MS)
@@ -246,9 +262,9 @@ const CATALOG_TOURS = [
 ]
 
 /**
- * Полосы туров "выбор персонажа" — по одной подсвечивается по очереди сама, ховер
- * ставит на паузу и подсвечивает выбранную. Ширина анимируется через width (не
- * flex-grow — так стабильнее анимируется в разных браузерах).
+ * Полосы туров "выбор персонажа" — равной ширины (без resize, чтобы не бросались в
+ * глаза), по одной подсвечивается по очереди сама (лёгкая яркость + тонкая рамка),
+ * ховер ставит на паузу и подсвечивает выбранную.
  */
 function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
   const [active, setActive] = useState(0)
@@ -277,15 +293,18 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
               setPaused(true)
               setActive(i)
             }}
-            className="group relative shrink-0 overflow-hidden rounded-2xl bg-muted transition-[width] duration-500 ease-out"
-            style={{ width: isActive ? "40%" : "15%" }}
+            className={`group relative flex-1 overflow-hidden rounded-lg bg-muted ring-1 transition-all duration-500 ease-out ${
+              isActive ? "ring-primary/60" : "ring-white/10"
+            }`}
           >
             <Image
               src={tour.imageSrc}
               alt={tour.title}
               fill
               sizes="(min-width: 640px) 400px, 60vw"
-              className="object-cover"
+              className={`object-cover transition-[filter] duration-500 ease-out ${
+                isActive ? "brightness-100" : "brightness-75"
+              }`}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/5 to-transparent" />
             <div
