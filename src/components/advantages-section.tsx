@@ -63,6 +63,27 @@ function visibleCountForWidth(width: number) {
   return VISIBLE_AT_BASE
 }
 
+function colsForWidth(width: number) {
+  if (width >= 1024) return 12
+  if (width >= 640) return 9
+  return 8
+}
+
+// Раскрытие раньше всегда росло из центра блока — визуально никак не привязано к
+// тому, какая именно плитка перед этим подмигнула, поэтому связь приходилось
+// принимать на веру. Точка роста теперь берётся из позиции самой плитки (её строка/
+// колонка в сетке), чтобы фото буквально "вырастало" из неё — совпадение видно
+// физически, а не подразумевается.
+function tileOrigin(idx: number, width: number) {
+  const cols = colsForWidth(width)
+  const rows = visibleCountForWidth(width) / cols
+  const col = idx % cols
+  const row = Math.floor(idx / cols)
+  const x = ((col + 0.5) / cols) * 100
+  const y = ((row + 0.5) / rows) * 100
+  return `${x}% ${y}%`
+}
+
 type Phase = "idle" | "priming" | "open"
 
 // Полноразмерный вариант (sizes=100vw) — это ДРУГОЙ файл/URL у Next/Image, чем маленькая
@@ -83,6 +104,7 @@ function preloadImage(src: string) {
 function PhotoCollage() {
   const [phase, setPhase] = useState<Phase>("idle")
   const [target, setTarget] = useState(0)
+  const [origin, setOrigin] = useState("50% 50%")
 
   useEffect(() => {
     let cancelled = false
@@ -107,6 +129,7 @@ function PhotoCollage() {
       const idx = order[step]
       step += 1
       setTarget(idx)
+      setOrigin(tileOrigin(idx, window.innerWidth))
       setPhase("priming")
       Promise.all([preloadImage(COLLAGE_PHOTOS[idx]), wait(PRIME_MS)]).then(() => {
         if (cancelled) return
@@ -154,7 +177,7 @@ function PhotoCollage() {
         className={`pointer-events-none absolute inset-0 z-10 transition-all ease-out ${
           phase === "open" ? "scale-100 opacity-100" : "scale-[0.35] opacity-0"
         }`}
-        style={{ transitionDuration: `${TRANSITION_MS}ms` }}
+        style={{ transitionDuration: `${TRANSITION_MS}ms`, transformOrigin: origin }}
       >
         <Image
           src={COLLAGE_PHOTOS[target]}
