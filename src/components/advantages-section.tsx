@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useState, type CSSProperties } from "react"
+import { useEffect, useState } from "react"
 import { Glow } from "@/components/glow"
 import { SlideDeck } from "@/components/slide-deck"
 
@@ -23,27 +23,72 @@ const COLLAGE_PHOTOS = Array.from(
   (_, i) => `/images/collage/collage-${String(i + 1).padStart(2, "0")}.jpg`,
 )
 
+// Порядок обхода при 29 (взаимно просто с 72) не повторяется, пока не пройдёт все 72 —
+// поэтому "открытие" фото в спотлайте кажется случайным, но каждое фото участвует.
+const SPOTLIGHT_ORDER = Array.from({ length: COLLAGE_PHOTO_COUNT }, (_, i) => (i * 29) % COLLAGE_PHOTO_COUNT)
+const SPOTLIGHT_OPEN_MS = 1300
+const SPOTLIGHT_CLOSED_MS = 900
+
 function PhotoCollage() {
+  const [spotlight, setSpotlight] = useState<{ photoIndex: number; open: boolean }>({
+    photoIndex: SPOTLIGHT_ORDER[0],
+    open: false,
+  })
+
+  useEffect(() => {
+    let cancelled = false
+    let step = 0
+    let timer: ReturnType<typeof setTimeout>
+
+    const openNext = () => {
+      if (cancelled) return
+      step += 1
+      setSpotlight({ photoIndex: SPOTLIGHT_ORDER[step % SPOTLIGHT_ORDER.length], open: true })
+      timer = setTimeout(closeCurrent, SPOTLIGHT_OPEN_MS)
+    }
+    const closeCurrent = () => {
+      if (cancelled) return
+      setSpotlight((s) => ({ ...s, open: false }))
+      timer = setTimeout(openNext, SPOTLIGHT_CLOSED_MS)
+    }
+
+    timer = setTimeout(openNext, SPOTLIGHT_CLOSED_MS)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [])
+
   return (
-    <div className="grid h-full w-full grid-cols-6 sm:grid-cols-9 lg:grid-cols-12">
-      {COLLAGE_PHOTOS.map((src, i) => {
-        // Перемешиваем порядок задержек (шаг 29 взаимно прост с 72), чтобы подсветка
-        // "бежала" по коллажу вразнобой, а не просто слева направо волной.
-        const delay = (((i * 29) % COLLAGE_PHOTO_COUNT) / COLLAGE_PHOTO_COUNT) * 14
-        return (
-          <div key={src} className="collage-tile relative aspect-square overflow-hidden">
+    <div className="relative h-full w-full">
+      <div className="grid h-full w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
+        {COLLAGE_PHOTOS.map((src, i) => (
+          <div key={src} className="relative aspect-square overflow-hidden">
             <Image
               src={src}
               alt=""
               fill
-              priority={i < 12}
-              sizes="(min-width: 1024px) 8vw, (min-width: 640px) 11vw, 17vw"
-              className="collage-tile-img object-cover"
-              style={{ "--tile-delay": `${delay.toFixed(2)}s` } as CSSProperties}
+              priority={i < 16}
+              sizes="(min-width: 1024px) 8vw, (min-width: 640px) 11vw, 12.5vw"
+              className="object-cover"
             />
           </div>
-        )
-      })}
+        ))}
+      </div>
+      <div
+        className={`pointer-events-none absolute inset-0 transition-all duration-700 ease-out ${
+          spotlight.open ? "scale-100 opacity-100" : "scale-[0.35] opacity-0"
+        }`}
+      >
+        <Image
+          src={COLLAGE_PHOTOS[spotlight.photoIndex]}
+          alt=""
+          fill
+          sizes="100vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+      </div>
     </div>
   )
 }
@@ -51,7 +96,7 @@ function PhotoCollage() {
 function IntroSlide() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="relative h-[36%] shrink-0 overflow-hidden sm:h-[40%]">
+      <div className="relative aspect-[8/9] w-full shrink-0 overflow-hidden sm:aspect-[9/8] lg:aspect-[2/1]">
         <PhotoCollage />
       </div>
       <div className="flex flex-1 flex-col items-center overflow-y-auto px-5 pt-5 pb-6 text-center sm:px-10 sm:pt-7">

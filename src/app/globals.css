@@ -209,24 +209,6 @@
   transform: scale(1.06);
 }
 
-@keyframes collage-pulse {
-  0%,
-  90%,
-  100% {
-    transform: scale(1);
-    filter: brightness(1);
-  }
-  95% {
-    transform: scale(1.2);
-    filter: brightness(1.12);
-  }
-}
-.collage-tile-img {
-  animation: collage-pulse 14s ease-in-out infinite;
-  animation-delay: var(--tile-delay, 0s);
-  will-change: transform;
-}
-
 
 .phone-input {
   height: 2.75rem;
