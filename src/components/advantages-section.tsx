@@ -112,7 +112,15 @@ function PhotoCollage() {
         }`}
         style={{ transitionDuration: `${TRANSITION_MS}ms` }}
       >
-        <Image src={COLLAGE_PHOTOS[target]} alt="" fill sizes="100vw" className="object-cover" />
+        <Image
+          src={COLLAGE_PHOTOS[target]}
+          alt=""
+          fill
+          sizes="100vw"
+          aria-hidden
+          className="scale-110 object-cover opacity-40 blur-2xl"
+        />
+        <Image src={COLLAGE_PHOTOS[target]} alt="" fill sizes="100vw" className="object-contain" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
       </div>
     </div>
