@@ -1,5 +1,8 @@
+"use client"
+
 import Image from "next/image"
 import Link from "next/link"
+import { useEffect, useState, type CSSProperties } from "react"
 import { Glow } from "@/components/glow"
 import { SlideDeck } from "@/components/slide-deck"
 
@@ -23,18 +26,24 @@ const COLLAGE_PHOTOS = Array.from(
 function PhotoCollage() {
   return (
     <div className="grid h-full w-full grid-cols-6 sm:grid-cols-9 lg:grid-cols-12">
-      {COLLAGE_PHOTOS.map((src, i) => (
-        <div key={src} className="collage-tile relative aspect-square overflow-hidden">
-          <Image
-            src={src}
-            alt=""
-            fill
-            priority={i < 12}
-            sizes="(min-width: 1024px) 8vw, (min-width: 640px) 11vw, 17vw"
-            className="collage-tile-img object-cover"
-          />
-        </div>
-      ))}
+      {COLLAGE_PHOTOS.map((src, i) => {
+        // Перемешиваем порядок задержек (шаг 29 взаимно прост с 72), чтобы подсветка
+        // "бежала" по коллажу вразнобой, а не просто слева направо волной.
+        const delay = (((i * 29) % COLLAGE_PHOTO_COUNT) / COLLAGE_PHOTO_COUNT) * 14
+        return (
+          <div key={src} className="collage-tile relative aspect-square overflow-hidden">
+            <Image
+              src={src}
+              alt=""
+              fill
+              priority={i < 12}
+              sizes="(min-width: 1024px) 8vw, (min-width: 640px) 11vw, 17vw"
+              className="collage-tile-img object-cover"
+              style={{ "--tile-delay": `${delay.toFixed(2)}s` } as CSSProperties}
+            />
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -131,6 +140,73 @@ const CATALOG_TOURS = [
   },
 ]
 
+/**
+ * Полосы туров "выбор персонажа" — по одной подсвечивается по очереди сама, ховер
+ * ставит на паузу и подсвечивает выбранную. Ширина анимируется через width (не
+ * flex-grow — так стабильнее анимируется в разных браузерах).
+ */
+function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
+  const [active, setActive] = useState(0)
+  const [paused, setPaused] = useState(false)
+
+  useEffect(() => {
+    if (paused) return
+    const id = setInterval(() => {
+      setActive((i) => (i + 1) % tours.length)
+    }, 2200)
+    return () => clearInterval(id)
+  }, [paused, tours.length])
+
+  return (
+    <div
+      className="mt-4 flex h-72 w-full max-w-xl gap-1.5 sm:h-80"
+      onMouseLeave={() => setPaused(false)}
+    >
+      {tours.map((tour, i) => {
+        const isActive = i === active
+        return (
+          <Link
+            key={tour.slug}
+            href={`/tours/${tour.slug}`}
+            onMouseEnter={() => {
+              setPaused(true)
+              setActive(i)
+            }}
+            className="group relative shrink-0 overflow-hidden rounded-2xl bg-muted transition-[width] duration-500 ease-out"
+            style={{ width: isActive ? "40%" : "15%" }}
+          >
+            <Image
+              src={tour.imageSrc}
+              alt={tour.title}
+              fill
+              sizes="(min-width: 640px) 400px, 60vw"
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/5 to-transparent" />
+            <div
+              className={`absolute inset-x-0 bottom-0 p-2.5 text-left transition-opacity duration-300 sm:p-3 ${
+                isActive ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <h3 className="font-heading text-sm leading-tight font-semibold text-white sm:text-base">
+                {tour.title}
+              </h3>
+              <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-white/80 sm:text-xs">
+                {tour.annotation}
+              </p>
+            </div>
+            {!isActive && (
+              <span className="absolute inset-0 flex items-center justify-center px-1 text-center text-[11px] font-semibold text-white/90 [writing-mode:vertical-rl]">
+                {tour.title}
+              </span>
+            )}
+          </Link>
+        )
+      })}
+    </div>
+  )
+}
+
 function ToursSlide() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
@@ -143,31 +219,7 @@ function ToursSlide() {
           однодневных марш-бросков и вечеров, когда гости бродят по незнакомому городу сами по
           себе — каждый маршрут выстроен так, чтобы риск был минимальным.
         </p>
-        <div className="mt-4 flex w-full max-w-xl flex-col gap-3">
-          {CATALOG_TOURS.map((tour) => (
-            <Link
-              key={tour.slug}
-              href={`/tours/${tour.slug}`}
-              className="group flex flex-col overflow-hidden rounded-2xl text-left"
-            >
-              <div className="relative aspect-[6/5] w-full overflow-hidden rounded-2xl bg-muted">
-                <Image
-                  src={tour.imageSrc}
-                  alt={tour.title}
-                  fill
-                  sizes="(min-width: 640px) 500px, 100vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
-              <div className="px-0.5 pt-2.5">
-                <h3 className="font-heading text-base font-semibold sm:text-lg">{tour.title}</h3>
-                <p className="mt-0.5 text-xs leading-snug text-muted-foreground sm:text-sm">
-                  {tour.annotation}
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <TourSelector tours={CATALOG_TOURS} />
         <TourCtaButton />
       </div>
     </div>
