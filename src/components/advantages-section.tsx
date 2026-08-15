@@ -103,28 +103,33 @@ function PhotoCollage() {
   }, [])
 
   return (
-    <div className="relative h-full w-full">
-      <div ref={gridRef} className="grid h-full w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
-        {COLLAGE_PHOTOS.map((src, i) => (
-          <div
-            key={src}
-            className={`relative aspect-square overflow-hidden ${
-              phase === "priming" && i === target ? "tile-priming" : ""
-            }`}
-          >
-            <Image
-              src={src}
-              alt=""
-              fill
-              priority={i < 16}
-              sizes="(min-width: 1024px) 8vw, (min-width: 640px) 11vw, 12.5vw"
-              className="object-cover"
-            />
-          </div>
-        ))}
+    <>
+      <div className="relative h-[38%] w-full shrink-0 overflow-hidden sm:h-[42%]">
+        <div ref={gridRef} className="grid h-full w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
+          {COLLAGE_PHOTOS.map((src, i) => (
+            <div
+              key={src}
+              className={`relative aspect-square overflow-hidden ${
+                phase === "priming" && i === target ? "tile-priming" : ""
+              }`}
+            >
+              <Image
+                src={src}
+                alt=""
+                fill
+                priority={i < 16}
+                sizes="(min-width: 1024px) 8vw, (min-width: 640px) 11vw, 12.5vw"
+                className="object-cover"
+              />
+            </div>
+          ))}
+        </div>
       </div>
+      {/* Раскрытие — квадратный оверлей во всю ширину слайда (шире, чем обрезанная
+          полоса сетки выше), позиционирован поверх неё абсолютно, поэтому не
+          сдвигает текст/кнопку ниже — только временно перекрывает верх текста. */}
       <div
-        className={`pointer-events-none absolute inset-0 transition-all ease-out ${
+        className={`pointer-events-none absolute inset-x-0 top-0 z-10 aspect-square w-full transition-all ease-out ${
           phase === "open" ? "scale-100 opacity-100" : "scale-[0.35] opacity-0"
         }`}
         style={{ transitionDuration: `${TRANSITION_MS}ms` }}
@@ -140,16 +145,14 @@ function PhotoCollage() {
         <Image src={COLLAGE_PHOTOS[target]} alt="" fill sizes="100vw" className="object-contain" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
       </div>
-    </div>
+    </>
   )
 }
 
 function IntroSlide() {
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="relative h-[38%] w-full shrink-0 overflow-hidden sm:h-[42%]">
-        <PhotoCollage />
-      </div>
+    <div className="relative flex h-full w-full flex-col overflow-hidden">
+      <PhotoCollage />
       <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-5 py-4 text-center sm:px-10">
         <h1 className="max-w-xl font-heading text-3xl leading-[1.1] font-semibold sm:text-5xl">
           Вьетнам без чужих
