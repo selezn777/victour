@@ -104,7 +104,7 @@ function PhotoCollage() {
 
   return (
     <>
-      <div className="relative h-[38%] w-full shrink-0 overflow-hidden sm:h-[42%]">
+      <div className="relative aspect-square w-full shrink-0 overflow-hidden">
         <div ref={gridRef} className="grid h-full w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
           {COLLAGE_PHOTOS.map((src, i) => (
             <div
@@ -125,9 +125,9 @@ function PhotoCollage() {
           ))}
         </div>
       </div>
-      {/* Раскрытие — квадратный оверлей во всю ширину слайда (шире, чем обрезанная
-          полоса сетки выше), позиционирован поверх неё абсолютно, поэтому не
-          сдвигает текст/кнопку ниже — только временно перекрывает верх текста. */}
+      {/* Раскрытие — тот же aspect-square/w-full, что и полоса сетки выше, поэтому
+          совпадает с ней по размеру и не заезжает на текст. Позиционировано
+          абсолютно (не в потоке), чтобы не сдвигать текст/кнопку ниже. */}
       <div
         className={`pointer-events-none absolute inset-x-0 top-0 z-10 aspect-square w-full transition-all ease-out ${
           phase === "open" ? "scale-100 opacity-100" : "scale-[0.35] opacity-0"
