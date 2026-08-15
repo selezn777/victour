@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Glow } from "@/components/glow"
 import { SlideDeck } from "@/components/slide-deck"
 
@@ -39,19 +39,36 @@ function shuffledIndices(count: number) {
   return arr
 }
 
+// Контейнер коллажа обрезан по высоте (overflow-hidden), а плиток в сетке больше,
+// чем помещается — нижние ряды физически не видны. Раскрытие должно выбирать только
+// среди плиток, которые реально видны, иначе подсвечивается (или должна подсвечиваться)
+// невидимая плитка, а большое фото раскрывается будто "из ниоткуда".
+function visibleTileCount(container: HTMLDivElement | null, total: number) {
+  const tile = container?.firstElementChild as HTMLElement | null | undefined
+  if (!container || !tile) return total
+  const containerRect = container.getBoundingClientRect()
+  const tileRect = tile.getBoundingClientRect()
+  if (tileRect.width === 0 || tileRect.height === 0) return total
+  const cols = Math.max(1, Math.round(containerRect.width / tileRect.width))
+  const rows = Math.max(1, Math.floor(containerRect.height / tileRect.height))
+  return Math.min(total, cols * rows)
+}
+
 type Phase = "idle" | "priming" | "open"
 
 function PhotoCollage() {
   const [phase, setPhase] = useState<Phase>("idle")
   const [target, setTarget] = useState(0)
+  const gridRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let cancelled = false
     let step = 0
     // Новая случайная перетасовка при каждом заходе на сайт (не фиксированный порядок) —
     // при этом каждое фото гарантированно показывается один раз за полный проход, прежде
-    // чем перетасовать заново и начать следующий круг.
-    let order = shuffledIndices(COLLAGE_PHOTO_COUNT)
+    // чем перетасовать заново и начать следующий круг. Перетасовка ограничена видимыми
+    // плитками (см. visibleTileCount), чтобы раскрытое фото всегда совпадало с подмигнувшей плиткой.
+    let order = shuffledIndices(visibleTileCount(gridRef.current, COLLAGE_PHOTO_COUNT))
     const timers: ReturnType<typeof setTimeout>[] = []
     const after = (fn: () => void, ms: number) => {
       timers.push(setTimeout(fn, ms))
@@ -60,7 +77,7 @@ function PhotoCollage() {
     const runCycle = () => {
       if (cancelled) return
       if (step >= order.length) {
-        order = shuffledIndices(COLLAGE_PHOTO_COUNT)
+        order = shuffledIndices(visibleTileCount(gridRef.current, COLLAGE_PHOTO_COUNT))
         step = 0
       }
       const idx = order[step]
@@ -87,7 +104,7 @@ function PhotoCollage() {
 
   return (
     <div className="relative h-full w-full">
-      <div className="grid h-full w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
+      <div ref={gridRef} className="grid h-full w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
         {COLLAGE_PHOTOS.map((src, i) => (
           <div
             key={src}
