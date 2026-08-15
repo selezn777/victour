@@ -209,6 +209,27 @@
   transform: scale(1.06);
 }
 
+@keyframes tile-prime-blink {
+  0%,
+  100% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
+  20%,
+  60% {
+    filter: brightness(1.7);
+    transform: scale(1.1);
+  }
+  40%,
+  80% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
+}
+.tile-priming {
+  animation: tile-prime-blink 0.9s ease-in-out 1;
+  z-index: 5;
+}
 
 .phone-input {
   height: 2.75rem;

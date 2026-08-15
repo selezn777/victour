@@ -26,36 +26,47 @@ const COLLAGE_PHOTOS = Array.from(
 // Порядок обхода при 29 (взаимно просто с 72) не повторяется, пока не пройдёт все 72 —
 // поэтому "открытие" фото в спотлайте кажется случайным, но каждое фото участвует.
 const SPOTLIGHT_ORDER = Array.from({ length: COLLAGE_PHOTO_COUNT }, (_, i) => (i * 29) % COLLAGE_PHOTO_COUNT)
-const SPOTLIGHT_OPEN_MS = 1300
-const SPOTLIGHT_CLOSED_MS = 900
+// priming — плитка в сетке "подмигивает", пока полноразмерное фото грузится в фоне
+// (устраняет мелькание предыдущего кадра) и даёт немного интриги перед раскрытием.
+const PRIME_MS = 900
+const HOLD_MS = 2000
+const GAP_MS = 700
+
+type Phase = "idle" | "priming" | "open"
 
 function PhotoCollage() {
-  const [spotlight, setSpotlight] = useState<{ photoIndex: number; open: boolean }>({
-    photoIndex: SPOTLIGHT_ORDER[0],
-    open: false,
-  })
+  const [phase, setPhase] = useState<Phase>("idle")
+  const [target, setTarget] = useState(SPOTLIGHT_ORDER[0])
 
   useEffect(() => {
     let cancelled = false
     let step = 0
-    let timer: ReturnType<typeof setTimeout>
+    const timers: ReturnType<typeof setTimeout>[] = []
+    const after = (fn: () => void, ms: number) => {
+      timers.push(setTimeout(fn, ms))
+    }
 
-    const openNext = () => {
+    const runCycle = () => {
       if (cancelled) return
+      const idx = SPOTLIGHT_ORDER[step % SPOTLIGHT_ORDER.length]
       step += 1
-      setSpotlight({ photoIndex: SPOTLIGHT_ORDER[step % SPOTLIGHT_ORDER.length], open: true })
-      timer = setTimeout(closeCurrent, SPOTLIGHT_OPEN_MS)
-    }
-    const closeCurrent = () => {
-      if (cancelled) return
-      setSpotlight((s) => ({ ...s, open: false }))
-      timer = setTimeout(openNext, SPOTLIGHT_CLOSED_MS)
+      setTarget(idx)
+      setPhase("priming")
+      after(() => {
+        if (cancelled) return
+        setPhase("open")
+        after(() => {
+          if (cancelled) return
+          setPhase("idle")
+          after(runCycle, GAP_MS)
+        }, HOLD_MS)
+      }, PRIME_MS)
     }
 
-    timer = setTimeout(openNext, SPOTLIGHT_CLOSED_MS)
+    after(runCycle, GAP_MS)
     return () => {
       cancelled = true
-      clearTimeout(timer)
+      timers.forEach(clearTimeout)
     }
   }, [])
 
@@ -63,7 +74,12 @@ function PhotoCollage() {
     <div className="relative h-full w-full">
       <div className="grid h-full w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
         {COLLAGE_PHOTOS.map((src, i) => (
-          <div key={src} className="relative aspect-square overflow-hidden">
+          <div
+            key={src}
+            className={`relative aspect-square overflow-hidden ${
+              phase === "priming" && i === target ? "tile-priming" : ""
+            }`}
+          >
             <Image
               src={src}
               alt=""
@@ -77,16 +93,10 @@ function PhotoCollage() {
       </div>
       <div
         className={`pointer-events-none absolute inset-0 transition-all duration-700 ease-out ${
-          spotlight.open ? "scale-100 opacity-100" : "scale-[0.35] opacity-0"
+          phase === "open" ? "scale-100 opacity-100" : "scale-[0.35] opacity-0"
         }`}
       >
-        <Image
-          src={COLLAGE_PHOTOS[spotlight.photoIndex]}
-          alt=""
-          fill
-          sizes="100vw"
-          className="object-cover"
-        />
+        <Image src={COLLAGE_PHOTOS[target]} alt="" fill sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
       </div>
     </div>

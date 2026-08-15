@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Geist_Mono, Unbounded } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -24,6 +24,13 @@ export const metadata: Metadata = {
   title: "ВикТур — private-туры по Вьетнаму",
   description:
     "Индивидуальные private-туры по Нячангу, Камрани и Далату. Больше гостей — дешевле.",
+};
+
+// Сайт всегда в тёмной теме (forcedTheme="dark") — красим системный UI (статус-бар,
+// шапку Chrome Custom Tab/Telegram in-app браузера) в тон фона, а не в серый по умолчанию,
+// чтобы открытая по ссылке страница ощущалась как приложение, а не как "просто ссылка".
+export const viewport: Viewport = {
+  themeColor: "#0a0a0a",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
