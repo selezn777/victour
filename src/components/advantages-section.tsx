@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { Glow } from "@/components/glow"
 import { SlideDeck } from "@/components/slide-deck"
 
@@ -39,19 +39,28 @@ function shuffledIndices(count: number) {
   return arr
 }
 
-// Контейнер коллажа обрезан по высоте (overflow-hidden), а плиток в сетке больше,
-// чем помещается — нижние ряды физически не видны. Раскрытие должно выбирать только
-// среди плиток, которые реально видны, иначе подсвечивается (или должна подсвечиваться)
-// невидимая плитка, а большое фото раскрывается будто "из ниоткуда".
-function visibleTileCount(container: HTMLDivElement | null, total: number) {
-  const tile = container?.firstElementChild as HTMLElement | null | undefined
-  if (!container || !tile) return total
-  const containerRect = container.getBoundingClientRect()
-  const tileRect = tile.getBoundingClientRect()
-  if (tileRect.width === 0 || tileRect.height === 0) return total
-  const cols = Math.max(1, Math.round(containerRect.width / tileRect.width))
-  const rows = Math.max(1, Math.floor(containerRect.height / tileRect.height))
-  return Math.min(total, cols * rows)
+// 66 не делится ровно на 8/9/12 колонок — последняя строка сетки всегда была бы
+// неполной (например, 2 фото в ряду). Вместо этого на каждом брейкпоинте показываем
+// только столько фото, сколько составляет целое число строк — остальные скрыты
+// классами ниже, сетка всегда представляет собой ровный прямоугольник без обрезков.
+const VISIBLE_AT_BASE = Math.floor(COLLAGE_PHOTO_COUNT / 8) * 8 // 8 кол. × 8 строк = 64
+const VISIBLE_AT_SM = Math.floor(COLLAGE_PHOTO_COUNT / 9) * 9 // 9 кол. × 7 строк = 63
+const VISIBLE_AT_LG = Math.floor(COLLAGE_PHOTO_COUNT / 12) * 12 // 12 кол. × 5 строк = 60
+
+function tileVisibilityClass(i: number) {
+  if (i >= VISIBLE_AT_BASE) return "hidden"
+  if (i >= VISIBLE_AT_SM) return "sm:hidden"
+  if (i >= VISIBLE_AT_LG) return "lg:hidden"
+  return ""
+}
+
+// Совпадает с брейкпоинтами Tailwind (sm 640px, lg 1024px) и с классами выше —
+// раскрытие выбирает только среди фото, которые реально отрисованы на этом экране,
+// иначе может выпасть индекс скрытой (display:none) плитки.
+function visibleCountForWidth(width: number) {
+  if (width >= 1024) return VISIBLE_AT_LG
+  if (width >= 640) return VISIBLE_AT_SM
+  return VISIBLE_AT_BASE
 }
 
 type Phase = "idle" | "priming" | "open"
@@ -59,16 +68,15 @@ type Phase = "idle" | "priming" | "open"
 function PhotoCollage() {
   const [phase, setPhase] = useState<Phase>("idle")
   const [target, setTarget] = useState(0)
-  const gridRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let cancelled = false
     let step = 0
     // Новая случайная перетасовка при каждом заходе на сайт (не фиксированный порядок) —
     // при этом каждое фото гарантированно показывается один раз за полный проход, прежде
-    // чем перетасовать заново и начать следующий круг. Перетасовка ограничена видимыми
-    // плитками (см. visibleTileCount), чтобы раскрытое фото всегда совпадало с подмигнувшей плиткой.
-    let order = shuffledIndices(visibleTileCount(gridRef.current, COLLAGE_PHOTO_COUNT))
+    // чем перетасовать заново и начать следующий круг. Перетасовка ограничена видимыми на
+    // этом экране плитками (см. visibleCountForWidth).
+    let order = shuffledIndices(visibleCountForWidth(window.innerWidth))
     const timers: ReturnType<typeof setTimeout>[] = []
     const after = (fn: () => void, ms: number) => {
       timers.push(setTimeout(fn, ms))
@@ -77,7 +85,7 @@ function PhotoCollage() {
     const runCycle = () => {
       if (cancelled) return
       if (step >= order.length) {
-        order = shuffledIndices(visibleTileCount(gridRef.current, COLLAGE_PHOTO_COUNT))
+        order = shuffledIndices(visibleCountForWidth(window.innerWidth))
         step = 0
       }
       const idx = order[step]
@@ -103,33 +111,31 @@ function PhotoCollage() {
   }, [])
 
   return (
-    <>
-      <div className="relative aspect-square w-full shrink-0 overflow-hidden">
-        <div ref={gridRef} className="grid h-full w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
-          {COLLAGE_PHOTOS.map((src, i) => (
-            <div
-              key={src}
-              className={`relative aspect-square overflow-hidden ${
-                phase === "priming" && i === target ? "tile-priming" : ""
-              }`}
-            >
-              <Image
-                src={src}
-                alt=""
-                fill
-                priority={i < 16}
-                sizes="(min-width: 1024px) 8vw, (min-width: 640px) 11vw, 12.5vw"
-                className="object-cover"
-              />
-            </div>
-          ))}
-        </div>
+    // Без фиксированной высоты/aspect-ratio — блок сам подстраивается под контент.
+    // Ряды сетки всегда полные (см. tileVisibilityClass), поэтому обрезка не нужна:
+    // раскрытие (absolute inset-0) само совпадает по размеру с сеткой пиксель в пиксель.
+    <div className="relative w-full shrink-0">
+      <div className="grid w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
+        {COLLAGE_PHOTOS.map((src, i) => (
+          <div
+            key={src}
+            className={`relative aspect-square overflow-hidden ${tileVisibilityClass(i)} ${
+              phase === "priming" && i === target ? "tile-priming" : ""
+            }`}
+          >
+            <Image
+              src={src}
+              alt=""
+              fill
+              priority={i < 16}
+              sizes="(min-width: 1024px) 8vw, (min-width: 640px) 11vw, 12.5vw"
+              className="object-cover"
+            />
+          </div>
+        ))}
       </div>
-      {/* Раскрытие — тот же aspect-square/w-full, что и полоса сетки выше, поэтому
-          совпадает с ней по размеру и не заезжает на текст. Позиционировано
-          абсолютно (не в потоке), чтобы не сдвигать текст/кнопку ниже. */}
       <div
-        className={`pointer-events-none absolute inset-x-0 top-0 z-10 aspect-square w-full transition-all ease-out ${
+        className={`pointer-events-none absolute inset-0 z-10 transition-all ease-out ${
           phase === "open" ? "scale-100 opacity-100" : "scale-[0.35] opacity-0"
         }`}
         style={{ transitionDuration: `${TRANSITION_MS}ms` }}
@@ -145,19 +151,19 @@ function PhotoCollage() {
         <Image src={COLLAGE_PHOTOS[target]} alt="" fill sizes="100vw" className="object-contain" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
       </div>
-    </>
+    </div>
   )
 }
 
 function IntroSlide() {
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden">
+    <div className="flex h-full w-full flex-col overflow-hidden">
       <PhotoCollage />
-      <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-5 py-4 text-center sm:px-10">
-        <h1 className="max-w-xl font-heading text-3xl leading-[1.1] font-semibold sm:text-5xl">
+      <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-5 py-2 text-center sm:px-10 sm:py-4">
+        <h1 className="max-w-xl font-heading text-2xl leading-[1.1] font-semibold sm:text-5xl">
           Вьетнам без чужих
         </h1>
-        <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+        <p className="mt-2 max-w-xl text-sm leading-snug text-muted-foreground sm:mt-3 sm:leading-relaxed sm:text-base">
           Мы — лучшие в приватных турах по Вьетнаму. Проверенные маршруты, надёжный транспорт и
           гид, который отвечает за вашу безопасность на каждом шаге — здесь всё настроено на вашу
           волну, и ничего не оставлено на волю случая.
