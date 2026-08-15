@@ -28,9 +28,10 @@ const COLLAGE_PHOTOS = Array.from(
 const SPOTLIGHT_ORDER = Array.from({ length: COLLAGE_PHOTO_COUNT }, (_, i) => (i * 29) % COLLAGE_PHOTO_COUNT)
 // priming — плитка в сетке "подмигивает", пока полноразмерное фото грузится в фоне
 // (устраняет мелькание предыдущего кадра) и даёт немного интриги перед раскрытием.
-const PRIME_MS = 900
-const HOLD_MS = 2000
-const GAP_MS = 700
+const PRIME_MS = 1000
+const HOLD_MS = 3200
+const GAP_MS = 900
+const TRANSITION_MS = 1000
 
 type Phase = "idle" | "priming" | "open"
 
@@ -92,9 +93,10 @@ function PhotoCollage() {
         ))}
       </div>
       <div
-        className={`pointer-events-none absolute inset-0 transition-all duration-700 ease-out ${
+        className={`pointer-events-none absolute inset-0 transition-all ease-out ${
           phase === "open" ? "scale-100 opacity-100" : "scale-[0.35] opacity-0"
         }`}
+        style={{ transitionDuration: `${TRANSITION_MS}ms` }}
       >
         <Image src={COLLAGE_PHOTOS[target]} alt="" fill sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
@@ -106,10 +108,10 @@ function PhotoCollage() {
 function IntroSlide() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="relative aspect-[8/9] w-full shrink-0 overflow-hidden sm:aspect-[9/8] lg:aspect-[2/1]">
+      <div className="relative h-[38%] w-full shrink-0 overflow-hidden sm:h-[42%]">
         <PhotoCollage />
       </div>
-      <div className="flex flex-1 flex-col items-center overflow-y-auto px-5 pt-5 pb-6 text-center sm:px-10 sm:pt-7">
+      <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-5 py-4 text-center sm:px-10">
         <h1 className="max-w-xl font-heading text-3xl leading-[1.1] font-semibold sm:text-5xl">
           Вьетнам без чужих
         </h1>
