@@ -32,7 +32,7 @@ function IntroSlide({
           fill
           priority
           style={imagePosition ? { objectPosition: imagePosition } : undefined}
-          className="object-cover"
+          className="kenburns-img object-cover"
           sizes="100vw"
         />
       </div>
@@ -41,8 +41,9 @@ function IntroSlide({
           Вьетнам без чужих
         </h1>
         <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-          Мы — лучшие в приватных турах по Вьетнаму. Только самый комфортный транспорт. Только
-          по-настоящему вкусная еда для вас. Здесь всё настроено на вашу волну.
+          Мы — лучшие в приватных турах по Вьетнаму. Проверенные маршруты, надёжный транспорт и
+          гид, который отвечает за вашу безопасность на каждом шаге — здесь всё настроено на вашу
+          волну, и ничего не оставлено на волю случая.
         </p>
         <TourCtaButton />
       </div>
@@ -51,14 +52,12 @@ function IntroSlide({
 }
 
 function PhotoSlide({
-  eyebrow,
   title,
   body,
   imageSrc,
   imageAlt,
   imagePosition,
 }: {
-  eyebrow: string
   title: string
   body: string
   imageSrc: string
@@ -73,15 +72,12 @@ function PhotoSlide({
           alt={imageAlt}
           fill
           style={imagePosition ? { objectPosition: imagePosition } : undefined}
-          className="object-cover"
+          className="kenburns-img object-cover"
           sizes="100vw"
         />
       </div>
-      <div className="flex flex-1 flex-col items-center overflow-y-auto px-5 pt-4 pb-6 text-center sm:px-10 sm:pt-6">
-        <span className="font-heading text-lg font-semibold tracking-wide text-primary uppercase sm:text-xl">
-          {eyebrow}
-        </span>
-        <h2 className="mt-1.5 max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
+      <div className="flex flex-1 flex-col items-center overflow-y-auto px-5 pt-5 pb-6 text-center sm:px-10 sm:pt-7">
+        <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {title}
         </h2>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">{body}</p>
@@ -96,27 +92,33 @@ const CATALOG_TOURS = [
     slug: "severnye-ostrova",
     title: "Северные острова",
     imageSrc: "/images/tours/severnye-ostrova.jpg",
+    annotation: "Маршрут, обкатанный лично Виктором — никаких случайных лодочников и левых причалов.",
   },
   {
     slug: "hon-tam",
     title: "Хон Там",
     imageSrc: "/images/tours/hon-tam.jpg",
+    annotation: "Ближайший остров без долгих переходов по открытой воде — спокойно даже с детьми.",
   },
   {
     slug: "mayak-dai-lan",
     title: "Маяк Дай Лань",
     imageSrc: "/images/tours/mayak-dai-lan.jpg",
+    annotation: "Дикий пляж, но дорога туда — только проверенная, без решений на ходу.",
   },
   {
     slug: "nyachang-avtorskiy",
     title: "Авторский Нячанг",
     imageSrc:
       "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/nyachang-avtorskiy-b2ZHevFPr4gfLIEw3aV2oZPHvsRbs9.jpg",
+    annotation: "Один гид и один водитель весь день — рядом с вами никого чужого.",
   },
   {
     slug: "dalat-2-dnya",
-    title: "Далат",
+    title: "Далат — 2 дня",
     imageSrc: "/images/tours/dalat-2-dnya.jpg",
+    annotation:
+      "Не однодневный марш-бросок в горы: два спокойных дня, а вечер в городе — под присмотром, не самостоятельная прогулка.",
   },
 ]
 
@@ -124,30 +126,36 @@ function ToursSlide() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="flex flex-1 flex-col items-center overflow-y-auto px-5 pt-6 pb-6 text-center sm:px-10 sm:pt-8">
-        <span className="font-heading text-lg font-semibold tracking-wide text-primary uppercase sm:text-xl">
-          Туры
-        </span>
-        <h2 className="mt-1.5 max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
-          Пять маршрутов, а не каталог на любой вкус
+        <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
+          Ровно пять маршрутов — и ни одного лишнего
         </h2>
-        <div className="mt-4 grid w-full max-w-xl grid-cols-3 gap-2 sm:gap-3">
+        <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+          Не каталог на любой вкус, а отбор самых безопасных и проверенных программ. Никаких
+          однодневных марш-бросков и вечеров, когда гости бродят по незнакомому городу сами по
+          себе — каждый маршрут выстроен так, чтобы риск был минимальным.
+        </p>
+        <div className="mt-4 flex w-full max-w-xl flex-col gap-3">
           {CATALOG_TOURS.map((tour) => (
             <Link
               key={tour.slug}
               href={`/tours/${tour.slug}`}
-              className="group relative aspect-3/4 overflow-hidden rounded-xl bg-muted first:col-span-3 first:aspect-[2.2/1] sm:first:aspect-[2.6/1]"
+              className="group flex flex-col overflow-hidden rounded-2xl text-left"
             >
-              <Image
-                src={tour.imageSrc}
-                alt={tour.title}
-                fill
-                sizes="(min-width: 640px) 200px, 33vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
-              <span className="absolute inset-x-0 bottom-0 p-2 text-left text-xs leading-tight font-semibold text-white sm:text-sm">
-                {tour.title}
-              </span>
+              <div className="relative aspect-[6/5] w-full overflow-hidden rounded-2xl bg-muted">
+                <Image
+                  src={tour.imageSrc}
+                  alt={tour.title}
+                  fill
+                  sizes="(min-width: 640px) 500px, 100vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              </div>
+              <div className="px-0.5 pt-2.5">
+                <h3 className="font-heading text-base font-semibold sm:text-lg">{tour.title}</h3>
+                <p className="mt-0.5 text-xs leading-snug text-muted-foreground sm:text-sm">
+                  {tour.annotation}
+                </p>
+              </div>
             </Link>
           ))}
         </div>
@@ -158,13 +166,11 @@ function ToursSlide() {
 }
 
 function QuoteSlide({
-  eyebrow,
   title,
   body,
   quote,
   quoteAuthor,
 }: {
-  eyebrow: string
   title: string
   body: string
   quote: string
@@ -174,10 +180,7 @@ function QuoteSlide({
     <div className="relative flex h-full w-full items-center justify-center overflow-y-auto px-5 py-16">
       <Glow side="left" />
       <div className="relative mx-auto flex max-w-2xl flex-col items-center text-center">
-        <span className="font-heading text-lg font-semibold tracking-wide text-primary uppercase sm:text-xl">
-          {eyebrow}
-        </span>
-        <h2 className="mt-1.5 font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">{title}</h2>
+        <h2 className="font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">{title}</h2>
         <p className="mt-3 text-base leading-relaxed text-muted-foreground">{body}</p>
         <blockquote className="relative mx-auto mt-6 max-w-md rounded-2xl border border-border bg-card p-6 text-left shadow-lg">
           <span aria-hidden className="font-heading text-5xl leading-none text-primary/30">
@@ -206,9 +209,8 @@ export function AdvantagesSection() {
         />,
         <PhotoSlide
           key="transport"
-          eyebrow="Транспорт"
           title="Забудьте, каким должен быть трансфер в отпуске"
-          body="Кожаные кресла с массажем и кондиционер, который реально спасает от вьетнамской жары, а не просто гудит для вида. Обычно с дороги все приезжают помятыми и раздражёнными. Наши гости выходят из машины будто их только что подвезли до дома, а не через три часа тряски."
+          body="Кожаные кресла с массажем и кондиционер, который реально спасает от вьетнамской жары, а не просто гудит для вида. За рулём — один и тот же проверенный водитель, которого лично знает Виктор, а не случайный человек с трассы. Наши гости выходят из машины будто их только что подвезли до дома, а не через три часа тряски."
           imageSrc="/images/hero/premium-van-interior.jpg"
           imageAlt="Салон премиального минивэна с кожаными креслами"
           imagePosition="30% 50%"
@@ -216,15 +218,13 @@ export function AdvantagesSection() {
         <ToursSlide key="tours" />,
         <QuoteSlide
           key="guide"
-          eyebrow="Гид"
           title="С вами говорит Виктор, а не заезженная методичка"
-          body="Он ведёт лично вас: шутит там, где смешно, копает глубже там, где вам действительно интересно. Никакого текста наизусть — живой разговор всю дорогу."
+          body="Он ведёт лично вас: шутит там, где смешно, копает глубже там, где вам действительно интересно. Никакого текста наизусть — живой разговор всю дорогу, и личная ответственность за маршрут и вашу безопасность от первой до последней минуты."
           quote="Внимательный, знающий и с отличным чувством юмора"
           quoteAuthor="Nikeshka Sunny, отзыв о туре в Далат"
         />,
         <PhotoSlide
           key="company"
-          eyebrow="Компания"
           title="Это ваш день, и в нём больше никого"
           body="Никто не опаздывает к автобусу и не тащит всех в дьюти-фри. Программа собрана под вашу компанию — от встречи в отеле до прощания вечером."
           imageSrc="/images/tours/mayak-dai-lan.jpg"
@@ -232,7 +232,6 @@ export function AdvantagesSection() {
         />,
         <PhotoSlide
           key="food"
-          eyebrow="Еда"
           title="Проголодались — просто скажите"
           body="Никаких столовых по расписанию тур-группы. Уличная лепёшка с рынка, кофе прямо с фермы — куда захочется, туда и заедем."
           imageSrc="/images/tours/dalat-2-dnya.jpg"
@@ -240,7 +239,6 @@ export function AdvantagesSection() {
         />,
         <PhotoSlide
           key="pace"
-          eyebrow="Темп"
           title="Спешить нас с вами точно не заставят"
           body="Никакой обязательной лавки, где гиду капает процент с ваших покупок. Понравилось место — сидим сколько хочется. Маршрут подстраивается под вас, а не наоборот."
           imageSrc="/images/tours/severnye-ostrova.jpg"

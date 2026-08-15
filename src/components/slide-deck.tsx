@@ -12,7 +12,8 @@ import "swiper/css/pagination"
  * тач-свайп и клавиатура листают строго по одному слайду, без проскакивания.
  * На первом/последнем слайде дальнейший скролл в ту же сторону отпускает
  * управление обычному скроллу страницы (releaseOnEdges). Вертикальная колонка
- * точек слева, ниже зоны фото у каждого слайда, показывает прогресс.
+ * стежков-делений слева сверху, поверх зоны фото у каждого слайда (никогда не
+ * заходит в текстовую зону), показывает прогресс — стилизована под переплёт книги.
  */
 export function SlideDeck({ slides }: { slides: ReactNode[] }) {
   return (
@@ -30,7 +31,7 @@ export function SlideDeck({ slides }: { slides: ReactNode[] }) {
           {slide}
         </SwiperSlide>
       ))}
-      <div className="pointer-events-none absolute top-[40%] left-3 z-20 sm:top-[44%] sm:left-5">
+      <div className="pointer-events-none absolute top-4 left-3 z-20 sm:top-5 sm:left-5">
         <div className="slide-deck-pagination pointer-events-auto flex flex-col items-center gap-2" />
       </div>
     </Swiper>
