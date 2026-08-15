@@ -17,7 +17,7 @@ function TourCtaButton() {
   )
 }
 
-const COLLAGE_PHOTO_COUNT = 66
+const COLLAGE_PHOTO_COUNT = 65
 const COLLAGE_PHOTOS = Array.from(
   { length: COLLAGE_PHOTO_COUNT },
   (_, i) => `/images/collage/collage-${String(i + 1).padStart(2, "0")}.jpg`,
