@@ -14,27 +14,36 @@ function TourCtaButton() {
   )
 }
 
-function IntroSlide({
-  imageSrc,
-  imageAlt,
-  imagePosition,
-}: {
-  imageSrc: string
-  imageAlt: string
-  imagePosition?: string
-}) {
+const COLLAGE_PHOTO_COUNT = 72
+const COLLAGE_PHOTOS = Array.from(
+  { length: COLLAGE_PHOTO_COUNT },
+  (_, i) => `/images/collage/collage-${String(i + 1).padStart(2, "0")}.jpg`,
+)
+
+function PhotoCollage() {
+  return (
+    <div className="grid h-full w-full grid-cols-6 sm:grid-cols-9 lg:grid-cols-12">
+      {COLLAGE_PHOTOS.map((src, i) => (
+        <div key={src} className="collage-tile relative aspect-square overflow-hidden">
+          <Image
+            src={src}
+            alt=""
+            fill
+            priority={i < 12}
+            sizes="(min-width: 1024px) 8vw, (min-width: 640px) 11vw, 17vw"
+            className="collage-tile-img object-cover"
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function IntroSlide() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="relative h-[36%] shrink-0 overflow-hidden sm:h-[40%]">
-        <Image
-          src={imageSrc}
-          alt={imageAlt}
-          fill
-          priority
-          style={imagePosition ? { objectPosition: imagePosition } : undefined}
-          className="kenburns-img object-cover"
-          sizes="100vw"
-        />
+        <PhotoCollage />
       </div>
       <div className="flex flex-1 flex-col items-center overflow-y-auto px-5 pt-5 pb-6 text-center sm:px-10 sm:pt-7">
         <h1 className="max-w-xl font-heading text-3xl leading-[1.1] font-semibold sm:text-5xl">
@@ -202,11 +211,7 @@ export function AdvantagesSection() {
   return (
     <SlideDeck
       slides={[
-        <IntroSlide
-          key="intro"
-          imageSrc="https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/mayak-dai-lan/gallery-2-0FWzyc7AaHZJfflkozhDvSyKItZnCR.jpg"
-          imageAlt="Бухта и маяк Дай Лань с высоты"
-        />,
+        <IntroSlide key="intro" />,
         <PhotoSlide
           key="transport"
           title="Забудьте, каким должен быть трансфер в отпуске"
