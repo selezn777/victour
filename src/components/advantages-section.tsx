@@ -23,9 +23,6 @@ const COLLAGE_PHOTOS = Array.from(
   (_, i) => `/images/collage/collage-${String(i + 1).padStart(2, "0")}.jpg`,
 )
 
-// Порядок обхода при 29 (взаимно просто с 72) не повторяется, пока не пройдёт все 72 —
-// поэтому "открытие" фото в спотлайте кажется случайным, но каждое фото участвует.
-const SPOTLIGHT_ORDER = Array.from({ length: COLLAGE_PHOTO_COUNT }, (_, i) => (i * 29) % COLLAGE_PHOTO_COUNT)
 // priming — плитка в сетке "подмигивает", пока полноразмерное фото грузится в фоне
 // (устраняет мелькание предыдущего кадра) и даёт немного интриги перед раскрытием.
 const PRIME_MS = 1000
@@ -33,15 +30,28 @@ const HOLD_MS = 3200
 const GAP_MS = 900
 const TRANSITION_MS = 1000
 
+function shuffledIndices(count: number) {
+  const arr = Array.from({ length: count }, (_, i) => i)
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
+}
+
 type Phase = "idle" | "priming" | "open"
 
 function PhotoCollage() {
   const [phase, setPhase] = useState<Phase>("idle")
-  const [target, setTarget] = useState(SPOTLIGHT_ORDER[0])
+  const [target, setTarget] = useState(0)
 
   useEffect(() => {
     let cancelled = false
     let step = 0
+    // Новая случайная перетасовка при каждом заходе на сайт (не фиксированный порядок) —
+    // при этом каждое фото гарантированно показывается один раз за полный проход, прежде
+    // чем перетасовать заново и начать следующий круг.
+    let order = shuffledIndices(COLLAGE_PHOTO_COUNT)
     const timers: ReturnType<typeof setTimeout>[] = []
     const after = (fn: () => void, ms: number) => {
       timers.push(setTimeout(fn, ms))
@@ -49,7 +59,11 @@ function PhotoCollage() {
 
     const runCycle = () => {
       if (cancelled) return
-      const idx = SPOTLIGHT_ORDER[step % SPOTLIGHT_ORDER.length]
+      if (step >= order.length) {
+        order = shuffledIndices(COLLAGE_PHOTO_COUNT)
+        step = 0
+      }
+      const idx = order[step]
       step += 1
       setTarget(idx)
       setPhase("priming")
