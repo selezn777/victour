@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { Glow } from "@/components/glow"
 import { SlideDeck } from "@/components/slide-deck"
 
@@ -39,28 +39,18 @@ function shuffledIndices(count: number) {
   return arr
 }
 
-// 66 не делится ровно на 8/9/12 колонок — последняя строка сетки всегда была бы
-// неполной (например, 2 фото в ряду). Вместо этого на каждом брейкпоинте показываем
-// только столько фото, сколько составляет целое число строк — остальные скрыты
-// классами ниже, сетка всегда представляет собой ровный прямоугольник без обрезков.
-const VISIBLE_AT_BASE = Math.floor(COLLAGE_PHOTO_COUNT / 8) * 8 // 8 кол. × 8 строк = 64
-const VISIBLE_AT_SM = Math.floor(COLLAGE_PHOTO_COUNT / 9) * 9 // 9 кол. × 7 строк = 63
-const VISIBLE_AT_LG = Math.floor(COLLAGE_PHOTO_COUNT / 12) * 12 // 12 кол. × 5 строк = 60
-
-function tileVisibilityClass(i: number) {
-  if (i >= VISIBLE_AT_BASE) return "hidden"
-  if (i >= VISIBLE_AT_SM) return "sm:hidden"
-  if (i >= VISIBLE_AT_LG) return "lg:hidden"
-  return ""
-}
-
-// Совпадает с брейкпоинтами Tailwind (sm 640px, lg 1024px) и с классами выше —
-// раскрытие выбирает только среди фото, которые реально отрисованы на этом экране,
-// иначе может выпасть индекс скрытой (display:none) плитки.
-function visibleCountForWidth(width: number) {
-  if (width >= 1024) return VISIBLE_AT_LG
-  if (width >= 640) return VISIBLE_AT_SM
-  return VISIBLE_AT_BASE
+// Раньше высота коллажа считалась "снизу вверх" — фиксированное число строк на
+// брейкпоинт, а итоговая высота была побочным эффектом (кол-во строк × ширина плитки).
+// На широких экранах строк было выделено меньше (5 у lg), но плитка внутри становится
+// куда шире, так что коллаж всё равно выходил на сотни пикселей выше, чем оставалось
+// места под заголовок и кнопку — на широком/невысоком экране текст обрезался или уезжал
+// за пределы слайда. Теперь наоборот: высота задаётся явно (% от высоты слайда,
+// см. wrapperRef ниже), а число строк вычисляется от неё через ResizeObserver — коллаж
+// физически не может занять больше отведённой полосы ни на каком экране.
+function columnsForWidth(width: number) {
+  if (width >= 1024) return 12
+  if (width >= 640) return 9
+  return 8
 }
 
 type Phase = "idle" | "priming" | "open"
@@ -81,17 +71,45 @@ function preloadImage(src: string) {
 }
 
 function PhotoCollage() {
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  // cols идёт от ширины (совпадает с брейкпоинтами Tailwind-сетки ниже), а rows —
+  // от РЕАЛЬНОЙ высоты полосы, отведённой под коллаж (см. className на обёртке).
+  // На широком, но невысоком экране (планшет/десктоп/landscape) плитка при 12
+  // колонках намного шире, чем при 8 — без этого пересчёта высота сетки росла вместе
+  // с шириной экрана и вылезала за пределы слайда. min(…, COLLAGE_PHOTO_COUNT) на
+  // случай очень высокой узкой полосы, где computed rows*cols мог бы превысить запас фото.
+  const [layout, setLayout] = useState({ cols: 8, rows: 4 })
   const [phase, setPhase] = useState<Phase>("idle")
   const [target, setTarget] = useState(0)
+
+  useLayoutEffect(() => {
+    const el = wrapperRef.current
+    if (!el) return
+    const measure = () => {
+      const width = el.clientWidth
+      const height = el.clientHeight
+      if (!width || !height) return
+      const cols = columnsForWidth(width)
+      const tile = width / cols
+      const rows = Math.max(2, Math.floor(height / tile))
+      setLayout((prev) => (prev.cols === cols && prev.rows === rows ? prev : { cols, rows }))
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const visibleCount = Math.min(COLLAGE_PHOTO_COUNT, layout.cols * layout.rows)
 
   useEffect(() => {
     let cancelled = false
     let step = 0
     // Новая случайная перетасовка при каждом заходе на сайт (не фиксированный порядок) —
     // при этом каждое фото гарантированно показывается один раз за полный проход, прежде
-    // чем перетасовать заново и начать следующий круг. Перетасовка ограничена видимыми на
-    // этом экране плитками (см. visibleCountForWidth).
-    let order = shuffledIndices(visibleCountForWidth(window.innerWidth))
+    // чем перетасовать заново и начать следующий круг. Перетасовка ограничена плитками,
+    // реально видимыми в текущей раскладке (см. layout выше).
+    let order = shuffledIndices(visibleCount)
     const timers: ReturnType<typeof setTimeout>[] = []
     const after = (fn: () => void, ms: number) => {
       timers.push(setTimeout(fn, ms))
@@ -101,7 +119,7 @@ function PhotoCollage() {
     const runCycle = () => {
       if (cancelled) return
       if (step >= order.length) {
-        order = shuffledIndices(visibleCountForWidth(window.innerWidth))
+        order = shuffledIndices(visibleCount)
         step = 0
       }
       const idx = order[step]
@@ -124,18 +142,23 @@ function PhotoCollage() {
       cancelled = true
       timers.forEach(clearTimeout)
     }
-  }, [])
+    // Смена раскладки (поворот экрана, ресайз окна) начинает цикл заново под новый
+    // набор видимых плиток — небольшая потеря прогресса цикла тут не заметна и не важна.
+  }, [visibleCount])
 
   return (
-    // Без фиксированной высоты/aspect-ratio — блок сам подстраивается под контент.
-    // Ряды сетки всегда полные (см. tileVisibilityClass), поэтому обрезка не нужна:
-    // раскрытие (absolute inset-0) само совпадает по размеру с сеткой пиксель в пиксель.
-    <div className="relative w-full shrink-0">
+    // Высота полосы задана явно (% от высоты слайда) и не зависит от контента — на любом
+    // экране коллаж не может занять больше отведённого места и отжать заголовок/кнопку
+    // за пределы слайда. overflow-hidden подчищает округление rows у самого нижнего ряда.
+    <div
+      ref={wrapperRef}
+      className="relative h-[24svh] min-h-[140px] w-full shrink-0 overflow-hidden sm:h-[28svh] lg:h-[32svh]"
+    >
       <div className="grid w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
         {COLLAGE_PHOTOS.map((src, i) => (
           <div
             key={src}
-            className={`relative aspect-square overflow-hidden ${tileVisibilityClass(i)} ${
+            className={`relative aspect-square overflow-hidden ${i >= visibleCount ? "hidden" : ""} ${
               phase === "priming" && i === target ? "tile-priming" : ""
             }`}
           >
