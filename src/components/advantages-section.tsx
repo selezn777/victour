@@ -409,30 +409,39 @@ function ToursSlide() {
 function QuoteSlide({
   title,
   body,
-  quote,
-  quoteAuthor,
+  quotes,
 }: {
   title: string
   body: string
-  quote: string
-  quoteAuthor: string
+  quotes: { quote: string; author: string }[]
 }) {
   return (
-    <div className="relative flex h-full w-full items-center justify-center overflow-y-auto px-5 py-16">
+    <div className="relative flex h-full w-full items-center justify-center overflow-y-auto px-5 py-12 sm:py-16">
       <Glow side="left" />
-      <div className="relative mx-auto flex max-w-2xl flex-col items-center text-center">
-        <h2 className="font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">{title}</h2>
-        <p className="mt-3 text-base leading-relaxed text-muted-foreground">{body}</p>
-        <blockquote className="relative mx-auto mt-6 max-w-md rounded-2xl border border-border bg-card p-6 text-left shadow-lg">
-          <span aria-hidden className="font-heading text-5xl leading-none text-primary/30">
-            “
-          </span>
-          <p className="-mt-3 text-sm text-foreground/90 italic">{quote}</p>
-          <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-sm">🙂</span>
-            {quoteAuthor}
-          </p>
-        </blockquote>
+      <div className="relative mx-auto flex max-w-4xl flex-col items-center text-center">
+        <h2 className="max-w-2xl font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">
+          {title}
+        </h2>
+        <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground">{body}</p>
+        <div className="mt-6 grid w-full gap-3 sm:grid-cols-3">
+          {quotes.map(({ quote, author }) => (
+            <blockquote
+              key={author}
+              className="relative rounded-2xl border border-border bg-card p-5 text-left shadow-lg"
+            >
+              <span aria-hidden className="font-heading text-4xl leading-none text-primary/30">
+                “
+              </span>
+              <p className="-mt-2 text-sm text-foreground/90 italic">{quote}</p>
+              <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm">
+                  🙂
+                </span>
+                {author}
+              </p>
+            </blockquote>
+          ))}
+        </div>
         <TourCtaButton />
       </div>
     </div>
@@ -455,10 +464,22 @@ export function AdvantagesSection() {
         <ToursSlide key="tours" />,
         <QuoteSlide
           key="guide"
-          title="С вами говорит Виктор, а не заезженная методичка"
-          body="Он ведёт лично вас: шутит там, где смешно, копает глубже там, где вам действительно интересно. Никакого текста наизусть — живой разговор всю дорогу, и личная ответственность за маршрут и вашу безопасность от первой до последней минуты."
-          quote="Внимательный, знающий и с отличным чувством юмора"
-          quoteAuthor="Nikeshka Sunny, отзыв о туре в Далат"
+          title="Что говорят гости, которые уже были с нами"
+          body="Внимание к мелочам, забота о безопасности и готовность подстроиться под вас — вот что нам чаще всего пишут после поездки. Если по дороге возникал вопрос или хотелось заехать куда-то ещё — решали на месте, без формальностей."
+          quotes={[
+            {
+              quote: "Внимательный, знающий и с отличным чувством юмора",
+              author: "Nikeshka Sunny, отзыв о туре в Далат",
+            },
+            {
+              quote: "Отвечает на любые вопросы и оперативно реагирует",
+              author: "Larin Vladimir, отзыв о турах в Далат и на Северные острова",
+            },
+            {
+              quote: "Хорошо ориентирует в плане отдыха и быта, готов помочь в любых вопросах",
+              author: "Марина Кутукова, отзыв о туре на Северные острова",
+            },
+          ]}
         />,
         <PhotoSlide
           key="company"
