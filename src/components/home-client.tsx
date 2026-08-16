@@ -11,16 +11,18 @@ export function HomeClient({
   settings,
   guide,
   guideReviews,
+  heroQuotes,
 }: {
   settings: SiteSettings
   guide: PrimaryGuide | null
   guideReviews: Review[]
+  heroQuotes: Review[]
 }) {
   return (
     <>
       <SiteHeader settings={settings} guide={guide} />
       <main className="flex-1">
-        <AdvantagesSection />
+        <AdvantagesSection heroQuotes={heroQuotes} />
         <DiscountsSection packageDiscounts={settings.packageDiscounts} />
         <FeaturedReviews reviews={guideReviews} guideName={guide?.name ?? null} />
       </main>

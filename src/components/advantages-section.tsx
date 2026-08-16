@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Glow } from "@/components/glow"
 import { SlideDeck } from "@/components/slide-deck"
+import type { Review } from "@/lib/reviews-data"
 
 function TourCtaButton() {
   return (
@@ -406,42 +407,81 @@ function ToursSlide() {
   )
 }
 
+type Quote = { quote: string; author: string }
+
+function reviewToQuote(r: Review): Quote {
+  const target = r.tourTitle
+    ? `отзыв о туре «${r.tourTitle}»`
+    : r.guideName
+      ? `отзыв о гиде ${r.guideName}`
+      : "отзыв гостя"
+  return { quote: r.text ?? "", author: `${r.authorName}, ${target}` }
+}
+
 // На мобиле карточки-цитаты в столбик не влезали в высоту слайда вместе с
 // кнопкой — сама секция скроллится (overflow-y-auto), но Swiper того же
 // направления (vertical) перехватывает вертикальный тач-свайп раньше, чем до
-// него доходит внутренний скролл, и кнопка оставалась недостижима. Плюс
-// Виктор отдельно просил не по одной карточке за раз, а сразу видеть 2-3.
-// Решение — просто узкие карточки в горизонтально скроллящемся ряду (нативный
-// overflow-x, БЕЗ scroll-snap: тот css-механизм уже один раз ломался на
-// реальном мобильном в этом проекте, см. feedback_victour_prefer_js_over_css) —
-// в кадре видно 2 целиком и край третьей, свайп просто листает дальше без
-// какой-либо самодельной JS-логики позиционирования. С sm и шире — обычная
-// CSS grid (там высота не проблема), а с lg/xl открываются ещё карточки.
+// него доходит внутренний скролл, и кнопка оставалась недостижима. Прошли
+// через пару итераций (карусель по одной, потом узкий ряд по 2-3 в кадре) —
+// Виктор в итоге попросил именно "слоями друг за другом" (стопкой карточек
+// внахлёст, следующая проглядывает из-за первой), а не сжатые side-by-side
+// карточки. line-clamp на тексте цитаты держит высоту карточек одинаковой
+// независимо от длины реального отзыва — иначе стопка "прыгала" бы при
+// переключении. С sm и шире — обычная CSS grid (там высота не проблема).
 function QuoteCard({ quote, author }: { quote: string; author: string }) {
   return (
-    <blockquote className="relative h-full rounded-2xl border border-border bg-card p-4 text-left shadow-lg sm:p-5">
+    <blockquote className="relative flex h-full flex-col rounded-2xl border border-border bg-card p-4 text-left shadow-lg sm:p-5">
       <span aria-hidden className="font-heading text-3xl leading-none text-primary/30 sm:text-4xl">
         “
       </span>
-      <p className="-mt-1 text-xs text-foreground/90 italic sm:-mt-2 sm:text-sm">{quote}</p>
+      <p className="-mt-1 line-clamp-5 text-xs text-foreground/90 italic sm:-mt-2 sm:line-clamp-6 sm:text-sm">
+        {quote}
+      </p>
       <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground sm:mt-3 sm:gap-2 sm:text-xs">
         <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs sm:size-6 sm:text-sm">
           🙂
         </span>
-        {author}
+        <span className="line-clamp-1">{author}</span>
       </p>
     </blockquote>
   )
 }
 
-function QuoteRow({ quotes }: { quotes: { quote: string; author: string }[] }) {
+const STACK_VISIBLE_LAYERS = 2
+const STACK_OFFSET_PX = 12
+
+function QuoteStack({ quotes }: { quotes: Quote[] }) {
+  const [front, setFront] = useState(0)
+
+  if (quotes.length === 0) return null
+
+  const advance = () => setFront((i) => (i + 1) % quotes.length)
+
   return (
-    <div className="mt-4 flex w-full gap-3 overflow-x-auto pb-1 sm:hidden">
-      {quotes.map(({ quote, author }) => (
-        <div key={author} className="w-[44%] shrink-0">
-          <QuoteCard quote={quote} author={author} />
-        </div>
-      ))}
+    <div
+      className="relative mx-auto mt-5 h-56 w-full max-w-xs sm:hidden"
+      style={{ paddingRight: STACK_OFFSET_PX * (STACK_VISIBLE_LAYERS - 1) }}
+    >
+      {quotes.map((q, i) => {
+        const depth = (i - front + quotes.length) % quotes.length
+        if (depth >= STACK_VISIBLE_LAYERS) return null
+        return (
+          <button
+            key={q.author}
+            type="button"
+            aria-label={depth === 0 ? "Следующий отзыв" : undefined}
+            tabIndex={depth === 0 ? 0 : -1}
+            onClick={advance}
+            className="absolute inset-0 w-full transition-transform duration-300 ease-out"
+            style={{
+              zIndex: STACK_VISIBLE_LAYERS - depth,
+              transform: `translate(${depth * STACK_OFFSET_PX}px, ${depth * STACK_OFFSET_PX}px)`,
+            }}
+          >
+            <QuoteCard quote={q.quote} author={q.author} />
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -453,12 +493,12 @@ function QuoteSlide({
 }: {
   title: string
   body: string
-  quotes: { quote: string; author: string; revealFrom?: "lg" | "xl" }[]
+  quotes: Quote[]
 }) {
   return (
-    <div className="relative flex h-full w-full items-center justify-center overflow-y-auto px-5 py-8 sm:py-16">
-      <Glow side="left" />
-      <div className="relative mx-auto flex w-full max-w-4xl flex-col items-center text-center lg:max-w-5xl xl:max-w-6xl">
+    <div className="flex h-full w-full flex-col overflow-hidden">
+      <div className="relative flex flex-1 flex-col items-center overflow-y-auto px-5 pt-6 pb-6 text-center sm:px-10 sm:pt-8">
+        <Glow side="left" />
         <h2 className="max-w-2xl font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">
           {title}
         </h2>
@@ -466,18 +506,17 @@ function QuoteSlide({
           {body}
         </p>
 
-        <QuoteRow quotes={quotes} />
+        <QuoteStack quotes={quotes} />
 
-        <div className="mt-6 hidden w-full gap-3 sm:grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {quotes.map(({ quote, author, revealFrom }) => (
-            <div
-              key={author}
-              className={revealFrom === "lg" ? "hidden lg:block" : revealFrom === "xl" ? "hidden xl:block" : ""}
-            >
-              <QuoteCard quote={quote} author={author} />
-            </div>
-          ))}
-        </div>
+        {quotes.length > 0 && (
+          <div className="mt-6 hidden w-full max-w-5xl gap-3 sm:grid sm:grid-cols-3 lg:max-w-6xl lg:grid-cols-4 xl:max-w-7xl xl:grid-cols-6">
+            {quotes.map(({ quote, author }, i) => (
+              <div key={author} className={i === 3 ? "hidden lg:block" : i >= 4 ? "hidden xl:block" : ""}>
+                <QuoteCard quote={quote} author={author} />
+              </div>
+            ))}
+          </div>
+        )}
 
         <TourCtaButton />
       </div>
@@ -485,7 +524,7 @@ function QuoteSlide({
   )
 }
 
-export function AdvantagesSection() {
+export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
   return (
     <SlideDeck
       slides={[
@@ -503,30 +542,7 @@ export function AdvantagesSection() {
           key="guide"
           title="Что говорят гости, которые уже были с нами"
           body="Внимание к мелочам и забота о безопасности — вот что нам чаще всего пишут после поездки."
-          quotes={[
-            {
-              quote: "Внимательный, знающий и с отличным чувством юмора",
-              author: "Nikeshka Sunny, отзыв о туре в Далат",
-            },
-            {
-              quote: "Отвечает на любые вопросы и оперативно реагирует",
-              author: "Larin Vladimir, отзыв о турах в Далат и на Северные острова",
-            },
-            {
-              quote: "Хорошо ориентирует в плане отдыха и быта, готов помочь в любых вопросах",
-              author: "Марина Кутукова, отзыв о туре на Северные острова",
-            },
-            {
-              quote: "Всё время рассказывал и показывал — подробно, увлекательно и совсем не утомительно",
-              author: "Юрий Ефремов, отзыв о туре в Далат",
-              revealFrom: "lg",
-            },
-            {
-              quote: "Очень компетентный, отдых на высшем уровне, всё прошло легко и непринуждённо",
-              author: "Кирилл Осипов, отзыв о туре на Северные острова",
-              revealFrom: "xl",
-            },
-          ]}
+          quotes={heroQuotes.map(reviewToQuote)}
         />,
         <PhotoSlide
           key="company"
