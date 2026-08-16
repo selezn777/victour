@@ -22,7 +22,7 @@ export function HomeClient({
     <>
       <SiteHeader settings={settings} guide={guide} />
       <main className="flex-1">
-        <AdvantagesSection heroQuotes={heroQuotes} />
+        <AdvantagesSection heroQuotes={heroQuotes} packageDiscounts={settings.packageDiscounts} />
         <DiscountsSection packageDiscounts={settings.packageDiscounts} />
         <FeaturedReviews reviews={guideReviews} guideName={guide?.name ?? null} />
       </main>
