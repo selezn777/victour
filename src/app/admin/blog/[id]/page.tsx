@@ -40,7 +40,7 @@ export default async function AdminArticlePage({ params }: { params: Promise<{ i
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <Link href="/admin/blog" className="text-sm text-muted-foreground hover:underline">
           ← Все статьи
         </Link>

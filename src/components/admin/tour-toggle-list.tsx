@@ -26,10 +26,15 @@ export function TourToggleList({ tours }: { tours: AdminTourRow[] }) {
     <div className="flex flex-col gap-2">
       {tours.map((tour) => (
         <div key={tour.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3">
-          <span className={tour.isActive ? "font-medium" : "font-medium text-muted-foreground line-through"}>
+          <span
+            className={
+              "min-w-0 flex-1 truncate " +
+              (tour.isActive ? "font-medium" : "font-medium text-muted-foreground line-through")
+            }
+          >
             {tour.title}
           </span>
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          <label className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground">
             {pending === tour.id ? "…" : tour.isActive ? "Виден на сайте" : "Скрыт"}
             <input
               type="checkbox"

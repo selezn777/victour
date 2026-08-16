@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { Glow } from "@/components/glow"
 import { SlideDeck } from "@/components/slide-deck"
 
@@ -39,14 +39,19 @@ function shuffledIndices(count: number) {
   return arr
 }
 
-// Раньше высота коллажа считалась "снизу вверх" — фиксированное число строк на
-// брейкпоинт, а итоговая высота была побочным эффектом (кол-во строк × ширина плитки).
-// На широких экранах строк было выделено меньше (5 у lg), но плитка внутри становится
-// куда шире, так что коллаж всё равно выходил на сотни пикселей выше, чем оставалось
-// места под заголовок и кнопку — на широком/невысоком экране текст обрезался или уезжал
-// за пределы слайда. Теперь наоборот: высота задаётся явно (% от высоты слайда,
-// см. wrapperRef ниже), а число строк вычисляется от неё через ResizeObserver — коллаж
-// физически не может занять больше отведённой полосы ни на каком экране.
+// Высота полосы под коллаж задана явно в CSS (% от высоты слайда, см. className
+// ниже) и не зависит от контента — сколько бы фото ни было в сетке, overflow-hidden
+// обрежет всё, что не влезло. Раньше высота была побочным эффектом "строк на
+// брейкпоинт × ширина плитки" — на широком экране плитка становилась шире, и та же
+// строка выходила на сотни пикселей выше, отжимая заголовок за пределы слайда.
+// Пробовали вместо этого измерять реальную высоту через ResizeObserver и вычислять
+// точное число строк — на практике словили гонку с загрузкой картинок на реальном
+// телефоне (одна лишняя частично обрезанная строка успевала отрендериться серым
+// плейсхолдером до того, как её скрывали). Не пытаемся больше попадать в ряд ровно —
+// просто рендерим фиксированный запас плиток на брейкпоинт (с запасом на обрезку
+// последней строки) и полагаемся на overflow-hidden.
+const VISIBLE_COUNT: Record<number, number> = { 8: 24, 9: 27, 12: 36 }
+
 function columnsForWidth(width: number) {
   if (width >= 1024) return 12
   if (width >= 640) return 9
@@ -71,36 +76,18 @@ function preloadImage(src: string) {
 }
 
 function PhotoCollage() {
-  const wrapperRef = useRef<HTMLDivElement>(null)
-  // cols идёт от ширины (совпадает с брейкпоинтами Tailwind-сетки ниже), а rows —
-  // от РЕАЛЬНОЙ высоты полосы, отведённой под коллаж (см. className на обёртке).
-  // На широком, но невысоком экране (планшет/десктоп/landscape) плитка при 12
-  // колонках намного шире, чем при 8 — без этого пересчёта высота сетки росла вместе
-  // с шириной экрана и вылезала за пределы слайда. min(…, COLLAGE_PHOTO_COUNT) на
-  // случай очень высокой узкой полосы, где computed rows*cols мог бы превысить запас фото.
-  const [layout, setLayout] = useState({ cols: 8, rows: 4 })
+  const [cols, setCols] = useState(8)
   const [phase, setPhase] = useState<Phase>("idle")
   const [target, setTarget] = useState(0)
 
-  useLayoutEffect(() => {
-    const el = wrapperRef.current
-    if (!el) return
-    const measure = () => {
-      const width = el.clientWidth
-      const height = el.clientHeight
-      if (!width || !height) return
-      const cols = columnsForWidth(width)
-      const tile = width / cols
-      const rows = Math.max(2, Math.floor(height / tile))
-      setLayout((prev) => (prev.cols === cols && prev.rows === rows ? prev : { cols, rows }))
-    }
-    measure()
-    const ro = new ResizeObserver(measure)
-    ro.observe(el)
-    return () => ro.disconnect()
+  useEffect(() => {
+    const update = () => setCols(columnsForWidth(window.innerWidth))
+    update()
+    window.addEventListener("resize", update)
+    return () => window.removeEventListener("resize", update)
   }, [])
 
-  const visibleCount = Math.min(COLLAGE_PHOTO_COUNT, layout.cols * layout.rows)
+  const visibleCount = VISIBLE_COUNT[cols]
 
   useEffect(() => {
     let cancelled = false
@@ -149,11 +136,9 @@ function PhotoCollage() {
   return (
     // Высота полосы задана явно (% от высоты слайда) и не зависит от контента — на любом
     // экране коллаж не может занять больше отведённого места и отжать заголовок/кнопку
-    // за пределы слайда. overflow-hidden подчищает округление rows у самого нижнего ряда.
-    <div
-      ref={wrapperRef}
-      className="relative h-[24svh] min-h-[140px] w-full shrink-0 overflow-hidden sm:h-[28svh] lg:h-[32svh]"
-    >
+    // за пределы слайда. overflow-hidden обрезает лишнее вместо того, чтобы растягивать блок.
+    <div className="relative h-[24svh] min-h-[140px] w-full shrink-0 overflow-hidden sm:h-[28svh] lg:h-[32svh]">
+
       <div className="grid w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
         {COLLAGE_PHOTOS.map((src, i) => (
           <div
@@ -198,7 +183,7 @@ function IntroSlide() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <PhotoCollage />
-      <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-5 py-2 text-center sm:px-10 sm:py-4">
+      <div className="flex flex-1 flex-col items-center overflow-y-auto px-5 pt-6 pb-6 text-center sm:px-10 sm:pt-8">
         <h1 className="max-w-xl font-heading text-2xl leading-[1.1] font-semibold sm:text-5xl">
           Вьетнам без чужих
         </h1>
