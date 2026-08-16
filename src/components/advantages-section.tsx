@@ -458,15 +458,18 @@ function QuotePairs({ quotes }: { quotes: Quote[] }) {
   const [direction, setDirection] = useState<1 | -1>(1)
   // Плавность — на React-стейте, не на CSS-скролле (то же правило, что и со
   // свайпом выше): новая пара монтируется уже сдвинутой/прозрачной (ключ
-  // сменился — это новый DOM-узел), затем в следующем кадре стейт сбрасывает
+  // сменился — это новый DOM-узел), затем чуть погодя стейт сбрасывает
   // сдвиг — переход анимируется через обычный CSS transition на transform/
-  // opacity, но моментом переключения управляет JS.
+  // opacity, но моментом переключения управляет JS. Именно setTimeout, а не
+  // requestAnimationFrame: rAF в невидимой/неактивной вкладке браузер может
+  // не вызвать вообще (проверено — карточки застревали прозрачными
+  // навсегда), setTimeout срабатывает гарантированно.
   const [entering, setEntering] = useState(false)
   const touchStartX = useRef<number | null>(null)
 
   useEffect(() => {
-    const id = requestAnimationFrame(() => requestAnimationFrame(() => setEntering(false)))
-    return () => cancelAnimationFrame(id)
+    const id = window.setTimeout(() => setEntering(false), 20)
+    return () => window.clearTimeout(id)
   }, [pairIndex])
 
   if (quotes.length === 0) return null
