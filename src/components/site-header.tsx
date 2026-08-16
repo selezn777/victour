@@ -75,7 +75,7 @@ export function SiteHeader({
                   href="/blog"
                   className="rounded-md px-2 py-2.5 font-heading text-base hover:bg-muted"
                 >
-                  Блог
+                  Полезное
                 </Link>
                 <div className="mt-3 flex flex-col gap-1 border-t border-border pt-3 text-xs text-muted-foreground">
                   <span>$1 = {formatVndFromUsd(1, settings.usdVndRate)}</span>
