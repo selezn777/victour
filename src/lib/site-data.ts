@@ -93,6 +93,7 @@ export async function getTourPageData(slug: string): Promise<{
         "id, slug, title, short_description, duration_label, duration_days, is_dalat_two_day, hero_image_url, gallery_urls, itinerary, includes, excludes, ticket_options, pricing_tiers(guest_count, price_adult_usd, price_child_usd)",
       )
       .eq("slug", slug)
+      .eq("is_active", true)
       .maybeSingle(),
     supabase
       .from("guides")
@@ -241,6 +242,7 @@ export async function getHomepageData(): Promise<{
     supabase
       .from("tours")
       .select("slug, title, short_description, duration_label, hero_image_url, sort_order, pricing_tiers(price_adult_usd)")
+      .eq("is_active", true)
       .order("sort_order", { ascending: true }),
     supabase.from("settings").select("key, value"),
     supabase

@@ -114,6 +114,9 @@ export default async function AdminBookingsPage() {
           <Link href="/admin/blog" className="mt-1 block text-sm text-primary hover:underline">
             Блог →
           </Link>
+          <Link href="/admin/tours" className="mt-1 block text-sm text-primary hover:underline">
+            Туры →
+          </Link>
         </div>
         <SignOutButton />
       </div>

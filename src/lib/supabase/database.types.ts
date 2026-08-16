@@ -526,6 +526,7 @@ export type Database = {
           hero_image_url: string | null
           id: string
           includes: Json
+          is_active: boolean
           is_dalat_two_day: boolean
           itinerary: Json
           short_description: Json
@@ -544,6 +545,7 @@ export type Database = {
           hero_image_url?: string | null
           id?: string
           includes?: Json
+          is_active?: boolean
           is_dalat_two_day?: boolean
           itinerary?: Json
           short_description: Json
@@ -562,6 +564,7 @@ export type Database = {
           hero_image_url?: string | null
           id?: string
           includes?: Json
+          is_active?: boolean
           is_dalat_two_day?: boolean
           itinerary?: Json
           short_description?: Json
