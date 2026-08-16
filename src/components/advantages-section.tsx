@@ -448,83 +448,75 @@ function QuoteCard({ quote, author }: { quote: string; author: string }) {
 
 const SWIPE_THRESHOLD_PX = 40
 
-// Виктор уточнил: не карточки внахлёст (та версия ему не подошла) — на
-// экране должны быть видны сразу 2 карточки, друг под другом (не в ряд), а
-// переключение на следующую пару — свайпом (не тапом). Свайп меряется
-// вручную (touchstart/touchend), без CSS scroll-snap — см. предыдущие
-// комментарии выше и feedback_victour_prefer_js_over_css.
-function QuotePairs({ quotes }: { quotes: Quote[] }) {
-  const [pairIndex, setPairIndex] = useState(0)
+// Виктор уточнил ещё раз: 2 карточки друг под другом должны листаться
+// НЕЗАВИСИМО — свайп по верхней листает только верхнюю, свайп по нижней
+// только нижнюю (не единой парой), и сам переход — чуть мягче (длиннее и
+// меньше сдвиг), чем было. Каждая карточка — свой независимый "слот" со
+// своим индексом по общему пулу отзывов.
+function useQuoteSlot(quotes: Quote[], startIndex: number) {
+  const [index, setIndex] = useState(startIndex)
   const [direction, setDirection] = useState<1 | -1>(1)
-  // Плавность — на React-стейте, не на CSS-скролле (то же правило, что и со
-  // свайпом выше): новая пара монтируется уже сдвинутой/прозрачной (ключ
-  // сменился — это новый DOM-узел), затем чуть погодя стейт сбрасывает
-  // сдвиг — переход анимируется через обычный CSS transition на transform/
-  // opacity, но моментом переключения управляет JS. Именно setTimeout, а не
-  // requestAnimationFrame: rAF в невидимой/неактивной вкладке браузер может
-  // не вызвать вообще (проверено — карточки застревали прозрачными
-  // навсегда), setTimeout срабатывает гарантированно.
+  // setTimeout, а не requestAnimationFrame — см. коммит с фиксом выше: rAF в
+  // невидимой/неактивной вкладке может не сработать вообще, карточка тогда
+  // застревает прозрачной навсегда.
   const [entering, setEntering] = useState(false)
   const touchStartX = useRef<number | null>(null)
 
   useEffect(() => {
     const id = window.setTimeout(() => setEntering(false), 20)
     return () => window.clearTimeout(id)
-  }, [pairIndex])
+  }, [index])
+
+  const advance = (dir: 1 | -1) => {
+    setDirection(dir)
+    setEntering(true)
+    setIndex((i) => (i + dir + quotes.length) % quotes.length)
+  }
+
+  return {
+    quote: quotes[index],
+    index,
+    direction,
+    entering,
+    onTouchStart: (e: React.TouchEvent) => {
+      touchStartX.current = e.touches[0].clientX
+    },
+    onTouchEnd: (e: React.TouchEvent) => {
+      if (touchStartX.current === null) return
+      const delta = e.changedTouches[0].clientX - touchStartX.current
+      touchStartX.current = null
+      if (Math.abs(delta) < SWIPE_THRESHOLD_PX) return
+      advance(delta < 0 ? 1 : -1)
+    },
+  }
+}
+
+function QuoteSlotView({ slot }: { slot: ReturnType<typeof useQuoteSlot> }) {
+  return (
+    <div className="overflow-hidden" onTouchStart={slot.onTouchStart} onTouchEnd={slot.onTouchEnd}>
+      <div
+        key={slot.index}
+        className={`transition-all duration-[380ms] ease-out ${
+          slot.entering ? (slot.direction === 1 ? "translate-x-4 opacity-0" : "-translate-x-4 opacity-0") : "translate-x-0 opacity-100"
+        }`}
+      >
+        <QuoteCard quote={slot.quote.quote} author={slot.quote.author} />
+      </div>
+    </div>
+  )
+}
+
+function QuotePairs({ quotes }: { quotes: Quote[] }) {
+  const safeQuotes = quotes.length > 0 ? quotes : [{ quote: "", author: "" }]
+  const top = useQuoteSlot(safeQuotes, 0)
+  const bottom = useQuoteSlot(safeQuotes, Math.min(1, safeQuotes.length - 1))
 
   if (quotes.length === 0) return null
 
-  const pairCount = Math.ceil(quotes.length / 2)
-  const goTo = (target: number, dir: 1 | -1) => {
-    setDirection(dir)
-    setEntering(true)
-    setPairIndex(target)
-  }
-  const advance = (dir: 1 | -1) => goTo((pairIndex + dir + pairCount) % pairCount, dir)
-  const visible = [quotes[(pairIndex * 2) % quotes.length], quotes[(pairIndex * 2 + 1) % quotes.length]]
-
   return (
-    <div className="mt-5 w-full max-w-xs sm:hidden">
-      <div
-        className="overflow-hidden"
-        onTouchStart={(e) => {
-          touchStartX.current = e.touches[0].clientX
-        }}
-        onTouchEnd={(e) => {
-          if (touchStartX.current === null) return
-          const delta = e.changedTouches[0].clientX - touchStartX.current
-          touchStartX.current = null
-          if (Math.abs(delta) < SWIPE_THRESHOLD_PX) return
-          advance(delta < 0 ? 1 : -1)
-        }}
-      >
-        <div
-          key={pairIndex}
-          className={`flex flex-col gap-3 transition-all duration-300 ease-out ${
-            entering ? (direction === 1 ? "translate-x-6 opacity-0" : "-translate-x-6 opacity-0") : "translate-x-0 opacity-100"
-          }`}
-        >
-          {visible.map((q, i) => (
-            <QuoteCard key={`${pairIndex}-${i}-${q.author}`} quote={q.quote} author={q.author} />
-          ))}
-        </div>
-      </div>
-
-      {pairCount > 1 && (
-        <div className="mt-3 flex justify-center gap-1.5">
-          {Array.from({ length: pairCount }).map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              aria-label={`Отзывы ${i + 1} из ${pairCount}`}
-              onClick={() => i !== pairIndex && goTo(i, i > pairIndex ? 1 : -1)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === pairIndex ? "w-5 bg-primary" : "w-1.5 bg-muted-foreground/40"
-              }`}
-            />
-          ))}
-        </div>
-      )}
+    <div className="mt-5 flex w-full max-w-xs flex-col gap-3 sm:hidden">
+      <QuoteSlotView slot={top} />
+      <QuoteSlotView slot={bottom} />
     </div>
   )
 }
