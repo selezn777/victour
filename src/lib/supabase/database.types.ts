@@ -39,6 +39,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      articles: {
+        Row: {
+          body: string
+          cover_image_url: string | null
+          created_at: string
+          destination: string
+          excerpt: string | null
+          id: string
+          is_published: boolean
+          published_at: string | null
+          related_tour_id: string | null
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          cover_image_url?: string | null
+          created_at?: string
+          destination: string
+          excerpt?: string | null
+          id?: string
+          is_published?: boolean
+          published_at?: string | null
+          related_tour_id?: string | null
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          cover_image_url?: string | null
+          created_at?: string
+          destination?: string
+          excerpt?: string | null
+          id?: string
+          is_published?: boolean
+          published_at?: string | null
+          related_tour_id?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "articles_related_tour_id_fkey"
+            columns: ["related_tour_id"]
+            isOneToOne: false
+            referencedRelation: "tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_items: {
         Row: {
           adults: number
