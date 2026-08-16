@@ -313,33 +313,22 @@ const CATALOG_TOURS = [
  * ховер ставит на паузу и подсвечивает выбранную.
  */
 function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
-  const [active, setActive] = useState(0)
-  const [paused, setPaused] = useState(false)
-
-  useEffect(() => {
-    if (paused) return
-    const id = setInterval(() => {
-      setActive((i) => (i + 1) % tours.length)
-    }, 2200)
-    return () => clearInterval(id)
-  }, [paused, tours.length])
+  // Раньше сами переключались по таймеру (setInterval) — выглядело как будто
+  // полосы моргают сами по себе. Теперь только ховер: без наведения ни одна не
+  // подсвечена, при наведении/уходе курсора active просто переключается туда-обратно.
+  const [active, setActive] = useState<number | null>(null)
 
   return (
-    <div
-      className="mt-4 flex h-72 w-full max-w-xl gap-1.5 sm:h-80"
-      onMouseLeave={() => setPaused(false)}
-    >
+    <div className="mt-4 flex h-72 w-full max-w-xl gap-1.5 sm:h-80 lg:h-96 lg:max-w-4xl">
       {tours.map((tour, i) => {
         const isActive = i === active
         return (
           <Link
             key={tour.slug}
             href={`/tours/${tour.slug}`}
-            onMouseEnter={() => {
-              setPaused(true)
-              setActive(i)
-            }}
-            className={`group relative flex-1 overflow-hidden rounded-lg bg-muted ring-1 transition-all duration-500 ease-out ${
+            onMouseEnter={() => setActive(i)}
+            onMouseLeave={() => setActive(null)}
+            className={`group relative flex-1 overflow-hidden rounded-md bg-muted ring-1 transition-all duration-500 ease-out ${
               isActive ? "ring-primary/60" : "ring-white/10"
             }`}
           >
@@ -347,7 +336,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
               src={tour.imageSrc}
               alt={tour.title}
               fill
-              sizes="(min-width: 640px) 400px, 60vw"
+              sizes="(min-width: 1024px) 700px, (min-width: 640px) 400px, 60vw"
               className={`object-cover transition-[filter] duration-500 ease-out ${
                 isActive ? "brightness-100" : "brightness-75"
               }`}
@@ -366,9 +355,16 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
               </p>
             </div>
             {!isActive && (
-              <span className="absolute inset-0 flex items-center justify-center px-1 text-center text-[11px] font-semibold text-white/90 [writing-mode:vertical-rl]">
-                {tour.title}
-              </span>
+              <>
+                {/* Уже/lg колонка узкая — вертикальное название. С lg колонка
+                    достаточно широкая для обычной горизонтальной подписи. */}
+                <span className="absolute inset-0 flex items-center justify-center px-1 text-center text-[11px] font-semibold text-white/90 [writing-mode:vertical-rl] lg:hidden">
+                  {tour.title}
+                </span>
+                <div className="absolute inset-x-0 bottom-0 hidden p-3 text-left lg:block">
+                  <h3 className="font-heading text-sm font-semibold text-white/80">{tour.title}</h3>
+                </div>
+              </>
             )}
           </Link>
         )
