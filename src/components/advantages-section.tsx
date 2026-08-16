@@ -313,22 +313,51 @@ const CATALOG_TOURS = [
  * ховер ставит на паузу и подсвечивает выбранную.
  */
 function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
-  // Раньше сами переключались по таймеру (setInterval) — выглядело как будто
-  // полосы моргают сами по себе. Теперь только ховер: без наведения ни одна не
-  // подсвечена, при наведении/уходе курсора active просто переключается туда-обратно.
-  const [active, setActive] = useState<number | null>(null)
+  // Раньше сами переключались по таймеру каждые 2.2с строго по порядку — на телефоне
+  // (где ховера нет вообще) это была единственная подсветка, и выглядело нервно.
+  // Первая попытка — оставить только ховер — оставила мобильные карточки совсем
+  // без подсветки. Теперь снова есть автоматическое переключение, но заметно медленнее
+  // (4.2с и плавнее переход) и вразнобой (перетасованный порядок, не 1→2→3→4→5 по кругу),
+  // а наведение курсора на десктопе всё равно берёт верх и ставит автоцикл на паузу.
+  const [active, setActive] = useState(0)
+  const [paused, setPaused] = useState(false)
+
+  useEffect(() => {
+    if (paused) return
+    let cancelled = false
+    let order = shuffledIndices(tours.length)
+    let step = 0
+    const id = setInterval(() => {
+      if (cancelled) return
+      if (step >= order.length) {
+        order = shuffledIndices(tours.length)
+        step = 0
+      }
+      setActive(order[step])
+      step += 1
+    }, 4200)
+    return () => {
+      cancelled = true
+      clearInterval(id)
+    }
+  }, [paused, tours.length])
 
   return (
-    <div className="mt-4 flex h-72 w-full max-w-xl gap-1.5 sm:h-80 lg:h-96 lg:max-w-4xl">
+    <div
+      className="mt-4 flex h-72 w-full max-w-xl gap-1.5 sm:h-80 lg:h-96 lg:max-w-4xl"
+      onMouseLeave={() => setPaused(false)}
+    >
       {tours.map((tour, i) => {
         const isActive = i === active
         return (
           <Link
             key={tour.slug}
             href={`/tours/${tour.slug}`}
-            onMouseEnter={() => setActive(i)}
-            onMouseLeave={() => setActive(null)}
-            className={`group relative flex-1 overflow-hidden rounded-md bg-muted ring-1 transition-all duration-500 ease-out ${
+            onMouseEnter={() => {
+              setPaused(true)
+              setActive(i)
+            }}
+            className={`group relative flex-1 overflow-hidden rounded-md bg-muted ring-1 transition-all duration-700 ease-out ${
               isActive ? "ring-primary/60" : "ring-white/10"
             }`}
           >
@@ -337,13 +366,13 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
               alt={tour.title}
               fill
               sizes="(min-width: 1024px) 700px, (min-width: 640px) 400px, 60vw"
-              className={`object-cover transition-[filter] duration-500 ease-out ${
+              className={`object-cover transition-[filter] duration-700 ease-out ${
                 isActive ? "brightness-100" : "brightness-75"
               }`}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/5 to-transparent" />
             <div
-              className={`absolute inset-x-0 bottom-0 p-2.5 text-left transition-opacity duration-300 sm:p-3 ${
+              className={`absolute inset-x-0 bottom-0 p-2.5 text-left transition-opacity duration-500 sm:p-3 ${
                 isActive ? "opacity-100" : "opacity-0"
               }`}
             >
