@@ -159,18 +159,23 @@ function PhotoCollage() {
         ))}
       </div>
       <div
-        className={`pointer-events-none absolute inset-0 z-10 transition-opacity ease-out ${
+        className={`pointer-events-none absolute inset-0 z-10 bg-black transition-opacity ease-out ${
           phase === "open" ? "opacity-100" : "opacity-0"
         }`}
         style={{ transitionDuration: `${TRANSITION_MS}ms` }}
       >
+        {/* Полоса теперь короткая и широкая — у портретного/квадратного фото при
+            object-contain по бокам остаются большие поля. Раньше там сквозь блёр
+            всё равно проглядывала соседняя плитка сетки (другое фото) — выглядело
+            как баг. Сплошной чёрный фон (bg-black на обёртке) гарантирует поля
+            без прогляда, блёр-слой поверх только добавляет мягкое свечение. */}
         <Image
           src={COLLAGE_PHOTOS[target]}
           alt=""
           fill
           sizes="100vw"
           aria-hidden
-          className="scale-110 object-cover opacity-40 blur-2xl"
+          className="scale-110 object-cover opacity-50 blur-2xl"
         />
         <Image src={COLLAGE_PHOTOS[target]} alt="" fill sizes="100vw" className="object-contain" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
