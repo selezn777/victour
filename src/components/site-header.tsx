@@ -76,6 +76,9 @@ export function SiteHeader({
                   <span>
                     $1 = {formatRubFromUsd(1, settings.usdRubRate, settings.rubMarkupPct)}
                   </span>
+                  <Link href="/privacy" className="mt-1 hover:underline">
+                    Политика конфиденциальности
+                  </Link>
                 </div>
               </nav>
               {guide && (

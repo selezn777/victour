@@ -70,6 +70,13 @@ export function LoginClient({ next }: { next: string | null }) {
       </Button>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
+
+      <p className="text-xs text-muted-foreground">
+        Продолжая, вы соглашаетесь с{" "}
+        <Link href="/privacy" className="text-primary hover:underline">
+          политикой конфиденциальности
+        </Link>
+      </p>
     </main>
   )
 }

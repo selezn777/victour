@@ -49,6 +49,7 @@ export function RequestPageClient({
   const [contactValue, setContactValue] = useState("")
   const [contactMode, setContactMode] = useState<"phone" | "handle">("phone")
   const [notes, setNotes] = useState("")
+  const [consentChecked, setConsentChecked] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submittedBookingId, setSubmittedBookingId] = useState<string | null>(null)
@@ -112,6 +113,7 @@ export function RequestPageClient({
     hotel.trim().length > 0 &&
     guestName.trim().length > 0 &&
     contactValue.trim().length > 0 &&
+    consentChecked &&
     !submitting
 
   const step1Valid = contactValue.trim().length > 0
@@ -487,6 +489,21 @@ export function RequestPageClient({
                       {submitError}
                     </p>
                   )}
+
+                  <label className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={consentChecked}
+                      onChange={(e) => setConsentChecked(e.target.checked)}
+                      className="mt-0.5 size-4 shrink-0 accent-primary"
+                    />
+                    <span>
+                      Согласен(на) на обработку персональных данных согласно{" "}
+                      <Link href="/privacy" target="_blank" className="text-primary hover:underline">
+                        политике конфиденциальности
+                      </Link>
+                    </span>
+                  </label>
 
                   <div className="flex gap-2">
                     <Button type="button" size="lg" variant="outline" onClick={() => setStep(2)}>
