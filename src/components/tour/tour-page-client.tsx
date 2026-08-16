@@ -8,6 +8,7 @@ import { TourIncludesExcludes } from "@/components/tour/tour-includes-excludes"
 import { TourPriceTable } from "@/components/tour/tour-price-table"
 import { TourTicketOptions } from "@/components/tour/tour-ticket-options"
 import { TourBookingPanel } from "@/components/tour/tour-booking-panel"
+import { TourStickyCta } from "@/components/tour/tour-sticky-cta"
 import { ReviewsSection } from "@/components/reviews/reviews-section"
 import { FaqSection } from "@/components/faq/faq-section"
 import { useFavorites } from "@/hooks/use-favorites"
@@ -33,6 +34,8 @@ export function TourPageClient({
   const { toggle, isFavorite } = useFavorites()
   const [guestCount, setGuestCount] = useState(2)
   const primaryGuide = guides[0] ?? null
+  const priceAdultUsd =
+    tour.pricingTiers.find((t) => t.guestCount === guestCount)?.priceAdultUsd ?? 0
 
   return (
     <>
@@ -49,12 +52,14 @@ export function TourPageClient({
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_360px] lg:items-start lg:gap-12">
             <div className="order-2 flex flex-col gap-10 lg:order-1">
               <TourIncludesExcludes includes={tour.includes} excludes={tour.excludes} />
-              <TourItinerary itinerary={tour.itinerary} isTwoDay={tour.isDalatTwoDay} />
+              {/* Цена — решающий фактор, раньше стояла после длинного описания маршрута
+                  по дням; подняли выше, ближе к панели бронирования наверху страницы. */}
               <TourPriceTable
                 tiers={tour.pricingTiers}
                 selectedGuestCount={guestCount}
                 onSelectGuestCount={setGuestCount}
               />
+              <TourItinerary itinerary={tour.itinerary} isTwoDay={tour.isDalatTwoDay} />
               {tour.ticketOptions.length > 0 && <TourTicketOptions options={tour.ticketOptions} />}
 
               <ReviewsSection
@@ -77,7 +82,7 @@ export function TourPageClient({
               />
             </div>
 
-            <div className="order-1 lg:sticky lg:top-20 lg:order-2">
+            <div id="tour-booking-panel" className="order-1 lg:sticky lg:top-20 lg:order-2">
               <TourBookingPanel
                 tour={tour}
                 guides={guides}
@@ -89,6 +94,7 @@ export function TourPageClient({
           </div>
         </div>
       </main>
+      <TourStickyCta priceAdultUsd={priceAdultUsd} targetId="tour-booking-panel" />
     </>
   )
 }
