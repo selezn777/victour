@@ -2,7 +2,6 @@
 
 import { useRef, useState } from "react"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { createClient } from "@/lib/supabase/client"
@@ -28,7 +27,6 @@ export function ArticleEditor({
   article: Article
   tours: { id: string; slug: string; title: string }[]
 }) {
-  const router = useRouter()
   const coverInputRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
 
@@ -86,7 +84,6 @@ export function ArticleEditor({
 
     if (updateError) setError(updateError.message)
     setSaving(false)
-    router.refresh()
   }
 
   async function onCoverChange(e: React.ChangeEvent<HTMLInputElement>) {

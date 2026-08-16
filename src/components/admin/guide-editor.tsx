@@ -2,7 +2,6 @@
 
 import { useRef, useState } from "react"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
 import { XIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,7 +19,6 @@ async function uploadGuidePhoto(file: File, guideId: string): Promise<string> {
 }
 
 export function GuideEditor({ guide }: { guide: Guide }) {
-  const router = useRouter()
   const photoInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
 
@@ -51,7 +49,6 @@ export function GuideEditor({ guide }: { guide: Guide }) {
 
     if (updateError) setError(updateError.message)
     setSaving(false)
-    router.refresh()
   }
 
   async function onPhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -168,13 +165,13 @@ export function GuideEditor({ guide }: { guide: Guide }) {
         {galleryUrls.length > 0 && (
           <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
             {galleryUrls.map((url) => (
-              <div key={url} className="group relative aspect-square overflow-hidden rounded-lg bg-muted">
+              <div key={url} className="relative aspect-square overflow-hidden rounded-lg bg-muted">
                 <Image src={url} alt="" fill className="object-cover" sizes="120px" />
                 <button
                   type="button"
                   aria-label="Убрать фото"
                   onClick={() => removeGalleryPhoto(url)}
-                  className="absolute top-1 right-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                  className="absolute top-1 right-1 rounded-full bg-black/70 p-1.5 text-white"
                 >
                   <XIcon className="size-3.5" />
                 </button>

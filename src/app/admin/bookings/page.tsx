@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { formatUsd } from "@/lib/format"
 import { usdToRub } from "@/lib/pricing"
 import { SignOutButton } from "@/components/sign-out-button"
+import { AdminNav } from "@/components/admin/admin-nav"
 import { BookingActions } from "@/components/admin/booking-actions"
 import { PaymentRequisites } from "@/components/admin/payment-requisites"
 import { LeadsList } from "@/components/admin/leads-list"
@@ -108,17 +109,12 @@ export default async function AdminBookingsPage() {
         <div>
           <h1 className="font-heading text-2xl font-semibold sm:text-3xl">Заявки</h1>
           <p className="mt-1 text-sm text-muted-foreground">Панель Виктора</p>
-          <Link href="/admin/guides" className="mt-1 inline-block text-sm text-primary hover:underline">
-            Профили гидов →
-          </Link>
-          <Link href="/admin/blog" className="mt-1 block text-sm text-primary hover:underline">
-            Блог →
-          </Link>
-          <Link href="/admin/tours" className="mt-1 block text-sm text-primary hover:underline">
-            Туры →
-          </Link>
         </div>
         <SignOutButton />
+      </div>
+
+      <div className="mt-5">
+        <AdminNav />
       </div>
 
       <div className="mt-6">
