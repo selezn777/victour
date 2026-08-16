@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { Glow } from "@/components/glow"
 import { SlideDeck } from "@/components/slide-deck"
 
@@ -409,25 +409,23 @@ function ToursSlide() {
 // На мобиле карточки-цитаты в столбик не влезали в высоту слайда вместе с
 // кнопкой — сама секция скроллится (overflow-y-auto), но Swiper того же
 // направления (vertical) перехватывает вертикальный тач-свайп раньше, чем до
-// него доходит внутренний скролл, и кнопка оставалась недостижима.
-// Первая версия фикса пробовала нативный горизонтальный scroll-snap — но это
-// именно тот css-механизм, который на реальном мобильном уже один раз ломался
-// в этом проекте (см. память feedback_victour_prefer_js_over_css), и здесь
-// тоже сломался: вложенный overflow-x внутри вертикального Swiper дал реальный
-// (не зум) горизонтальный сдвиг всего контента слайда на телефоне. Поэтому
-// карусель на мобиле теперь целиком на React-стейте — по одной карточке,
-// свайп меряется вручную (touchstart/touchend), снаружи ничего не скроллится
-// и не бликует. С sm и шире — обычная CSS grid (там высота не проблема), а
-// с lg/xl открываются ещё карточки отзывов.
+// него доходит внутренний скролл, и кнопка оставалась недостижима. Плюс
+// Виктор отдельно просил не по одной карточке за раз, а сразу видеть 2-3.
+// Решение — просто узкие карточки в горизонтально скроллящемся ряду (нативный
+// overflow-x, БЕЗ scroll-snap: тот css-механизм уже один раз ломался на
+// реальном мобильном в этом проекте, см. feedback_victour_prefer_js_over_css) —
+// в кадре видно 2 целиком и край третьей, свайп просто листает дальше без
+// какой-либо самодельной JS-логики позиционирования. С sm и шире — обычная
+// CSS grid (там высота не проблема), а с lg/xl открываются ещё карточки.
 function QuoteCard({ quote, author }: { quote: string; author: string }) {
   return (
-    <blockquote className="relative h-full rounded-2xl border border-border bg-card p-5 text-left shadow-lg">
-      <span aria-hidden className="font-heading text-4xl leading-none text-primary/30">
+    <blockquote className="relative h-full rounded-2xl border border-border bg-card p-4 text-left shadow-lg sm:p-5">
+      <span aria-hidden className="font-heading text-3xl leading-none text-primary/30 sm:text-4xl">
         “
       </span>
-      <p className="-mt-2 text-sm text-foreground/90 italic">{quote}</p>
-      <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm">
+      <p className="-mt-1 text-xs text-foreground/90 italic sm:-mt-2 sm:text-sm">{quote}</p>
+      <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground sm:mt-3 sm:gap-2 sm:text-xs">
+        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs sm:size-6 sm:text-sm">
           🙂
         </span>
         {author}
@@ -436,53 +434,14 @@ function QuoteCard({ quote, author }: { quote: string; author: string }) {
   )
 }
 
-const SWIPE_THRESHOLD_PX = 40
-
-function QuoteCarousel({ quotes }: { quotes: { quote: string; author: string }[] }) {
-  const [index, setIndex] = useState(0)
-  const touchStartX = useRef<number | null>(null)
-
-  const goTo = (i: number) => setIndex(Math.max(0, Math.min(quotes.length - 1, i)))
-
+function QuoteRow({ quotes }: { quotes: { quote: string; author: string }[] }) {
   return (
-    <div className="mt-6 w-full sm:hidden">
-      <div
-        className="w-full overflow-hidden"
-        onTouchStart={(e) => {
-          touchStartX.current = e.touches[0].clientX
-        }}
-        onTouchEnd={(e) => {
-          if (touchStartX.current === null) return
-          const delta = e.changedTouches[0].clientX - touchStartX.current
-          touchStartX.current = null
-          if (Math.abs(delta) < SWIPE_THRESHOLD_PX) return
-          goTo(index + (delta < 0 ? 1 : -1))
-        }}
-      >
-        <div
-          className="flex transition-transform duration-300 ease-out"
-          style={{ transform: `translateX(-${index * 100}%)` }}
-        >
-          {quotes.map(({ quote, author }) => (
-            <div key={author} className="w-full shrink-0 px-0.5">
-              <QuoteCard quote={quote} author={author} />
-            </div>
-          ))}
+    <div className="mt-4 flex w-full gap-3 overflow-x-auto pb-1 sm:hidden">
+      {quotes.map(({ quote, author }) => (
+        <div key={author} className="w-[44%] shrink-0">
+          <QuoteCard quote={quote} author={author} />
         </div>
-      </div>
-      <div className="mt-3 flex justify-center gap-1.5">
-        {quotes.map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            aria-label={`Отзыв ${i + 1} из ${quotes.length}`}
-            onClick={() => goTo(i)}
-            className={`size-1.5 rounded-full transition-colors ${
-              i === index ? "bg-primary" : "bg-muted-foreground/30"
-            }`}
-          />
-        ))}
-      </div>
+      ))}
     </div>
   )
 }
@@ -503,9 +462,11 @@ function QuoteSlide({
         <h2 className="max-w-2xl font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">
           {title}
         </h2>
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground">{body}</p>
+        <p className="mt-2 max-w-2xl text-sm leading-snug text-muted-foreground sm:mt-3 sm:text-base sm:leading-relaxed">
+          {body}
+        </p>
 
-        <QuoteCarousel quotes={quotes} />
+        <QuoteRow quotes={quotes} />
 
         <div className="mt-6 hidden w-full gap-3 sm:grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {quotes.map(({ quote, author, revealFrom }) => (
@@ -541,7 +502,7 @@ export function AdvantagesSection() {
         <QuoteSlide
           key="guide"
           title="Что говорят гости, которые уже были с нами"
-          body="Внимание к мелочам, забота о безопасности и готовность подстроиться под вас — вот что нам чаще всего пишут после поездки. Если по дороге возникал вопрос или хотелось заехать куда-то ещё — решали на месте, без формальностей."
+          body="Внимание к мелочам и забота о безопасности — вот что нам чаще всего пишут после поездки."
           quotes={[
             {
               quote: "Внимательный, знающий и с отличным чувством юмора",
