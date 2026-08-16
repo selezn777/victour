@@ -29,8 +29,14 @@ export const metadata: Metadata = {
 // Сайт всегда в тёмной теме (forcedTheme="dark") — красим системный UI (статус-бар,
 // шапку Chrome Custom Tab/Telegram in-app браузера) в тон фона, а не в серый по умолчанию,
 // чтобы открытая по ссылке страница ощущалась как приложение, а не как "просто ссылка".
+// interactiveWidget: "resizes-content" — на Android без этого клавиатура может
+// "оverlay"-иться поверх страницы вместо честного сжатия viewport, и нижний ряд
+// клавиатуры (пробел) оказывается в зоне жест-навигации телефона, которая эти
+// касания перехватывает и закрывает клавиатуру. С resizes-content браузер честно
+// сжимает layout viewport под клавиатуру, как это делают нативные приложения.
 export const viewport: Viewport = {
   themeColor: "#0a0a0a",
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
