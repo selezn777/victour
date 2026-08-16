@@ -3,6 +3,8 @@ import type { Metadata } from "next"
 import { getAllReviews, getTourOptions } from "@/lib/reviews-data"
 import { getHomepageData } from "@/lib/site-data"
 import { ReviewsSection } from "@/components/reviews/reviews-section"
+import { buttonVariants } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
   title: "Отзывы — ВикТур",
@@ -25,6 +27,10 @@ export default async function ReviewsPage() {
       <p className="mt-1 text-sm text-muted-foreground">
         Отзывы о турах и о гиде — публикуются сразу после отправки.
       </p>
+
+      <Link href="/tours" className={cn(buttonVariants({ size: "lg" }), "mt-4 w-full sm:w-auto")}>
+        Выбрать тур
+      </Link>
 
       <div className="mt-6">
         <ReviewsSection

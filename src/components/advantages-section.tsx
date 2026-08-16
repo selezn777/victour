@@ -17,9 +17,6 @@ function TourCtaButton() {
   )
 }
 
-const SWIPE_UP_THRESHOLD_PX = 30
-const TAP_THRESHOLD_PX = 10
-
 function DiscountTiles({ packageDiscounts }: { packageDiscounts: Record<string, number> }) {
   const tiers = Object.entries(packageDiscounts).sort(([a], [b]) => Number(a) - Number(b))
   return (
@@ -44,7 +41,6 @@ function DiscountTiles({ packageDiscounts }: { packageDiscounts: Record<string, 
 // вертикальный жест как на "следующий слайд".
 function DiscountTeaser({ packageDiscounts }: { packageDiscounts: Record<string, number> }) {
   const [open, setOpen] = useState(false)
-  const touchStartY = useRef<number | null>(null)
 
   const tiers = Object.entries(packageDiscounts)
   if (tiers.length === 0) return null
@@ -55,21 +51,10 @@ function DiscountTeaser({ packageDiscounts }: { packageDiscounts: Record<string,
       <button
         type="button"
         onClick={() => setOpen(true)}
-        onTouchStart={(e) => {
-          touchStartY.current = e.touches[0].clientY
-        }}
-        onTouchEnd={(e) => {
-          if (touchStartY.current === null) return
-          const delta = e.changedTouches[0].clientY - touchStartY.current
-          touchStartY.current = null
-          if (delta <= -SWIPE_UP_THRESHOLD_PX || Math.abs(delta) < TAP_THRESHOLD_PX) setOpen(true)
-        }}
-        className="swiper-no-swiping absolute inset-x-0 bottom-0 z-20 flex items-center justify-center gap-2 border-t border-border bg-card/95 px-4 py-2.5 text-sm font-medium text-foreground backdrop-blur-sm"
+        aria-label={`Скидка до −${maxPct}% на пакет туров`}
+        className="swiper-no-swiping absolute top-4 right-4 z-20 flex size-12 items-center justify-center rounded-full bg-primary text-xl shadow-lg shadow-primary/40 transition-transform hover:scale-105 active:scale-95 sm:top-5 sm:right-6 sm:size-14"
       >
-        <span>🎁 Скидка до −{maxPct}% на пакет туров</span>
-        <span aria-hidden className="text-primary">
-          ↑
-        </span>
+        🎁
       </button>
 
       {open && (
@@ -363,9 +348,7 @@ function PhotoSlide({
           sizes="100vw"
         />
       </div>
-      <div
-        className={`flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pt-5 text-center sm:pl-12 sm:pr-10 sm:pt-7 ${discountTeaser ? "pb-16" : "pb-6"}`}
-      >
+      <div className="flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pt-5 pb-6 text-center sm:pl-12 sm:pr-10 sm:pt-7">
         <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {title}
         </h2>
@@ -629,7 +612,7 @@ function QuoteSlide({
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden">
       <div
-        className={`relative flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pt-6 text-center sm:pl-12 sm:pr-10 sm:pt-8 ${discountTeaser ? "pb-16" : "pb-6"}`}
+        className={`relative flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pb-6 text-center sm:pl-12 sm:pr-10 ${discountTeaser ? "pt-16 sm:pt-20" : "pt-6 sm:pt-8"}`}
       >
         <h2 className="max-w-2xl font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">
           {title}
@@ -694,17 +677,9 @@ export function AdvantagesSection({
           discountTeaser={discountTeaser}
         />,
         <PhotoSlide
-          key="food"
-          title="Проголодались — просто скажите"
-          body="Никаких столовых по расписанию тур-группы. Уличная лепёшка с рынка, кофе прямо с фермы — куда захочется, туда и заедем."
-          imageSrc="/images/tours/dalat-2-dnya.jpg"
-          imageAlt="Далат, куда заезжаем по своему желанию, а не по расписанию тур-группы"
-          discountTeaser={discountTeaser}
-        />,
-        <PhotoSlide
           key="pace"
-          title="Спешить нас с вами точно не заставят"
-          body="Никакой обязательной лавки, где гиду капает процент с ваших покупок. Понравилось место — сидим сколько хочется. Маршрут подстраивается под вас, а не наоборот."
+          title="Ваш темп — а не расписание тургруппы"
+          body="Никакой обязательной лавки, где гиду капает процент с покупок, и столовой по расписанию автобуса. Понравилось место — сидим сколько хочется, проголодались — просто скажите. Мы не гонимся за галочками в чек-листе: даём настоящую поездку — выверенную и профессиональную, но без туристической суеты и толпы."
           imageSrc="/images/tours/severnye-ostrova.jpg"
           imageAlt="Северные острова, тихая бухта в стороне от туристических троп"
           discountTeaser={discountTeaser}

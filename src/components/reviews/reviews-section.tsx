@@ -52,9 +52,14 @@ export function ReviewsSection({
 
   return (
     <section className={className}>
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="font-heading text-lg font-semibold sm:text-xl">{title}</h2>
-        <Button variant="outline" size="sm" onClick={() => setShowForm((v) => !v)}>
+        <Button
+          variant={showForm ? "outline" : "default"}
+          size="lg"
+          onClick={() => setShowForm((v) => !v)}
+          className="w-full sm:w-auto"
+        >
           {showForm ? "Отмена" : "Оставить отзыв"}
         </Button>
       </div>
