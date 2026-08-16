@@ -406,6 +406,43 @@ function ToursSlide() {
   )
 }
 
+// На мобиле карточки-цитаты в столбик не влезали в высоту слайда вместе с
+// кнопкой — сама секция скроллится (overflow-y-auto), но Swiper того же
+// направления (vertical) перехватывает вертикальный тач-свайп раньше, чем до
+// него доходит внутренний скролл, и кнопка оставалась недостижима. Вместо
+// вертикального стека — горизонтальная свайп-лента (только 1 карточка высотой
+// в кадре, конфликта осей со свайпом слайдов нет). С sm и шире карточки
+// возвращаются в сетку, где по высоте всё влезает свободно, а с lg/xl — ещё и
+// открываются дополнительные отзывы (визуально скрыты до нужного брейкпоинта).
+function QuoteCard({
+  quote,
+  author,
+  revealFrom,
+}: {
+  quote: string
+  author: string
+  revealFrom?: "lg" | "xl"
+}) {
+  return (
+    <blockquote
+      className={`relative w-[80vw] max-w-sm shrink-0 snap-center rounded-2xl border border-border bg-card p-5 text-left shadow-lg sm:w-auto sm:shrink sm:snap-none ${
+        revealFrom === "lg" ? "sm:hidden lg:block" : revealFrom === "xl" ? "sm:hidden xl:block" : ""
+      }`}
+    >
+      <span aria-hidden className="font-heading text-4xl leading-none text-primary/30">
+        “
+      </span>
+      <p className="-mt-2 text-sm text-foreground/90 italic">{quote}</p>
+      <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm">
+          🙂
+        </span>
+        {author}
+      </p>
+    </blockquote>
+  )
+}
+
 function QuoteSlide({
   title,
   body,
@@ -413,33 +450,19 @@ function QuoteSlide({
 }: {
   title: string
   body: string
-  quotes: { quote: string; author: string }[]
+  quotes: { quote: string; author: string; revealFrom?: "lg" | "xl" }[]
 }) {
   return (
-    <div className="relative flex h-full w-full items-center justify-center overflow-y-auto px-5 py-12 sm:py-16">
+    <div className="relative flex h-full w-full items-center justify-center overflow-y-auto px-5 py-8 sm:py-16">
       <Glow side="left" />
-      <div className="relative mx-auto flex max-w-4xl flex-col items-center text-center">
+      <div className="relative mx-auto flex max-w-4xl flex-col items-center text-center lg:max-w-5xl xl:max-w-6xl">
         <h2 className="max-w-2xl font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">
           {title}
         </h2>
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground">{body}</p>
-        <div className="mt-6 grid w-full gap-3 sm:grid-cols-3">
-          {quotes.map(({ quote, author }) => (
-            <blockquote
-              key={author}
-              className="relative rounded-2xl border border-border bg-card p-5 text-left shadow-lg"
-            >
-              <span aria-hidden className="font-heading text-4xl leading-none text-primary/30">
-                “
-              </span>
-              <p className="-mt-2 text-sm text-foreground/90 italic">{quote}</p>
-              <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm">
-                  🙂
-                </span>
-                {author}
-              </p>
-            </blockquote>
+        <div className="-mx-5 mt-6 flex w-[calc(100%+2.5rem)] snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 sm:mx-0 sm:grid sm:w-full sm:snap-none sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4 xl:grid-cols-5">
+          {quotes.map(({ quote, author, revealFrom }) => (
+            <QuoteCard key={author} quote={quote} author={author} revealFrom={revealFrom} />
           ))}
         </div>
         <TourCtaButton />
@@ -478,6 +501,16 @@ export function AdvantagesSection() {
             {
               quote: "Хорошо ориентирует в плане отдыха и быта, готов помочь в любых вопросах",
               author: "Марина Кутукова, отзыв о туре на Северные острова",
+            },
+            {
+              quote: "Всё время рассказывал и показывал — подробно, увлекательно и совсем не утомительно",
+              author: "Юрий Ефремов, отзыв о туре в Далат",
+              revealFrom: "lg",
+            },
+            {
+              quote: "Очень компетентный, отдых на высшем уровне, всё прошло легко и непринуждённо",
+              author: "Кирилл Осипов, отзыв о туре на Северные острова",
+              revealFrom: "xl",
             },
           ]}
         />,
