@@ -27,20 +27,20 @@ export function CookieConsent({ gaId }: { gaId: string | undefined }) {
       {gaId && consent === "accepted" && <GoogleAnalytics gaId={gaId} />}
 
       {ready && consent === null && (
-        <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80">
-          <div className="mx-auto flex max-w-4xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <p className="text-sm text-muted-foreground">
-              Сайт использует cookie для аналитики посещений.{" "}
+        <div className="fixed inset-x-3 bottom-3 z-50 sm:inset-x-auto sm:right-4 sm:bottom-4 sm:left-auto sm:max-w-xs">
+          <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card/95 p-4 shadow-lg backdrop-blur supports-backdrop-filter:bg-card/85">
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Используем cookie для аналитики посещений.{" "}
               <Link href="/privacy" className="text-primary hover:underline">
                 Подробнее
               </Link>
             </p>
-            <div className="flex shrink-0 gap-2">
-              <Button size="sm" variant="outline" onClick={() => choose("declined")}>
-                Отклонить
-              </Button>
-              <Button size="sm" onClick={() => choose("accepted")}>
+            <div className="flex gap-2">
+              <Button size="sm" className="flex-1" onClick={() => choose("accepted")}>
                 Принять
+              </Button>
+              <Button size="sm" variant="outline" className="flex-1" onClick={() => choose("declined")}>
+                Отклонить
               </Button>
             </div>
           </div>
