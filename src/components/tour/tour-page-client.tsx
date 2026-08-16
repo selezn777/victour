@@ -47,7 +47,7 @@ export function TourPageClient({
 
         <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_360px] lg:items-start lg:gap-12">
-            <div className="flex flex-col gap-10">
+            <div className="order-2 flex flex-col gap-10 lg:order-1">
               <TourIncludesExcludes includes={tour.includes} excludes={tour.excludes} />
               <TourItinerary itinerary={tour.itinerary} isTwoDay={tour.isDalatTwoDay} />
               <TourPriceTable
@@ -77,7 +77,7 @@ export function TourPageClient({
               />
             </div>
 
-            <div className="lg:sticky lg:top-20">
+            <div className="order-1 lg:sticky lg:top-20 lg:order-2">
               <TourBookingPanel
                 tour={tour}
                 guides={guides}
