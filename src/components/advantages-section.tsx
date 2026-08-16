@@ -139,15 +139,20 @@ function useRevealCycle(staggerMs: number) {
   return { phase, target }
 }
 
+// Показать со слота i включительно — начиная с какого брейкпоинта он появляется.
+// Пусто (i===0) значит виден всегда. flex-1 на каждом слоте сам делит ширину
+// поровну между видимыми — явно считать доли/ширины в процентах не нужно.
+const SLOT_VISIBILITY = ["", "hidden sm:flex", "hidden md:flex", "hidden lg:flex", "hidden xl:flex"]
+
 function RevealSlot({
   reveal,
-  widthClass,
+  visibilityClass,
 }: {
   reveal: { phase: Phase; target: number }
-  widthClass: string
+  visibilityClass: string
 }) {
   return (
-    <div className={`relative h-full ${widthClass}`}>
+    <div className={`relative h-full flex-1 ${visibilityClass}`}>
       <div
         className={`absolute inset-0 bg-black transition-opacity ease-out ${
           reveal.phase === "open" ? "opacity-100" : "opacity-0"
@@ -162,7 +167,7 @@ function RevealSlot({
           src={COLLAGE_PHOTOS[reveal.target]}
           alt=""
           fill
-          sizes="(min-width: 1536px) 34vw, (min-width: 1024px) 50vw, 100vw"
+          sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 34vw, (min-width: 640px) 50vw, 100vw"
           className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
@@ -172,12 +177,20 @@ function RevealSlot({
 }
 
 function PhotoCollage() {
-  const revealA = useRevealCycle(0)
-  const revealB = useRevealCycle(1400)
-  const revealC = useRevealCycle(2600)
+  // Раньше повышалось только с lg (1024) и 2xl (1536) — на реальном планшете (обычно
+  // 700–1000px) так и оставалось 1 раскрытие вместо обещанных "по 2, по 3". Теперь
+  // ступени плотнее: 1 (телефон) → 2 (sm, 640) → 3 (md, 768) → 4 (lg, 1024) →
+  // 5 (xl, 1280, ноутбук и шире) — каждый слот крутит независимый цикл со сдвигом.
+  const reveals = [
+    useRevealCycle(0),
+    useRevealCycle(900),
+    useRevealCycle(1800),
+    useRevealCycle(2700),
+    useRevealCycle(3600),
+  ]
 
   const primingTiles = new Set(
-    [revealA, revealB, revealC].filter((r) => r.phase === "priming").map((r) => r.target),
+    reveals.filter((r) => r.phase === "priming").map((r) => r.target),
   )
 
   return (
@@ -206,12 +219,10 @@ function PhotoCollage() {
           </div>
         ))}
       </div>
-      {/* 1 раскрытие на мобиле/планшете, 2 — с lg (1024px), 3 — с 2xl (1536px) шире экран,
-          больше свободного места под одновременные раскрытия разных фото. */}
       <div className="pointer-events-none absolute inset-0 z-10 flex">
-        <RevealSlot reveal={revealA} widthClass="w-full lg:w-1/2 2xl:w-1/3" />
-        <RevealSlot reveal={revealB} widthClass="hidden lg:block lg:w-1/2 2xl:w-1/3" />
-        <RevealSlot reveal={revealC} widthClass="hidden 2xl:block 2xl:w-1/3" />
+        {reveals.map((reveal, i) => (
+          <RevealSlot key={i} reveal={reveal} visibilityClass={SLOT_VISIBILITY[i]} />
+        ))}
       </div>
     </div>
   )
@@ -320,7 +331,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
   const [active, setActive] = useState<number | null>(null)
 
   return (
-    <div className="mt-4 flex h-72 w-full max-w-xl gap-1.5 sm:h-80 lg:h-96 lg:max-w-4xl">
+    <div className="mt-4 flex h-72 w-full max-w-xl gap-1.5 sm:h-80 md:max-w-2xl lg:h-96 lg:max-w-4xl">
       {tours.map((tour, i) => {
         const isActive = i === active
         return (
