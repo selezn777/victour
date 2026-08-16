@@ -2,8 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useState } from "react"
-import { Glow } from "@/components/glow"
+import { useEffect, useRef, useState } from "react"
 import { SlideDeck } from "@/components/slide-deck"
 import type { Review } from "@/lib/reviews-data"
 
@@ -447,41 +446,40 @@ function QuoteCard({ quote, author }: { quote: string; author: string }) {
   )
 }
 
-const STACK_VISIBLE_LAYERS = 2
-const STACK_OFFSET_PX = 12
+const SWIPE_THRESHOLD_PX = 40
 
-function QuoteStack({ quotes }: { quotes: Quote[] }) {
-  const [front, setFront] = useState(0)
+// Виктор уточнил: не карточки внахлёст (та версия ему не подошла) — на
+// экране должны быть видны сразу 2 карточки, друг под другом (не в ряд), а
+// переключение на следующую пару — свайпом (не тапом). Свайп меряется
+// вручную (touchstart/touchend), без CSS scroll-snap — см. предыдущие
+// комментарии выше и feedback_victour_prefer_js_over_css.
+function QuotePairs({ quotes }: { quotes: Quote[] }) {
+  const [pairIndex, setPairIndex] = useState(0)
+  const touchStartX = useRef<number | null>(null)
 
   if (quotes.length === 0) return null
 
-  const advance = () => setFront((i) => (i + 1) % quotes.length)
+  const pairCount = Math.ceil(quotes.length / 2)
+  const advance = (dir: 1 | -1) => setPairIndex((i) => (i + dir + pairCount) % pairCount)
+  const visible = [quotes[(pairIndex * 2) % quotes.length], quotes[(pairIndex * 2 + 1) % quotes.length]]
 
   return (
     <div
-      className="relative mx-auto mt-5 h-56 w-full max-w-xs sm:hidden"
-      style={{ paddingRight: STACK_OFFSET_PX * (STACK_VISIBLE_LAYERS - 1) }}
+      className="mt-5 flex w-full max-w-xs flex-col gap-3 sm:hidden"
+      onTouchStart={(e) => {
+        touchStartX.current = e.touches[0].clientX
+      }}
+      onTouchEnd={(e) => {
+        if (touchStartX.current === null) return
+        const delta = e.changedTouches[0].clientX - touchStartX.current
+        touchStartX.current = null
+        if (Math.abs(delta) < SWIPE_THRESHOLD_PX) return
+        advance(delta < 0 ? 1 : -1)
+      }}
     >
-      {quotes.map((q, i) => {
-        const depth = (i - front + quotes.length) % quotes.length
-        if (depth >= STACK_VISIBLE_LAYERS) return null
-        return (
-          <button
-            key={q.author}
-            type="button"
-            aria-label={depth === 0 ? "Следующий отзыв" : undefined}
-            tabIndex={depth === 0 ? 0 : -1}
-            onClick={advance}
-            className="absolute inset-0 w-full transition-transform duration-300 ease-out"
-            style={{
-              zIndex: STACK_VISIBLE_LAYERS - depth,
-              transform: `translate(${depth * STACK_OFFSET_PX}px, ${depth * STACK_OFFSET_PX}px)`,
-            }}
-          >
-            <QuoteCard quote={q.quote} author={q.author} />
-          </button>
-        )
-      })}
+      {visible.map((q, i) => (
+        <QuoteCard key={`${pairIndex}-${i}-${q.author}`} quote={q.quote} author={q.author} />
+      ))}
     </div>
   )
 }
@@ -498,7 +496,6 @@ function QuoteSlide({
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="relative flex flex-1 flex-col items-center overflow-y-auto px-5 pt-6 pb-6 text-center sm:px-10 sm:pt-8">
-        <Glow side="left" />
         <h2 className="max-w-2xl font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">
           {title}
         </h2>
@@ -506,7 +503,7 @@ function QuoteSlide({
           {body}
         </p>
 
-        <QuoteStack quotes={quotes} />
+        <QuotePairs quotes={quotes} />
 
         {quotes.length > 0 && (
           <div className="mt-6 hidden w-full max-w-5xl gap-3 sm:grid sm:grid-cols-3 lg:max-w-6xl lg:grid-cols-4 xl:max-w-7xl xl:grid-cols-6">
