@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useRef, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState } from "react"
 import { SlideDeck } from "@/components/slide-deck"
 import type { Review } from "@/lib/reviews-data"
 
@@ -14,80 +14,6 @@ function TourCtaButton() {
     >
       Выбрать тур
     </Link>
-  )
-}
-
-function DiscountTiles({ packageDiscounts }: { packageDiscounts: Record<string, number> }) {
-  const tiers = Object.entries(packageDiscounts).sort(([a], [b]) => Number(a) - Number(b))
-  return (
-    <div className="grid grid-cols-3 gap-3">
-      {tiers.map(([count, pct]) => (
-        <div key={count} className="rounded-xl border border-border bg-card px-3 py-4 text-center shadow-sm">
-          <div className="font-heading text-xl font-semibold text-primary sm:text-2xl">−{pct}%</div>
-          <div className="mt-1 text-xs text-muted-foreground">{count} тура</div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// Тизер-плашка снизу слайдов (начиная со слайда с отзывами) — раньше на
-// последнем слайде карусели свайп дальше "отпускал" её в обычный скролл
-// страницы, и снизу незаметно наезжал блок скидок — Виктор наткнулся на
-// это случайно и не понял, что произошло. Явная плашка с открытым текстом
-// решает то же самое осознанно: видно, что там акция, и как её открыть —
-// тапом или свайпом вверх. swiper-no-swiping — встроенный механизм Swiper
-// (не самодельный CSS-трюк) — не даёт деке ТАКЖЕ среагировать на этот же
-// вертикальный жест как на "следующий слайд".
-function DiscountTeaser({ packageDiscounts }: { packageDiscounts: Record<string, number> }) {
-  const [open, setOpen] = useState(false)
-
-  const tiers = Object.entries(packageDiscounts)
-  if (tiers.length === 0) return null
-  const maxPct = Math.max(...tiers.map(([, pct]) => pct))
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label={`Скидка до −${maxPct}% на пакет туров`}
-        className="swiper-no-swiping absolute top-4 right-4 z-20 flex size-12 items-center justify-center rounded-full bg-primary text-xl shadow-lg shadow-primary/40 transition-transform hover:scale-105 active:scale-95 sm:top-5 sm:right-6 sm:size-14"
-      >
-        🎁
-      </button>
-
-      {open && (
-        <div className="swiper-no-swiping absolute inset-0 z-30 flex flex-col justify-end">
-          <button
-            type="button"
-            aria-label="Закрыть"
-            onClick={() => setOpen(false)}
-            className="absolute inset-0 bg-black/60"
-          />
-          <div className="relative rounded-t-3xl border-t border-border bg-background p-5 pb-6 text-center shadow-2xl">
-            <button
-              type="button"
-              aria-label="Закрыть"
-              onClick={() => setOpen(false)}
-              className="absolute top-3 right-3 flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground"
-            >
-              ✕
-            </button>
-            <h3 className="px-8 font-heading text-lg font-semibold sm:text-xl">
-              Больше туров в пакете — больше скидка
-            </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Скидка считается автоматически при бронировании нескольких программ.
-            </p>
-            <div className="mt-4">
-              <DiscountTiles packageDiscounts={packageDiscounts} />
-            </div>
-            <TourCtaButton />
-          </div>
-        </div>
-      )}
-    </>
   )
 }
 
@@ -327,17 +253,15 @@ function PhotoSlide({
   imageSrc,
   imageAlt,
   imagePosition,
-  discountTeaser,
 }: {
   title: string
   body: string
   imageSrc: string
   imageAlt: string
   imagePosition?: string
-  discountTeaser?: ReactNode
 }) {
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden">
+    <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="relative h-[36%] shrink-0 overflow-hidden sm:h-[40%]">
         <Image
           src={imageSrc}
@@ -355,7 +279,6 @@ function PhotoSlide({
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">{body}</p>
         <TourCtaButton />
       </div>
-      {discountTeaser}
     </div>
   )
 }
@@ -602,18 +525,14 @@ function QuoteSlide({
   title,
   body,
   quotes,
-  discountTeaser,
 }: {
   title: string
   body: string
   quotes: Quote[]
-  discountTeaser?: ReactNode
 }) {
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden">
-      <div
-        className={`relative flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pb-6 text-center sm:pl-12 sm:pr-10 ${discountTeaser ? "pt-16 sm:pt-20" : "pt-6 sm:pt-8"}`}
-      >
+    <div className="flex h-full w-full flex-col overflow-hidden">
+      <div className="relative flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pt-6 pb-6 text-center sm:pl-12 sm:pr-10 sm:pt-8">
         <h2 className="max-w-2xl font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">
           {title}
         </h2>
@@ -635,19 +554,11 @@ function QuoteSlide({
 
         <TourCtaButton />
       </div>
-      {discountTeaser}
     </div>
   )
 }
 
-export function AdvantagesSection({
-  heroQuotes,
-  packageDiscounts,
-}: {
-  heroQuotes: Review[]
-  packageDiscounts: Record<string, number>
-}) {
-  const discountTeaser = <DiscountTeaser packageDiscounts={packageDiscounts} />
+export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
   return (
     <SlideDeck
       slides={[
@@ -666,7 +577,6 @@ export function AdvantagesSection({
           title="Что говорят гости, которые уже были с нами"
           body="Внимание к мелочам и забота о безопасности — вот что нам чаще всего пишут после поездки."
           quotes={heroQuotes.map(reviewToQuote)}
-          discountTeaser={discountTeaser}
         />,
         <PhotoSlide
           key="company"
@@ -674,7 +584,6 @@ export function AdvantagesSection({
           body="Никто не опаздывает к автобусу и не тащит всех в дьюти-фри. Программа собрана под вашу компанию — от встречи в отеле до прощания вечером."
           imageSrc="/images/tours/mayak-dai-lan.jpg"
           imageAlt="Пляж у маяка Дай Лань, где кроме вас почти никого нет"
-          discountTeaser={discountTeaser}
         />,
         <PhotoSlide
           key="pace"
@@ -682,7 +591,6 @@ export function AdvantagesSection({
           body="Никакой обязательной лавки, где гиду капает процент с покупок, и столовой по расписанию автобуса. Понравилось место — сидим сколько хочется, проголодались — просто скажите. Мы не гонимся за галочками в чек-листе: даём настоящую поездку — выверенную и профессиональную, но без туристической суеты и толпы."
           imageSrc="/images/tours/severnye-ostrova.jpg"
           imageAlt="Северные острова, тихая бухта в стороне от туристических троп"
-          discountTeaser={discountTeaser}
         />,
       ]}
     />

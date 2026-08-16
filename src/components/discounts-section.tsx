@@ -1,5 +1,8 @@
+import Link from "next/link"
 import { Reveal } from "@/components/motion/reveal"
 import { Glow } from "@/components/glow"
+import { buttonVariants } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 export function DiscountsSection({ packageDiscounts }: { packageDiscounts: Record<string, number> }) {
   const tiers = Object.entries(packageDiscounts).sort(([a], [b]) => Number(a) - Number(b))
@@ -27,6 +30,10 @@ export function DiscountsSection({ packageDiscounts }: { packageDiscounts: Recor
             </Reveal>
           ))}
         </div>
+
+        <Link href="/tours" className={cn(buttonVariants({ size: "lg" }), "mt-6 w-full sm:w-auto")}>
+          Выбрать тур
+        </Link>
       </div>
     </section>
   )
