@@ -39,23 +39,29 @@ function shuffledIndices(count: number) {
   return arr
 }
 
-// Высота полосы под коллаж задана явно в CSS (% от высоты слайда, см. className
-// ниже) и не зависит от контента — сколько бы фото ни было в сетке, overflow-hidden
-// обрежет всё, что не влезло. Раньше высота была побочным эффектом "строк на
-// брейкпоинт × ширина плитки" — на широком экране плитка становилась шире, и та же
-// строка выходила на сотни пикселей выше, отжимая заголовок за пределы слайда.
-// Пробовали вместо этого измерять реальную высоту через ResizeObserver и вычислять
-// точное число строк — на практике словили гонку с загрузкой картинок на реальном
-// телефоне (одна лишняя частично обрезанная строка успевала отрендериться серым
-// плейсхолдером до того, как её скрывали). Не пытаемся больше попадать в ряд ровно —
-// просто рендерим фиксированный запас плиток на брейкпоинт (с запасом на обрезку
-// последней строки) и полагаемся на overflow-hidden.
-const VISIBLE_COUNT: Record<number, number> = { 8: 24, 9: 27, 12: 36 }
+// На мобиле (< sm) высота полосы — как задумывалась изначально: побочный эффект
+// "строк × ширина плитки", без верхней границы (8 кол. × 8 строк — почти квадрат,
+// это и есть исходный "полноэкранный" вид, который нужно сохранить как есть).
+// Начиная с sm экран становится шире, но не пропорционально выше — та же формула
+// давала на широких экранах сетку на сотни пикселей выше, чем оставалось места под
+// заголовок. Поэтому с sm и выше высота полосы дополнительно ограничена в CSS
+// (см. className на обёртке ниже) и строк выделено меньше, чтобы почти попадать
+// в размер без обрезки лишнего.
+const VISIBLE_AT_BASE = Math.floor(COLLAGE_PHOTO_COUNT / 8) * 8 // 8 кол. × 8 строк = 64, как исходно
+const VISIBLE_AT_SM = 9 * 4 // 9 кол. × 4 строки — с sm полоса дополнительно ограничена высотой
+const VISIBLE_AT_LG = 12 * 3 // 12 кол. × 3 строки — на lg плитка ощутимо шире, строк меньше
 
-function columnsForWidth(width: number) {
-  if (width >= 1024) return 12
-  if (width >= 640) return 9
-  return 8
+function tileVisibilityClass(i: number) {
+  if (i >= VISIBLE_AT_BASE) return "hidden"
+  if (i >= VISIBLE_AT_SM) return "sm:hidden"
+  if (i >= VISIBLE_AT_LG) return "lg:hidden"
+  return ""
+}
+
+function visibleCountForWidth(width: number) {
+  if (width >= 1024) return VISIBLE_AT_LG
+  if (width >= 640) return VISIBLE_AT_SM
+  return VISIBLE_AT_BASE
 }
 
 type Phase = "idle" | "priming" | "open"
@@ -75,28 +81,25 @@ function preloadImage(src: string) {
   })
 }
 
-function PhotoCollage() {
-  const [cols, setCols] = useState(8)
+// Раньше раскрывалась только одна плитка сразу. На широком экране места хватает
+// на несколько одновременных раскрытий — каждый слот крутит СВОЙ независимый
+// цикл (staggerMs разводит их по времени, чтобы не открывались синхронно).
+// Слот держит собственное состояние на верхнем уровне PhotoCollage (см. вызовы
+// useRevealCycle ниже), а видимость/ширина самого блока управляется CSS-классами
+// в RevealSlot — так на узком экране лишние слоты просто не рендерятся визуально,
+// без JS-определения ширины экрана и связанных с ним гонок.
+function useRevealCycle(staggerMs: number) {
   const [phase, setPhase] = useState<Phase>("idle")
   const [target, setTarget] = useState(0)
-
-  useEffect(() => {
-    const update = () => setCols(columnsForWidth(window.innerWidth))
-    update()
-    window.addEventListener("resize", update)
-    return () => window.removeEventListener("resize", update)
-  }, [])
-
-  const visibleCount = VISIBLE_COUNT[cols]
 
   useEffect(() => {
     let cancelled = false
     let step = 0
     // Новая случайная перетасовка при каждом заходе на сайт (не фиксированный порядок) —
     // при этом каждое фото гарантированно показывается один раз за полный проход, прежде
-    // чем перетасовать заново и начать следующий круг. Перетасовка ограничена плитками,
-    // реально видимыми в текущей раскладке (см. layout выше).
-    let order = shuffledIndices(visibleCount)
+    // чем перетасовать заново и начать следующий круг. Перетасовка ограничена видимыми на
+    // этом экране плитками (см. visibleCountForWidth).
+    let order = shuffledIndices(visibleCountForWidth(window.innerWidth))
     const timers: ReturnType<typeof setTimeout>[] = []
     const after = (fn: () => void, ms: number) => {
       timers.push(setTimeout(fn, ms))
@@ -106,7 +109,7 @@ function PhotoCollage() {
     const runCycle = () => {
       if (cancelled) return
       if (step >= order.length) {
-        order = shuffledIndices(visibleCount)
+        order = shuffledIndices(visibleCountForWidth(window.innerWidth))
         step = 0
       }
       const idx = order[step]
@@ -124,27 +127,72 @@ function PhotoCollage() {
       })
     }
 
-    after(runCycle, GAP_MS)
+    after(runCycle, GAP_MS + staggerMs)
     return () => {
       cancelled = true
       timers.forEach(clearTimeout)
     }
-    // Смена раскладки (поворот экрана, ресайз окна) начинает цикл заново под новый
-    // набор видимых плиток — небольшая потеря прогресса цикла тут не заметна и не важна.
-  }, [visibleCount])
+    // staggerMs — константа на весь жизненный цикл компонента, менять её не нужно.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  return { phase, target }
+}
+
+function RevealSlot({
+  reveal,
+  widthClass,
+}: {
+  reveal: { phase: Phase; target: number }
+  widthClass: string
+}) {
+  return (
+    <div className={`relative h-full ${widthClass}`}>
+      <div
+        className={`absolute inset-0 bg-black transition-opacity ease-out ${
+          reveal.phase === "open" ? "opacity-100" : "opacity-0"
+        }`}
+        style={{ transitionDuration: `${TRANSITION_MS}ms` }}
+      >
+        {/* Полоса под коллаж короткая и широкая — у портретного/квадратного фото
+            object-contain оставлял большие пустые поля по бокам (даже с непрозрачным
+            фоном под ними это выглядело как "марка", а не как полноэкранное раскрытие).
+            object-cover заполняет весь слот целиком, обрезая лишнее по краям. */}
+        <Image
+          src={COLLAGE_PHOTOS[reveal.target]}
+          alt=""
+          fill
+          sizes="(min-width: 1536px) 34vw, (min-width: 1024px) 50vw, 100vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+      </div>
+    </div>
+  )
+}
+
+function PhotoCollage() {
+  const revealA = useRevealCycle(0)
+  const revealB = useRevealCycle(1400)
+  const revealC = useRevealCycle(2600)
+
+  const primingTiles = new Set(
+    [revealA, revealB, revealC].filter((r) => r.phase === "priming").map((r) => r.target),
+  )
 
   return (
-    // Высота полосы задана явно (% от высоты слайда) и не зависит от контента — на любом
-    // экране коллаж не может занять больше отведённого места и отжать заголовок/кнопку
-    // за пределы слайда. overflow-hidden обрезает лишнее вместо того, чтобы растягивать блок.
-    <div className="relative h-[24svh] min-h-[140px] w-full shrink-0 overflow-hidden sm:h-[28svh] lg:h-[32svh]">
-
+    // База (< sm) — без ограничения высоты, ряды сетки всегда полные (см.
+    // tileVisibilityClass), обрезка не нужна: исходный "полноэкранный" вид как есть.
+    // С sm и выше высота дополнительно ограничена явно (% от высоты слайда) —
+    // на широком экране та же формула строк даёт сетку выше, чем есть места под
+    // заголовок, overflow-hidden подчищает то, что не влезло.
+    <div className="relative w-full shrink-0 sm:h-[38svh] sm:overflow-hidden lg:h-[32svh]">
       <div className="grid w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
         {COLLAGE_PHOTOS.map((src, i) => (
           <div
             key={src}
-            className={`relative aspect-square overflow-hidden ${i >= visibleCount ? "hidden" : ""} ${
-              phase === "priming" && i === target ? "tile-priming" : ""
+            className={`relative aspect-square overflow-hidden ${tileVisibilityClass(i)} ${
+              primingTiles.has(i) ? "tile-priming" : ""
             }`}
           >
             <Image
@@ -158,27 +206,12 @@ function PhotoCollage() {
           </div>
         ))}
       </div>
-      <div
-        className={`pointer-events-none absolute inset-0 z-10 bg-black transition-opacity ease-out ${
-          phase === "open" ? "opacity-100" : "opacity-0"
-        }`}
-        style={{ transitionDuration: `${TRANSITION_MS}ms` }}
-      >
-        {/* Полоса теперь короткая и широкая — у портретного/квадратного фото при
-            object-contain по бокам остаются большие поля. Раньше там сквозь блёр
-            всё равно проглядывала соседняя плитка сетки (другое фото) — выглядело
-            как баг. Сплошной чёрный фон (bg-black на обёртке) гарантирует поля
-            без прогляда, блёр-слой поверх только добавляет мягкое свечение. */}
-        <Image
-          src={COLLAGE_PHOTOS[target]}
-          alt=""
-          fill
-          sizes="100vw"
-          aria-hidden
-          className="scale-110 object-cover opacity-50 blur-2xl"
-        />
-        <Image src={COLLAGE_PHOTOS[target]} alt="" fill sizes="100vw" className="object-contain" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+      {/* 1 раскрытие на мобиле/планшете, 2 — с lg (1024px), 3 — с 2xl (1536px) шире экран,
+          больше свободного места под одновременные раскрытия разных фото. */}
+      <div className="pointer-events-none absolute inset-0 z-10 flex">
+        <RevealSlot reveal={revealA} widthClass="w-full lg:w-1/2 2xl:w-1/3" />
+        <RevealSlot reveal={revealB} widthClass="hidden lg:block lg:w-1/2 2xl:w-1/3" />
+        <RevealSlot reveal={revealC} widthClass="hidden 2xl:block 2xl:w-1/3" />
       </div>
     </div>
   )
@@ -188,7 +221,7 @@ function IntroSlide() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <PhotoCollage />
-      <div className="flex flex-1 flex-col items-center overflow-y-auto px-5 pt-6 pb-6 text-center sm:px-10 sm:pt-8">
+      <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-5 py-2 text-center sm:px-10 sm:py-4">
         <h1 className="max-w-xl font-heading text-2xl leading-[1.1] font-semibold sm:text-5xl">
           Вьетнам без чужих
         </h1>
