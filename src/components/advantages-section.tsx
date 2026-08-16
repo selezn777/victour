@@ -455,31 +455,73 @@ const SWIPE_THRESHOLD_PX = 40
 // комментарии выше и feedback_victour_prefer_js_over_css.
 function QuotePairs({ quotes }: { quotes: Quote[] }) {
   const [pairIndex, setPairIndex] = useState(0)
+  const [direction, setDirection] = useState<1 | -1>(1)
+  // Плавность — на React-стейте, не на CSS-скролле (то же правило, что и со
+  // свайпом выше): новая пара монтируется уже сдвинутой/прозрачной (ключ
+  // сменился — это новый DOM-узел), затем в следующем кадре стейт сбрасывает
+  // сдвиг — переход анимируется через обычный CSS transition на transform/
+  // opacity, но моментом переключения управляет JS.
+  const [entering, setEntering] = useState(false)
   const touchStartX = useRef<number | null>(null)
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => setEntering(false)))
+    return () => cancelAnimationFrame(id)
+  }, [pairIndex])
 
   if (quotes.length === 0) return null
 
   const pairCount = Math.ceil(quotes.length / 2)
-  const advance = (dir: 1 | -1) => setPairIndex((i) => (i + dir + pairCount) % pairCount)
+  const goTo = (target: number, dir: 1 | -1) => {
+    setDirection(dir)
+    setEntering(true)
+    setPairIndex(target)
+  }
+  const advance = (dir: 1 | -1) => goTo((pairIndex + dir + pairCount) % pairCount, dir)
   const visible = [quotes[(pairIndex * 2) % quotes.length], quotes[(pairIndex * 2 + 1) % quotes.length]]
 
   return (
-    <div
-      className="mt-5 flex w-full max-w-xs flex-col gap-3 sm:hidden"
-      onTouchStart={(e) => {
-        touchStartX.current = e.touches[0].clientX
-      }}
-      onTouchEnd={(e) => {
-        if (touchStartX.current === null) return
-        const delta = e.changedTouches[0].clientX - touchStartX.current
-        touchStartX.current = null
-        if (Math.abs(delta) < SWIPE_THRESHOLD_PX) return
-        advance(delta < 0 ? 1 : -1)
-      }}
-    >
-      {visible.map((q, i) => (
-        <QuoteCard key={`${pairIndex}-${i}-${q.author}`} quote={q.quote} author={q.author} />
-      ))}
+    <div className="mt-5 w-full max-w-xs sm:hidden">
+      <div
+        className="overflow-hidden"
+        onTouchStart={(e) => {
+          touchStartX.current = e.touches[0].clientX
+        }}
+        onTouchEnd={(e) => {
+          if (touchStartX.current === null) return
+          const delta = e.changedTouches[0].clientX - touchStartX.current
+          touchStartX.current = null
+          if (Math.abs(delta) < SWIPE_THRESHOLD_PX) return
+          advance(delta < 0 ? 1 : -1)
+        }}
+      >
+        <div
+          key={pairIndex}
+          className={`flex flex-col gap-3 transition-all duration-300 ease-out ${
+            entering ? (direction === 1 ? "translate-x-6 opacity-0" : "-translate-x-6 opacity-0") : "translate-x-0 opacity-100"
+          }`}
+        >
+          {visible.map((q, i) => (
+            <QuoteCard key={`${pairIndex}-${i}-${q.author}`} quote={q.quote} author={q.author} />
+          ))}
+        </div>
+      </div>
+
+      {pairCount > 1 && (
+        <div className="mt-3 flex justify-center gap-1.5">
+          {Array.from({ length: pairCount }).map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              aria-label={`Отзывы ${i + 1} из ${pairCount}`}
+              onClick={() => i !== pairIndex && goTo(i, i > pairIndex ? 1 : -1)}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                i === pairIndex ? "w-5 bg-primary" : "w-1.5 bg-muted-foreground/40"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
