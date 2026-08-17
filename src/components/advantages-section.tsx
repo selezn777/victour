@@ -65,7 +65,11 @@ function visibleCountForWidth(width: number) {
   return VISIBLE_AT_BASE
 }
 
-type Phase = "idle" | "priming" | "open"
+// "closing" — отдельная фаза между open и idle: масштаб уже вернулся к 1, но
+// z-index/overflow-visible ещё держатся TRANSITION_MS, пока идёт CSS-переход
+// "стягивания обратно" — иначе тайл мгновенно обрезался бы своим overflow-hidden
+// в момент переключения фазы, ещё не успев визуально сжаться.
+type Phase = "idle" | "priming" | "open" | "closing"
 
 // Полноразмерный вариант (sizes=100vw) — это ДРУГОЙ файл/URL у Next/Image, чем маленькая
 // плитка (sizes~12vw), так что готовность тайла в кэше ничего не значит для раскрытия.
@@ -82,14 +86,12 @@ function preloadImage(src: string) {
   })
 }
 
-// Раньше раскрывалась только одна плитка сразу. На широком экране места хватает
-// на несколько одновременных раскрытий — каждый слот крутит СВОЙ независимый
-// цикл (staggerMs разводит их по времени, чтобы не открывались синхронно).
-// Слот держит собственное состояние на верхнем уровне PhotoCollage (см. вызовы
-// useRevealCycle ниже), а видимость/ширина самого блока управляется CSS-классами
-// в RevealSlot — так на узком экране лишние слоты просто не рендерятся визуально,
-// без JS-определения ширины экрана и связанных с ним гонок.
-function useRevealCycle(staggerMs: number) {
+// Раскрытие — строго одно за раз, по очереди (Виктор: "рандомно по очереди все
+// картинки открываются") — раньше крутилось до 5 параллельных независимых
+// циклов (staggerMs разводил их по слотам на широких экранах), но с раскрытием
+// "на месте" плитки несколько одновременных были бы визуальным шумом, да и не
+// тем, о чём просил Виктор.
+function useRevealCycle() {
   const [phase, setPhase] = useState<Phase>("idle")
   const [target, setTarget] = useState(0)
 
@@ -122,108 +124,86 @@ function useRevealCycle(staggerMs: number) {
         setPhase("open")
         after(() => {
           if (cancelled) return
-          setPhase("idle")
-          after(runCycle, GAP_MS)
+          setPhase("closing")
+          after(() => {
+            if (cancelled) return
+            setPhase("idle")
+            after(runCycle, GAP_MS)
+          }, TRANSITION_MS)
         }, HOLD_MS)
       })
     }
 
-    after(runCycle, GAP_MS + staggerMs)
+    after(runCycle, GAP_MS)
     return () => {
       cancelled = true
       timers.forEach(clearTimeout)
     }
-    // staggerMs — константа на весь жизненный цикл компонента, менять её не нужно.
+    // Разовая настройка цикла при монтировании — не нужно перезапускать.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return { phase, target }
 }
 
-// Показать со слота i включительно — начиная с какого брейкпоинта он появляется.
-// Пусто (i===0) значит виден всегда. flex-1 на каждом слоте сам делит ширину
-// поровну между видимыми — явно считать доли/ширины в процентах не нужно.
-const SLOT_VISIBILITY = ["", "hidden sm:flex", "hidden md:flex", "hidden lg:flex", "hidden xl:flex"]
-
-function RevealSlot({
-  reveal,
-  visibilityClass,
-}: {
-  reveal: { phase: Phase; target: number }
-  visibilityClass: string
-}) {
-  return (
-    <div className={`relative h-full flex-1 ${visibilityClass}`}>
-      <div
-        className={`absolute inset-0 bg-black transition-opacity ease-out ${
-          reveal.phase === "open" ? "opacity-100" : "opacity-0"
-        }`}
-        style={{ transitionDuration: `${TRANSITION_MS}ms` }}
-      >
-        {/* Полоса под коллаж короткая и широкая — у портретного/квадратного фото
-            object-contain оставлял большие пустые поля по бокам (даже с непрозрачным
-            фоном под ними это выглядело как "марка", а не как полноэкранное раскрытие).
-            object-cover заполняет весь слот целиком, обрезая лишнее по краям. */}
-        <Image
-          src={COLLAGE_PHOTOS[reveal.target]}
-          alt=""
-          fill
-          sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 34vw, (min-width: 640px) 50vw, 100vw"
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-      </div>
-    </div>
-  )
-}
+// Насколько раскрытая плитка "вырастает" от своей же позиции в сетке — transform
+// не участвует в layout, так что соседние плитки не сдвигаются, а увеличенная
+// просто перекрывает их визуально (z-index). Это и даёт эффект "вытягивается
+// изнутри на месте / стягивается обратно туда же", без расчёта координат в JS.
+const REVEAL_SCALE = 2.6
 
 function PhotoCollage() {
-  // Раньше повышалось только с lg (1024) и 2xl (1536) — на реальном планшете (обычно
-  // 700–1000px) так и оставалось 1 раскрытие вместо обещанных "по 2, по 3". Теперь
-  // ступени плотнее: 1 (телефон) → 2 (sm, 640) → 3 (md, 768) → 4 (lg, 1024) →
-  // 5 (xl, 1280, ноутбук и шире) — каждый слот крутит независимый цикл со сдвигом.
-  const reveals = [
-    useRevealCycle(0),
-    useRevealCycle(900),
-    useRevealCycle(1800),
-    useRevealCycle(2700),
-    useRevealCycle(3600),
-  ]
-
-  const primingTiles = new Set(
-    reveals.filter((r) => r.phase === "priming").map((r) => r.target),
-  )
+  const { phase, target } = useRevealCycle()
 
   return (
     // База (< sm) — без ограничения высоты, ряды сетки всегда полные (см.
-    // tileVisibilityClass), обрезка не нужна: исходный "полноэкранный" вид как есть.
+    // tileVisibilityClass), overflow-hidden всё равно нужен теперь всегда (не
+    // только с sm) — иначе выросшая крайняя плитка вылезала бы за пределы блока.
     // С sm и выше высота дополнительно ограничена явно (% от высоты слайда) —
     // на широком экране та же формула строк даёт сетку выше, чем есть места под
     // заголовок, overflow-hidden подчищает то, что не влезло.
-    <div className="relative w-full shrink-0 sm:h-[38svh] sm:overflow-hidden lg:h-[32svh]">
+    <div className="relative w-full shrink-0 overflow-hidden sm:h-[38svh] lg:h-[32svh]">
       <div className="grid w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
-        {COLLAGE_PHOTOS.map((src, i) => (
-          <div
-            key={src}
-            className={`relative aspect-square overflow-hidden ${tileVisibilityClass(i)} ${
-              primingTiles.has(i) ? "tile-priming" : ""
-            }`}
-          >
-            <Image
-              src={src}
-              alt=""
-              fill
-              priority={i < 16}
-              sizes="(min-width: 1024px) 8vw, (min-width: 640px) 11vw, 12.5vw"
-              className="object-cover"
-            />
-          </div>
-        ))}
-      </div>
-      <div className="pointer-events-none absolute inset-0 z-10 flex">
-        {reveals.map((reveal, i) => (
-          <RevealSlot key={i} reveal={reveal} visibilityClass={SLOT_VISIBILITY[i]} />
-        ))}
+        {COLLAGE_PHOTOS.map((src, i) => {
+          const isTarget = target === i
+          const isPriming = phase === "priming" && isTarget
+          const isScaled = phase === "open" && isTarget
+          // held elevated through "closing" too, so the shrink-back transition
+          // is not clipped by the tile's own overflow-hidden mid-animation.
+          const isElevated = (phase === "open" || phase === "closing") && isTarget
+          return (
+            <div
+              key={src}
+              className={`relative aspect-square ${tileVisibilityClass(i)} ${isPriming ? "tile-priming" : ""} ${
+                isElevated ? "z-10 overflow-visible" : "overflow-hidden"
+              }`}
+            >
+              <div
+                className="absolute inset-0 overflow-hidden transition-transform ease-out"
+                style={{
+                  transitionDuration: `${TRANSITION_MS}ms`,
+                  transform: isScaled ? `scale(${REVEAL_SCALE})` : "scale(1)",
+                  boxShadow: isElevated ? "0 20px 45px -12px rgba(0,0,0,0.55)" : undefined,
+                }}
+              >
+                <Image
+                  src={src}
+                  alt=""
+                  fill
+                  priority={i < 16}
+                  sizes="(min-width: 1024px) 8vw, (min-width: 640px) 11vw, 12.5vw"
+                  className="object-cover"
+                />
+                {isElevated && (
+                  <div
+                    className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent transition-opacity ease-out"
+                    style={{ transitionDuration: `${TRANSITION_MS}ms`, opacity: isScaled ? 1 : 0 }}
+                  />
+                )}
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
