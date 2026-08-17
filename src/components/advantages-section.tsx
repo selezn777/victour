@@ -392,25 +392,19 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
                 isActive ? "opacity-100" : "opacity-0"
               }`}
             >
-              <div className="inline-block rounded-sm bg-black/60 px-2 py-1.5">
-                <h3 className="line-clamp-2 font-heading text-sm leading-tight font-semibold break-words text-white sm:text-base">
-                  {tour.title}
-                </h3>
-                <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug break-words text-white/80 sm:text-xs">
-                  {tour.annotation}
-                </p>
-              </div>
+              <h3 className="line-clamp-2 font-heading text-sm leading-tight font-semibold break-words text-white sm:text-base">
+                {tour.title}
+              </h3>
+              <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug break-words text-white/80 sm:text-xs">
+                {tour.annotation}
+              </p>
             </div>
             {!isActive && (
               <>
                 {/* Уже/lg колонка узкая — вертикальное название. С lg колонка
-                    достаточно широкая для обычной горизонтальной подписи.
-                    Сплошная тёмная плашка позади текста вместо text-shadow —
-                    блюр-тень размазывалась в грязное пятно на светлых фото. */}
-                <span className="absolute inset-0 flex items-center justify-center p-2 lg:hidden">
-                  <span className="rounded-sm bg-black/55 px-1 py-3 text-center text-[11px] font-semibold text-white [writing-mode:vertical-rl]">
-                    {tour.title}
-                  </span>
+                    достаточно широкая для обычной горизонтальной подписи. */}
+                <span className="absolute inset-0 flex items-center justify-center px-1 text-center text-[11px] font-semibold text-white [writing-mode:vertical-rl] lg:hidden">
+                  {tour.title}
                 </span>
                 <div className="absolute inset-x-0 bottom-0 hidden p-3 text-left lg:block">
                   <h3 className="line-clamp-2 font-heading text-sm font-semibold break-words text-white/80">
