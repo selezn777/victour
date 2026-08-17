@@ -367,7 +367,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
   const [active, setActive] = useState<number | null>(null)
 
   return (
-    <div className="mt-4 flex h-72 w-full max-w-xl gap-1.5 sm:h-80 md:max-w-2xl lg:h-96 lg:max-w-4xl">
+    <div className="mt-4 flex h-72 w-full max-w-2xl gap-1 sm:h-80 md:max-w-3xl lg:h-96 lg:max-w-5xl">
       {tours.map((tour, i) => {
         const isActive = i === active
         return (
@@ -376,7 +376,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
             href={`/tours/${tour.slug}`}
             onMouseEnter={() => setActive(i)}
             onMouseLeave={() => setActive(null)}
-            className={`group relative flex-1 overflow-hidden rounded-md bg-muted ring-1 transition-all duration-500 ease-out ${
+            className={`group relative flex-1 overflow-hidden rounded-sm bg-muted ring-1 transition-all duration-500 ease-out ${
               isActive ? "ring-primary/60" : "ring-white/10"
             }`}
           >
@@ -386,7 +386,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
               fill
               sizes="(min-width: 1024px) 700px, (min-width: 640px) 400px, 60vw"
               className={`object-cover transition-[filter] duration-700 ease-out ${
-                isActive ? "brightness-100" : "brightness-75"
+                isActive ? "brightness-100" : "brightness-95"
               }`}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/5 to-transparent" />
@@ -406,7 +406,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
               <>
                 {/* Уже/lg колонка узкая — вертикальное название. С lg колонка
                     достаточно широкая для обычной горизонтальной подписи. */}
-                <span className="absolute inset-0 flex items-center justify-center px-1 text-center text-[11px] font-semibold text-white/90 [writing-mode:vertical-rl] lg:hidden">
+                <span className="absolute inset-0 flex items-center justify-center px-1 text-center text-[11px] font-semibold text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.9),0_0_12px_rgba(0,0,0,0.6)] [writing-mode:vertical-rl] lg:hidden">
                   {tour.title}
                 </span>
                 <div className="absolute inset-x-0 bottom-0 hidden p-3 text-left lg:block">
