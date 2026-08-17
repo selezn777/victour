@@ -19,6 +19,11 @@ const STACK_TRANSFORM = [
 const DROP_STAGGER_MS = 1200
 const DROP_INITIAL_DELAY_MS = 400
 
+// Автопереключение вместо тапа — Виктор решил, что гости всё равно не будут
+// тыкать по фото, пусть стопка сама листает себя с тем же ритмом, как будто
+// кто-то по ней тапает.
+const AUTO_SHUFFLE_MS = 3200
+
 /**
  * Стопка фото "как будто уронили друг на друга" — при появлении фото падают
  * по очереди (снизу стопки наверх) с заметной паузой между каждым, а по тапу
@@ -79,6 +84,19 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
       setLifted(false)
     }, 200)
   }
+
+  // Всегда актуальная ссылка на shuffle для таймера ниже — обычный setInterval
+  // захватил бы устаревшее замыкание (и устаревший lifted) из момента запуска.
+  const shuffleRef = useRef(shuffle)
+  useEffect(() => {
+    shuffleRef.current = shuffle
+  })
+
+  useEffect(() => {
+    if (!entered.every(Boolean)) return
+    const interval = setInterval(() => shuffleRef.current(), AUTO_SHUFFLE_MS)
+    return () => clearInterval(interval)
+  }, [entered])
 
   return (
     <button
