@@ -376,7 +376,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
             href={`/tours/${tour.slug}`}
             onMouseEnter={() => setActive(i)}
             onMouseLeave={() => setActive(null)}
-            className={`group relative flex-1 overflow-hidden bg-muted ring-1 ring-white/10 transition-shadow duration-500 ease-out ${
+            className={`group relative flex-1 overflow-hidden rounded-[1px] bg-muted ring-1 ring-white/10 transition-shadow duration-500 ease-out ${
               isActive ? "shadow-[0_10px_28px_-6px_rgba(0,0,0,0.55)]" : ""
             }`}
           >
@@ -400,18 +400,11 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
               </p>
             </div>
             {!isActive && (
-              <>
-                {/* Уже/lg колонка узкая — вертикальное название. С lg колонка
-                    достаточно широкая для обычной горизонтальной подписи. */}
-                <span className="absolute inset-0 flex items-center justify-center px-1 text-center text-[11px] font-semibold text-white [writing-mode:vertical-rl] lg:hidden">
+              <div className="absolute inset-x-0 bottom-0 p-1 text-center sm:p-2 lg:p-3 lg:text-left">
+                <h3 className="line-clamp-2 font-heading text-[9px] leading-tight font-semibold break-words text-white/80 sm:text-xs lg:text-sm">
                   {tour.title}
-                </span>
-                <div className="absolute inset-x-0 bottom-0 hidden p-3 text-left lg:block">
-                  <h3 className="line-clamp-2 font-heading text-sm font-semibold break-words text-white/80">
-                    {tour.title}
-                  </h3>
-                </div>
-              </>
+                </h3>
+              </div>
             )}
           </Link>
         )
