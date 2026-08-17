@@ -6,7 +6,6 @@ import { TourHero } from "@/components/tour/tour-hero"
 import { TourItinerary } from "@/components/tour/tour-itinerary"
 import { TourIncludesExcludes } from "@/components/tour/tour-includes-excludes"
 import { TourPriceTable } from "@/components/tour/tour-price-table"
-import { TourTicketOptions } from "@/components/tour/tour-ticket-options"
 import { TourBookingPanel } from "@/components/tour/tour-booking-panel"
 import { TourStickyCta } from "@/components/tour/tour-sticky-cta"
 import { ReviewsSection } from "@/components/reviews/reviews-section"
@@ -60,7 +59,6 @@ export function TourPageClient({
                 onSelectGuestCount={setGuestCount}
               />
               <TourItinerary itinerary={tour.itinerary} isTwoDay={tour.isDalatTwoDay} />
-              {tour.ticketOptions.length > 0 && <TourTicketOptions options={tour.ticketOptions} />}
 
               <ReviewsSection
                 title="Отзывы об этом туре"

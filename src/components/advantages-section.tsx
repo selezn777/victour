@@ -2,7 +2,6 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronDownIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { SlideDeck } from "@/components/slide-deck"
 import type { Review } from "@/lib/reviews-data"
@@ -355,27 +354,33 @@ const CATALOG_TOURS = [
   },
 ]
 
+// Лёгкая "горная" волна — центральная карточка чуть выше соседей, крайние
+// на общей линии. Разноуровневость вместо ровного ряда, как попросил
+// Виктор ("максимально дизайнерски"), но без резкого зигзага — тема
+// маршрутов/гор считывается, а не выглядит как визуальный шум.
+const STAGGER = ["", "mt-2.5", "mt-4", "mt-2.5", ""]
+
 /**
- * Полосы туров "выбор персонажа" — равной ширины, ховер (десктоп) чуть
+ * Полосы туров "выбор персонажа" — разноуровневый ряд, ховер (десктоп) чуть
  * приподнимает тенью. Подпись — ПОД картинкой, не поверх неё: раньше текст
  * поверх фото либо обрезался (line-clamp), либо терялся на светлом фото
  * при любой технике контраста (тень/плашка) — Виктор много раз забраковал
  * оба варианта. Подпись снаружи фото решает это раз и навсегда — полный
- * текст, без ограничения по высоте, стрелка-коннектор указывает на фото.
+ * текст, без ограничения по высоте. Коннектор — тонкая линия с точкой
+ * (не иконка-стрелка, которую Виктор посчитал слишком прямолинейной).
  */
 function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
   const [active, setActive] = useState<number | null>(null)
 
   return (
-    <div className="mt-2 w-full max-w-3xl sm:mt-4 sm:max-w-4xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl">
-      <div className="flex h-56 gap-1 sm:h-64 lg:h-72">
-        {tours.map((tour, i) => (
+    <div className="mt-2 flex w-full max-w-3xl items-start gap-1 sm:mt-4 sm:max-w-4xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl">
+      {tours.map((tour, i) => (
+        <div key={tour.slug} className={`flex flex-1 flex-col items-center ${STAGGER[i % STAGGER.length]}`}>
           <Link
-            key={tour.slug}
             href={`/tours/${tour.slug}`}
             onMouseEnter={() => setActive(i)}
             onMouseLeave={() => setActive(null)}
-            className={`relative flex-1 overflow-hidden rounded-[1px] bg-muted ring-1 ring-white/10 transition-shadow duration-500 ease-out ${
+            className={`relative h-56 w-full overflow-hidden rounded-[1px] bg-muted ring-1 ring-white/10 transition-shadow duration-500 ease-out sm:h-64 lg:h-72 ${
               i === active ? "shadow-[0_10px_28px_-6px_rgba(0,0,0,0.55)]" : ""
             }`}
           >
@@ -387,18 +392,14 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
               className="object-cover brightness-100"
             />
           </Link>
-        ))}
-      </div>
-      <div className="mt-1.5 flex gap-1">
-        {tours.map((tour) => (
-          <div key={tour.slug} className="flex flex-1 flex-col items-center gap-0.5 px-0.5 text-center">
-            <ChevronDownIcon className="size-3 shrink-0 text-primary/60" />
-            <span className="font-heading text-[10px] leading-tight font-semibold text-foreground sm:text-xs">
-              {tour.title}
-            </span>
+          <div className="relative mt-1.5 h-3 w-px shrink-0 bg-primary/40">
+            <span className="absolute -bottom-px left-1/2 size-1.5 -translate-x-1/2 rounded-full bg-primary/70" />
           </div>
-        ))}
-      </div>
+          <span className="mt-1 text-center font-heading text-[10px] leading-tight font-semibold text-foreground sm:text-xs">
+            {tour.title}
+          </span>
+        </div>
+      ))}
     </div>
   )
 }
