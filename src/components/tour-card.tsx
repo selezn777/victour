@@ -3,10 +3,15 @@
 import Image from "next/image"
 import Link from "next/link"
 import { HeartIcon } from "lucide-react"
+import { Swiper, SwiperSlide } from "swiper/react"
+import { Pagination } from "swiper/modules"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatUsd } from "@/lib/format"
 import type { CatalogTour } from "@/lib/site-data"
+
+import "swiper/css"
+import "swiper/css/pagination"
 
 export function TourCard({
   tour,
@@ -17,21 +22,41 @@ export function TourCard({
   isFavorite: boolean
   onToggleFavorite: () => void
 }) {
+  const photos = tour.galleryUrls.length > 0 ? tour.galleryUrls : tour.heroImageUrl ? [tour.heroImageUrl] : []
+  const paginationClass = `tour-card-pagination-${tour.slug}`
+
   return (
     <article className="group relative aspect-3/4 overflow-hidden rounded-2xl bg-muted">
       <Link href={`/tours/${tour.slug}`} className="absolute inset-0">
-        {tour.heroImageUrl && (
-          <Image
-            src={tour.heroImageUrl}
-            alt={tour.title}
-            fill
-            sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 100vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-110"
-          />
+        {photos.length > 0 && (
+          <Swiper
+            modules={[Pagination]}
+            pagination={photos.length > 1 ? { clickable: false, el: `.${paginationClass}` } : false}
+            className="absolute inset-0 h-full w-full"
+          >
+            {photos.map((url, i) => (
+              <SwiperSlide key={url} className="relative h-full w-full">
+                <Image
+                  src={url}
+                  alt={tour.title}
+                  fill
+                  priority={i === 0}
+                  sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 100vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+              </SwiperSlide>
+            ))}
+          </Swiper>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/95 via-black/20 to-transparent" />
 
-        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-5 text-white">
+        {photos.length > 1 && (
+          <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-full bg-black/25 px-2.5 py-1.5 backdrop-blur-md">
+            <div className={`flex items-center gap-1.5 ${paginationClass}`} />
+          </div>
+        )}
+
+        <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col gap-2 px-5 pt-5 pb-6 text-white">
           <span className="text-xs tracking-wide text-white/70 uppercase">
             {tour.durationLabel}
           </span>

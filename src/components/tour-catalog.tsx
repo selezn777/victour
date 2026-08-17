@@ -28,7 +28,7 @@ export function TourCatalog({
   favoritesCount: number
 }) {
   return (
-    <section id="catalog" className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+    <section id="catalog" className="mx-auto max-w-6xl px-4 pt-6 pb-10 sm:px-6 sm:pt-8 sm:pb-14">
       <h2 className="font-heading text-xl font-semibold sm:text-2xl">Наши туры</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Пять авторских программ. Дата и гид — на странице каждого тура.
