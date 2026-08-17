@@ -3,6 +3,7 @@
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Mousewheel, Pagination, Keyboard } from "swiper/modules"
 import type { ReactNode } from "react"
+import type { Swiper as SwiperType } from "swiper/types"
 
 import "swiper/css"
 import "swiper/css/pagination"
@@ -14,8 +15,11 @@ import "swiper/css/pagination"
  * управление обычному скроллу страницы (releaseOnEdges). Вертикальная колонка
  * стежков-делений слева сверху, поверх зоны фото у каждого слайда (никогда не
  * заходит в текстовую зону), показывает прогресс — стилизована под переплёт книги.
+ *
+ * onSwiper — опциональный доступ к инстансу Swiper для программных переходов
+ * (например кнопка "Забронировать" в одном слайде уводит на слайд брони).
  */
-export function SlideDeck({ slides }: { slides: ReactNode[] }) {
+export function SlideDeck({ slides, onSwiper }: { slides: ReactNode[]; onSwiper?: (swiper: SwiperType) => void }) {
   return (
     <Swiper
       modules={[Mousewheel, Pagination, Keyboard]}
@@ -24,6 +28,7 @@ export function SlideDeck({ slides }: { slides: ReactNode[] }) {
       mousewheel={{ releaseOnEdges: true, sensitivity: 1 }}
       keyboard={{ enabled: true }}
       pagination={{ clickable: true, el: ".slide-deck-pagination" }}
+      onSwiper={onSwiper}
       className="h-[calc(100svh-3.5rem)] w-full sm:h-[calc(100svh-4rem)]"
     >
       {slides.map((slide, i) => (
