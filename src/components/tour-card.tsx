@@ -17,16 +17,25 @@ export function TourCard({
   tour,
   isFavorite,
   onToggleFavorite,
+  fill,
 }: {
   tour: CatalogTour
   isFavorite: boolean
   onToggleFavorite: () => void
+  /** Заполнить родителя целиком вместо фиксированного aspect-3/4 — для
+   * использования внутри слайда с уже заданной высотой (см. TourCatalog). */
+  fill?: boolean
 }) {
   const photos = tour.galleryUrls.length > 0 ? tour.galleryUrls : tour.heroImageUrl ? [tour.heroImageUrl] : []
   const paginationClass = `tour-card-pagination-${tour.slug}`
 
   return (
-    <article className="group relative aspect-3/4 overflow-hidden rounded-2xl bg-muted">
+    <article
+      className={cn(
+        "group relative overflow-hidden rounded-2xl bg-muted",
+        fill ? "h-full w-full" : "aspect-3/4",
+      )}
+    >
       <Link href={`/tours/${tour.slug}`} className="absolute inset-0">
         {photos.length > 0 && (
           <Swiper
@@ -51,7 +60,9 @@ export function TourCard({
         <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/95 via-black/20 to-transparent" />
 
         {photos.length > 1 && (
-          <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-full bg-black/25 px-2.5 py-1.5 backdrop-blur-md">
+          // top-right, под кнопкой избранного (не top-left — там, когда карточка
+          // используется в SlideDeck, сидит книжный "переплёт"-индикатор колоды).
+          <div className="pointer-events-none absolute top-14 right-3 z-10 rounded-full bg-black/25 px-2.5 py-1.5 backdrop-blur-md">
             <div className={`flex items-center gap-1.5 ${paginationClass}`} />
           </div>
         )}

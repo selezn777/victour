@@ -1,5 +1,6 @@
 import { SearchIcon, HeartIcon } from "lucide-react"
 import { TourCard } from "@/components/tour-card"
+import { SlideDeck } from "@/components/slide-deck"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -66,15 +67,26 @@ export function TourCatalog({
       {tours.length === 0 ? (
         <p className="mt-10 text-sm text-muted-foreground">{emptyMessage}</p>
       ) : (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {tours.map((tour) => (
-            <TourCard
-              key={tour.slug}
-              tour={tour}
-              isFavorite={isFavorite(tour.slug)}
-              onToggleFavorite={() => onToggleFavorite(tour.slug)}
-            />
-          ))}
+        // Виктор попросил ту же поэтапную "блоковую" пролистку, что на
+        // главной (переплёт слева, ровно один блок за раз, без обычного
+        // скролла) — вместо сетки карточек здесь одна карточка на весь
+        // блок, свайп/колесо переключает на следующий тур. Высота
+        // фиксированная (не formula "вся высота вьюпорта минус хедер" —
+        // дека здесь встроена НЕ первым блоком под хедером, а ниже
+        // заголовка и поиска).
+        <div className="mt-6 mx-auto w-full max-w-sm sm:max-w-md">
+          <SlideDeck
+            className="h-[72svh] min-h-[420px] w-full sm:h-[76svh]"
+            slides={tours.map((tour) => (
+              <TourCard
+                key={tour.slug}
+                tour={tour}
+                fill
+                isFavorite={isFavorite(tour.slug)}
+                onToggleFavorite={() => onToggleFavorite(tour.slug)}
+              />
+            ))}
+          />
         </div>
       )}
     </section>

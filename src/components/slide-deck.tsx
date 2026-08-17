@@ -15,7 +15,16 @@ import "swiper/css/pagination"
  * стежков-делений слева сверху, поверх зоны фото у каждого слайда (никогда не
  * заходит в текстовую зону), показывает прогресс — стилизована под переплёт книги.
  */
-export function SlideDeck({ slides }: { slides: ReactNode[] }) {
+export function SlideDeck({
+  slides,
+  className = "h-[calc(100svh-3.5rem)] w-full sm:h-[calc(100svh-4rem)]",
+}: {
+  slides: ReactNode[]
+  /** Переопределяет высоту/ширину — по умолчанию "вся высота вьюпорта минус
+   * хедер" (как на главной). Задать явную высоту, если дека встроена НЕ
+   * первым блоком под хедером, а ниже другого контента на странице. */
+  className?: string
+}) {
   return (
     <Swiper
       modules={[Mousewheel, Pagination, Keyboard]}
@@ -24,7 +33,7 @@ export function SlideDeck({ slides }: { slides: ReactNode[] }) {
       mousewheel={{ releaseOnEdges: true, sensitivity: 1 }}
       keyboard={{ enabled: true }}
       pagination={{ clickable: true, el: ".slide-deck-pagination" }}
-      className="h-[calc(100svh-3.5rem)] w-full sm:h-[calc(100svh-4rem)]"
+      className={className}
     >
       {slides.map((slide, i) => (
         <SwiperSlide key={i} className="h-full w-full">
