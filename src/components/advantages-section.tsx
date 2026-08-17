@@ -300,11 +300,16 @@ function ValuesSlide({
         <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {title}
         </h2>
-        <div className="mt-5 w-full max-w-md divide-y divide-border">
-          {points.map((point) => (
-            <div key={point.title} className="py-4 first:pt-0 last:pb-0">
-              <h3 className="font-heading text-base font-semibold sm:text-lg">{point.title}</h3>
-              <p className="mt-1 text-sm text-muted-foreground sm:text-base">{point.body}</p>
+        <div className="mt-6 w-full max-w-md space-y-5 text-left">
+          {points.map((point, i) => (
+            <div key={point.title} className="flex items-start gap-3">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 font-heading text-sm font-semibold text-primary">
+                {i + 1}
+              </span>
+              <div>
+                <h3 className="font-heading text-base font-semibold sm:text-lg">{point.title}</h3>
+                <p className="mt-0.5 text-sm text-muted-foreground sm:text-base">{point.body}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -584,6 +589,9 @@ function QuoteSlide({
         )}
 
         <TourCtaButton />
+        <Link href="/reviews" className="mt-3 text-sm text-primary hover:underline">
+          Все отзывы →
+        </Link>
       </div>
     </div>
   )
@@ -603,29 +611,29 @@ export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
           imagePosition="30% 50%"
         />,
         <ToursSlide key="tours" />,
-        <QuoteSlide
-          key="guide"
-          title="Что говорят гости, которые уже были с нами"
-          body="Внимание к мелочам и забота о безопасности — вот что нам чаще всего пишут после поездки."
-          quotes={heroQuotes.map(reviewToQuote)}
-        />,
         <ValuesSlide
           key="values"
           title="Ваша поездка — под вас, а не под группу"
           points={[
             {
-              title: "Только для вас",
-              body: "Никого не надо ждать — программа собрана под вашу компанию, от встречи в отеле до прощания вечером.",
+              title: "Только вы — и больше никого",
+              body: "Никого не ждём и никуда не спешим за компанию — маршрут собран под вас, от встречи в отеле до прощания вечером.",
             },
             {
-              title: "Без туристических магазинов",
-              body: "Никакой обязательной лавки, где гиду капает процент с покупок. Понравилось место — сидим сколько хочется.",
+              title: "Без разводов на магазины",
+              body: "Ни одной обязательной лавки, где гиду капает процент с ваших покупок — заезжаем только туда, что интересно вам.",
             },
             {
-              title: "Еду выбираете вы",
-              body: "Блюда на обед выбираете сами — не кормим тем, что решили за вас. Для многих гостей это принципиально важно.",
+              title: "Меню выбираете вы",
+              body: "Никакого комплексного обеда по расписанию — сами решаете, что и где заказать. Для многих гостей это принципиально.",
             },
           ]}
+        />,
+        <QuoteSlide
+          key="guide"
+          title="Что говорят гости, которые уже были с нами"
+          body="Внимание к мелочам и забота о безопасности — вот что нам чаще всего пишут после поездки."
+          quotes={heroQuotes.map(reviewToQuote)}
         />,
       ]}
     />
