@@ -2,15 +2,7 @@ import { TourCard } from "@/components/tour-card"
 import { SlideDeck } from "@/components/slide-deck"
 import type { CatalogTour } from "@/lib/site-data"
 
-export function TourCatalog({
-  tours,
-  isFavorite,
-  onToggleFavorite,
-}: {
-  tours: CatalogTour[]
-  isFavorite: (slug: string) => boolean
-  onToggleFavorite: (slug: string) => void
-}) {
+export function TourCatalog({ tours }: { tours: CatalogTour[] }) {
   if (tours.length === 0) return null
 
   return (
@@ -27,13 +19,7 @@ export function TourCatalog({
         direction="horizontal"
         paginationPosition="bottom-center"
         slides={tours.map((tour) => (
-          <TourCard
-            key={tour.slug}
-            tour={tour}
-            fill
-            isFavorite={isFavorite(tour.slug)}
-            onToggleFavorite={() => onToggleFavorite(tour.slug)}
-          />
+          <TourCard key={tour.slug} tour={tour} fill />
         ))}
       />
     </section>

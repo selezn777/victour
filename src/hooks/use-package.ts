@@ -6,16 +6,23 @@ const STORAGE_KEY = "victour:package"
 const MAX_ITEMS = 4
 const listeners = new Set<() => void>()
 
+// Гость сначала быстро отмечает 2-3 интересных тура прямо в каталоге (без
+// выбора даты/гида на каждом), а потом донастраивает каждый на странице
+// заявки — поэтому дата/гид/гости/цена необязательны в момент добавления.
 export type PackageItem = {
   tourId: string
   tourSlug: string
   tourTitle: string
-  guideId: string
-  guideName: string
-  date: string
+  guideId: string | null
+  guideName: string | null
+  date: string | null
   dateEnd: string | null
-  adults: number
-  priceAdultUsd: number
+  adults: number | null
+  priceAdultUsd: number | null
+}
+
+export function isConfigured(item: PackageItem): boolean {
+  return item.date != null && item.guideId != null && item.adults != null && item.priceAdultUsd != null
 }
 
 let cache: PackageItem[] = []
@@ -62,7 +69,7 @@ export function datesUsedByOtherItems(items: PackageItem[], excludeTourSlug: str
   const dates = new Set<string>()
   for (const item of items) {
     if (item.tourSlug === excludeTourSlug) continue
-    dates.add(item.date)
+    if (item.date) dates.add(item.date)
     if (item.dateEnd) dates.add(item.dateEnd)
   }
   return dates
@@ -71,17 +78,54 @@ export function datesUsedByOtherItems(items: PackageItem[], excludeTourSlug: str
 export function usePackage() {
   const items = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
+  // Быстрое добавление из каталога — только опознание тура, без даты/гида/
+  // гостей. Если тур уже в заявке (в любом состоянии) — ничего не делает.
+  const addPendingTour = useCallback(
+    (tour: { tourId: string; tourSlug: string; tourTitle: string }): { ok: true } | { ok: false; error: string } => {
+      ensureInitialized()
+      if (cache.some((i) => i.tourSlug === tour.tourSlug)) {
+        return { ok: true }
+      }
+      if (cache.length >= MAX_ITEMS) {
+        return { ok: false, error: `В пакете можно собрать максимум ${MAX_ITEMS} тура.` }
+      }
+      write([
+        ...cache,
+        {
+          tourId: tour.tourId,
+          tourSlug: tour.tourSlug,
+          tourTitle: tour.tourTitle,
+          guideId: null,
+          guideName: null,
+          date: null,
+          dateEnd: null,
+          adults: null,
+          priceAdultUsd: null,
+        },
+      ])
+      return { ok: true }
+    },
+    [],
+  )
+
+  // Полное добавление/донастройка (со страницы тура или конфигуратора в
+  // заявке) — если позиция с таким туром уже есть (например, добавлена
+  // быстрым способом из каталога), обновляет её на месте вместо отказа.
   const addItem = useCallback((item: PackageItem): { ok: true } | { ok: false; error: string } => {
     ensureInitialized()
-    if (cache.some((i) => i.tourSlug === item.tourSlug)) {
-      return { ok: false, error: "Этот тур уже в заявке." }
+    const usedDates = datesUsedByOtherItems(cache, item.tourSlug)
+    if (item.date && (usedDates.has(item.date) || (item.dateEnd && usedDates.has(item.dateEnd)))) {
+      return { ok: false, error: "На эту дату уже выбран другой тур в заявке." }
+    }
+    const existingIndex = cache.findIndex((i) => i.tourSlug === item.tourSlug)
+    if (existingIndex >= 0) {
+      const next = [...cache]
+      next[existingIndex] = item
+      write(next)
+      return { ok: true }
     }
     if (cache.length >= MAX_ITEMS) {
       return { ok: false, error: `В пакете можно собрать максимум ${MAX_ITEMS} тура.` }
-    }
-    const usedDates = datesUsedByOtherItems(cache, item.tourSlug)
-    if (usedDates.has(item.date) || (item.dateEnd && usedDates.has(item.dateEnd))) {
-      return { ok: false, error: "На эту дату уже выбран другой тур в заявке." }
     }
     write([...cache, item])
     return { ok: true }
@@ -96,5 +140,5 @@ export function usePackage() {
     write([])
   }, [])
 
-  return { items, addItem, removeItem, clear }
+  return { items, addItem, addPendingTour, removeItem, clear }
 }

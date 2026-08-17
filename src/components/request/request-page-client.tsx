@@ -3,12 +3,13 @@
 import Link from "next/link"
 import { sendGAEvent } from "@next/third-parties/google"
 import { XIcon } from "lucide-react"
-import { useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { PhoneInput } from "@/components/ui/phone-input"
 import { AccountMenu } from "@/components/account-menu"
-import { usePackage, type PackageItem } from "@/hooks/use-package"
+import { BookingCalendar } from "@/components/tour/booking-calendar"
+import { datesUsedByOtherItems, isConfigured, usePackage, type PackageItem } from "@/hooks/use-package"
 import { calculatePackageTotal, calculatePrepayment } from "@/lib/pricing"
 import { formatRubFromUsd, formatUsd, formatVnd, formatVndFromUsd } from "@/lib/format"
 import type { SiteSettings, Surcharge } from "@/lib/site-data"
@@ -30,8 +31,169 @@ function formatDate(iso: string): string {
   })
 }
 
+function isoDatePlusOne(iso: string): string {
+  const d = new Date(`${iso}T00:00:00`)
+  d.setDate(d.getDate() + 1)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${m}-${day}`
+}
+
 function itemGroupTotalUsd(item: PackageItem): number {
-  return item.priceAdultUsd * item.adults
+  return (item.priceAdultUsd ?? 0) * (item.adults ?? 0)
+}
+
+type TourPricingInfo = {
+  pricingTiers: { guestCount: number; priceAdultUsd: number; priceChildUsd: number | null }[]
+  durationDays: number
+}
+
+type GuideInfo = { id: string; name: string; bookedDates: string[] }
+
+// Тур, добавленный из каталога "в один тап" (без гида/даты/гостей) — эта
+// карточка донастраивает его на месте: гость выбирает гостей и дату, и
+// позиция сама становится полноценной (тот же addItem, что и со страницы
+// тура, просто вызванный отсюда).
+function PendingItemCard({
+  item,
+  info,
+  guide,
+  usedDates,
+  onRemove,
+  onConfigure,
+}: {
+  item: PackageItem
+  info: TourPricingInfo | undefined
+  guide: GuideInfo | null
+  usedDates: Set<string>
+  onRemove: () => void
+  onConfigure: (patch: { date: string; dateEnd: string | null; adults: number; priceAdultUsd: number }) => string | null
+}) {
+  const [error, setError] = useState<string | null>(null)
+
+  if (!info || !guide) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div className="font-medium">{item.tourTitle}</div>
+          <Button type="button" variant="ghost" size="icon-sm" aria-label="Убрать тур из заявки" onClick={onRemove}>
+            <XIcon />
+          </Button>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">Загружаем даты и цены…</p>
+      </div>
+    )
+  }
+
+  return <PendingItemForm item={item} info={info} guide={guide} usedDates={usedDates} onRemove={onRemove} onConfigure={onConfigure} error={error} setError={setError} />
+}
+
+function PendingItemForm({
+  item,
+  info,
+  guide,
+  usedDates,
+  onRemove,
+  onConfigure,
+  error,
+  setError,
+}: {
+  item: PackageItem
+  info: TourPricingInfo
+  guide: GuideInfo
+  usedDates: Set<string>
+  onRemove: () => void
+  onConfigure: (patch: { date: string; dateEnd: string | null; adults: number; priceAdultUsd: number }) => string | null
+  error: string | null
+  setError: (e: string | null) => void
+}) {
+  const minGuests = info.pricingTiers[0]?.guestCount ?? 2
+  const maxGuests = info.pricingTiers[info.pricingTiers.length - 1]?.guestCount ?? 9
+  const cheapestTier = info.pricingTiers[info.pricingTiers.length - 1]
+  const [guestCount, setGuestCount] = useState(cheapestTier?.guestCount ?? minGuests)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+
+  const priceAdultUsd = info.pricingTiers.find((t) => t.guestCount === guestCount)?.priceAdultUsd ?? 0
+  const bookedDates = useMemo(() => new Set([...guide.bookedDates, ...usedDates]), [guide, usedDates])
+
+  useEffect(() => {
+    if (!selectedDate) return
+    const result = onConfigure({
+      date: selectedDate,
+      dateEnd: info.durationDays === 2 ? isoDatePlusOne(selectedDate) : null,
+      adults: guestCount,
+      priceAdultUsd,
+    })
+    setError(result)
+    // Донастраиваем позицию заново при каждом изменении даты/гостей —
+    // зависимость только от них, не от коллбэка (пересоздаётся каждый рендер).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate, guestCount])
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div className="font-medium">{item.tourTitle}</div>
+        <Button type="button" variant="ghost" size="icon-sm" aria-label="Убрать тур из заявки" onClick={onRemove}>
+          <XIcon />
+        </Button>
+      </div>
+
+      <div className="mt-4 flex items-end justify-between gap-4">
+        <div>
+          <span className="text-sm font-medium">Гостей</span>
+          <div className="mt-1.5 flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              disabled={guestCount <= minGuests}
+              onClick={() => setGuestCount((c) => Math.max(minGuests, c - 1))}
+              aria-label="Меньше гостей"
+            >
+              −
+            </Button>
+            <span className="w-6 text-center text-sm font-medium">{guestCount}</span>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              disabled={guestCount >= maxGuests}
+              onClick={() => setGuestCount((c) => Math.min(maxGuests, c + 1))}
+              aria-label="Больше гостей"
+            >
+              +
+            </Button>
+          </div>
+        </div>
+        {selectedDate && (
+          <div className="text-right">
+            <div className="font-heading text-lg font-semibold text-primary">
+              {formatUsd(priceAdultUsd * guestCount)}
+            </div>
+            <div className="text-xs text-muted-foreground">{formatUsd(priceAdultUsd)} за человека</div>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4">
+        <span className="text-sm font-medium">Дата</span>
+        <div className="mt-1.5">
+          <BookingCalendar
+            bookedDates={bookedDates}
+            durationDays={info.durationDays}
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+          />
+        </div>
+      </div>
+
+      {error && (
+        <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+      )}
+    </div>
+  )
 }
 
 export function RequestPageClient({
@@ -41,7 +203,9 @@ export function RequestPageClient({
   settings: SiteSettings
   surcharges: Surcharge[]
 }) {
-  const { items, removeItem, clear } = usePackage()
+  const { items, addItem, removeItem, clear } = usePackage()
+  const [tourInfo, setTourInfo] = useState<Record<string, TourPricingInfo>>({})
+  const [guide, setGuide] = useState<GuideInfo | null>(null)
   const [selectedSurcharges, setSelectedSurcharges] = useState<Set<string>>(new Set())
   const [hotel, setHotel] = useState("")
   const [guestName, setGuestName] = useState("")
@@ -55,6 +219,69 @@ export function RequestPageClient({
   const [submittedBookingId, setSubmittedBookingId] = useState<string | null>(null)
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const lastCapturedLead = useRef<string | null>(null)
+
+  // Позиции, добавленные "в один тап" из каталога, приходят без гида/даты/
+  // цены — подтягиваем то, чего не хватает для донастройки (тарифы и
+  // длительность тура, доступность гида), один раз на нужные слаги.
+  useEffect(() => {
+    const pendingSlugs = items.filter((i) => !isConfigured(i)).map((i) => i.tourSlug)
+    if (pendingSlugs.length === 0) return
+    const missingSlugs = pendingSlugs.filter((s) => !tourInfo[s])
+    if (missingSlugs.length === 0 && guide) return
+
+    let cancelled = false
+    const supabase = createClient()
+
+    Promise.all([
+      missingSlugs.length > 0
+        ? supabase
+            .from("tours")
+            .select("slug, duration_days, pricing_tiers(guest_count, price_adult_usd, price_child_usd)")
+            .in("slug", missingSlugs)
+        : Promise.resolve({ data: [] as never[], error: null }),
+      guide
+        ? Promise.resolve({ data: null, error: null })
+        : supabase
+            .from("guides")
+            .select("id, name, guide_availability(date, status)")
+            .eq("is_active", true)
+            .order("sort_order", { ascending: true })
+            .limit(1)
+            .maybeSingle(),
+    ]).then(([toursRes, guideRes]) => {
+      if (cancelled) return
+      if (!toursRes.error && toursRes.data) {
+        setTourInfo((prev) => {
+          const next = { ...prev }
+          for (const row of toursRes.data as {
+            slug: string
+            duration_days: number
+            pricing_tiers: { guest_count: number; price_adult_usd: number; price_child_usd: number | null }[]
+          }[]) {
+            next[row.slug] = {
+              durationDays: row.duration_days,
+              pricingTiers: row.pricing_tiers
+                .map((t) => ({
+                  guestCount: t.guest_count,
+                  priceAdultUsd: t.price_adult_usd,
+                  priceChildUsd: t.price_child_usd,
+                }))
+                .sort((a, b) => a.guestCount - b.guestCount),
+            }
+          }
+          return next
+        })
+      }
+      if (!guideRes.error && guideRes.data) {
+        const availability = guideRes.data.guide_availability as { date: string }[]
+        setGuide({ id: guideRes.data.id, name: guideRes.data.name, bookedDates: availability.map((a) => a.date) })
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [items, tourInfo, guide])
 
   // Гость мог оставить контакт и не дозаполнить заявку — сохраняем его, чтобы
   // не терять первый заход и иметь возможность потом самим дожать бронь.
@@ -81,6 +308,8 @@ export function RequestPageClient({
         }
       })
   }
+
+  const allConfigured = items.length > 0 && items.every(isConfigured)
 
   const itemsSubtotalUsd = useMemo(
     () => items.reduce((sum, item) => sum + itemGroupTotalUsd(item), 0),
@@ -109,7 +338,7 @@ export function RequestPageClient({
   const prepaymentUsd = calculatePrepayment(settings.depositUsd)
 
   const canSubmit =
-    items.length > 0 &&
+    allConfigured &&
     hotel.trim().length > 0 &&
     guestName.trim().length > 0 &&
     contactValue.trim().length > 0 &&
@@ -139,8 +368,9 @@ export function RequestPageClient({
     setSubmitting(true)
     setSubmitError(null)
 
+    const configuredItems = items.filter(isConfigured)
     const supabase = createClient()
-    const maxAdults = Math.max(...items.map((i) => i.adults))
+    const maxAdults = Math.max(...configuredItems.map((i) => i.adults!))
 
     const { data, error } = await supabase.rpc("create_booking", {
       p_booking: {
@@ -163,7 +393,7 @@ export function RequestPageClient({
           rubMarkupPct: settings.rubMarkupPct,
         },
       },
-      p_items: items.map((item) => ({
+      p_items: configuredItems.map((item) => ({
         tour_id: item.tourId,
         guide_id: item.guideId,
         date: item.date,
@@ -245,34 +475,63 @@ export function RequestPageClient({
             <h1 className="font-heading text-2xl font-semibold sm:text-3xl">Ваша заявка</h1>
 
             <section className="mt-6 flex flex-col gap-3">
-              {items.map((item) => (
-                <div
-                  key={item.tourSlug}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-5 shadow-sm"
-                >
-                  <div>
-                    <div className="font-medium">{item.tourTitle}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {formatDate(item.date)} · {item.guideName} · {item.adults} гостей
+              {items.map((item) =>
+                isConfigured(item) ? (
+                  <div
+                    key={item.tourSlug}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-5 shadow-sm"
+                  >
+                    <div>
+                      <div className="font-medium">{item.tourTitle}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {formatDate(item.date!)} · {item.guideName} · {item.adults} гостей
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-heading font-semibold text-primary">
+                        {formatUsd(itemGroupTotalUsd(item))}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label="Убрать тур из заявки"
+                        onClick={() => removeItem(item.tourSlug)}
+                      >
+                        <XIcon />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-heading font-semibold text-primary">
-                      {formatUsd(itemGroupTotalUsd(item))}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label="Убрать тур из заявки"
-                      onClick={() => removeItem(item.tourSlug)}
-                    >
-                      <XIcon />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                ) : (
+                  <PendingItemCard
+                    key={item.tourSlug}
+                    item={item}
+                    info={tourInfo[item.tourSlug]}
+                    guide={guide}
+                    usedDates={datesUsedByOtherItems(items, item.tourSlug)}
+                    onRemove={() => removeItem(item.tourSlug)}
+                    onConfigure={(patch) => {
+                      if (!guide) return "Гид ещё загружается, подождите секунду."
+                      const result = addItem({
+                        tourId: item.tourId,
+                        tourSlug: item.tourSlug,
+                        tourTitle: item.tourTitle,
+                        guideId: guide.id,
+                        guideName: guide.name,
+                        ...patch,
+                      })
+                      return result.ok ? null : result.error
+                    }}
+                  />
+                ),
+              )}
             </section>
+
+            {!allConfigured && (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Выберите дату и число гостей для каждого тура — тогда можно будет продолжить оформление.
+              </p>
+            )}
 
             {surcharges.length > 0 && (
               <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
@@ -339,189 +598,191 @@ export function RequestPageClient({
               </p>
             </section>
 
-            <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
-              <div className="flex items-center justify-center gap-2">
-                {[1, 2, 3].map((s) => (
-                  <span
-                    key={s}
-                    className={cn(
-                      "h-1.5 w-8 rounded-full transition-colors",
-                      s <= step ? "bg-primary" : "bg-muted",
-                    )}
-                  />
-                ))}
-              </div>
-              <p className="mt-2 text-center text-xs text-muted-foreground">Шаг {step} из 3</p>
-
-              {step === 1 && (
-                <div className="mt-4 flex flex-col gap-4">
-                  <div>
-                    <span className="text-sm font-medium">Как с вами связаться?</span>
-                    <div className="mt-1.5 flex flex-wrap gap-2">
-                      {CONTACT_CHANNELS.map((c) => (
-                        <button
-                          key={c.code}
-                          type="button"
-                          aria-pressed={contactChannel === c.code}
-                          onClick={() => setContactChannel(c.code)}
-                          className={cn(
-                            "rounded-full border px-3 py-1.5 text-sm transition-colors",
-                            contactChannel === c.code
-                              ? "border-primary bg-primary/10 text-primary"
-                              : "border-border hover:bg-muted",
-                          )}
-                        >
-                          {c.label}
-                        </button>
-                      ))}
-                    </div>
-                    {contactMode === "phone" ? (
-                      <PhoneInput
-                        autoFocus
-                        className="mt-2"
-                        value={contactValue}
-                        onChange={setContactValue}
-                        onKeyDown={(e) => e.key === "Enter" && goToStep2()}
-                      />
-                    ) : (
-                      <Input
-                        autoFocus
-                        className="mt-2 h-12 text-base"
-                        value={contactValue}
-                        onChange={(e) => setContactValue(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && goToStep2()}
-                        placeholder="Ник в WhatsApp / Telegram / VK"
-                      />
-                    )}
-                    <div className="mt-1.5 flex items-center justify-between gap-2">
-                      <p className="text-xs text-muted-foreground">
-                        Спрашиваем первым — если что-то пойдёт не так, сможем сами написать вам.
-                      </p>
-                      <button
-                        type="button"
-                        className="shrink-0 text-xs text-primary underline-offset-2 hover:underline"
-                        onClick={() => {
-                          setContactValue("")
-                          setContactMode((m) => (m === "phone" ? "handle" : "phone"))
-                        }}
-                      >
-                        {contactMode === "phone" ? "Указать ник" : "Указать телефон"}
-                      </button>
-                    </div>
-                  </div>
-                  <Button type="button" size="lg" className="w-full" disabled={!step1Valid} onClick={goToStep2}>
-                    Далее
-                  </Button>
+            {allConfigured && (
+              <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
+                <div className="flex items-center justify-center gap-2">
+                  {[1, 2, 3].map((s) => (
+                    <span
+                      key={s}
+                      className={cn(
+                        "h-1.5 w-8 rounded-full transition-colors",
+                        s <= step ? "bg-primary" : "bg-muted",
+                      )}
+                    />
+                  ))}
                 </div>
-              )}
+                <p className="mt-2 text-center text-xs text-muted-foreground">Шаг {step} из 3</p>
 
-              {step === 2 && (
-                <div className="mt-4 flex flex-col gap-4">
-                  <div>
-                    <label className="text-sm font-medium" htmlFor="guestName">Как к вам обращаться?</label>
-                    <Input
-                      autoFocus
-                      id="guestName"
-                      className="mt-1.5"
-                      value={guestName}
-                      onChange={(e) => setGuestName(e.target.value)}
-                      placeholder="Имя"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium" htmlFor="hotel">Где вас забрать?</label>
-                    <Input
-                      id="hotel"
-                      className="mt-1.5"
-                      value={hotel}
-                      onChange={(e) => setHotel(e.target.value)}
-                      placeholder="Название отеля"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button type="button" size="lg" variant="outline" onClick={() => setStep(1)}>
-                      Назад
-                    </Button>
-                    <Button
-                      type="button"
-                      size="lg"
-                      className="flex-1"
-                      disabled={!step2Valid}
-                      onClick={() => setStep(3)}
-                    >
+                {step === 1 && (
+                  <div className="mt-4 flex flex-col gap-4">
+                    <div>
+                      <span className="text-sm font-medium">Как с вами связаться?</span>
+                      <div className="mt-1.5 flex flex-wrap gap-2">
+                        {CONTACT_CHANNELS.map((c) => (
+                          <button
+                            key={c.code}
+                            type="button"
+                            aria-pressed={contactChannel === c.code}
+                            onClick={() => setContactChannel(c.code)}
+                            className={cn(
+                              "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                              contactChannel === c.code
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-border hover:bg-muted",
+                            )}
+                          >
+                            {c.label}
+                          </button>
+                        ))}
+                      </div>
+                      {contactMode === "phone" ? (
+                        <PhoneInput
+                          autoFocus
+                          className="mt-2"
+                          value={contactValue}
+                          onChange={setContactValue}
+                          onKeyDown={(e) => e.key === "Enter" && goToStep2()}
+                        />
+                      ) : (
+                        <Input
+                          autoFocus
+                          className="mt-2 h-12 text-base"
+                          value={contactValue}
+                          onChange={(e) => setContactValue(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && goToStep2()}
+                          placeholder="Ник в WhatsApp / Telegram / VK"
+                        />
+                      )}
+                      <div className="mt-1.5 flex items-center justify-between gap-2">
+                        <p className="text-xs text-muted-foreground">
+                          Спрашиваем первым — если что-то пойдёт не так, сможем сами написать вам.
+                        </p>
+                        <button
+                          type="button"
+                          className="shrink-0 text-xs text-primary underline-offset-2 hover:underline"
+                          onClick={() => {
+                            setContactValue("")
+                            setContactMode((m) => (m === "phone" ? "handle" : "phone"))
+                          }}
+                        >
+                          {contactMode === "phone" ? "Указать ник" : "Указать телефон"}
+                        </button>
+                      </div>
+                    </div>
+                    <Button type="button" size="lg" className="w-full" disabled={!step1Valid} onClick={goToStep2}>
                       Далее
                     </Button>
                   </div>
-                </div>
-              )}
+                )}
 
-              {step === 3 && (
-                <div className="mt-4 flex flex-col gap-4">
-                  <div>
-                    <label className="text-sm font-medium" htmlFor="notes">Пожелания</label>
-                    <textarea
-                      id="notes"
-                      autoFocus
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      rows={3}
-                      placeholder="Необязательно"
-                      className="mt-1.5 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-base outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
-                    />
+                {step === 2 && (
+                  <div className="mt-4 flex flex-col gap-4">
+                    <div>
+                      <label className="text-sm font-medium" htmlFor="guestName">Как к вам обращаться?</label>
+                      <Input
+                        autoFocus
+                        id="guestName"
+                        className="mt-1.5"
+                        value={guestName}
+                        onChange={(e) => setGuestName(e.target.value)}
+                        placeholder="Имя"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium" htmlFor="hotel">Где вас забрать?</label>
+                      <Input
+                        id="hotel"
+                        className="mt-1.5"
+                        value={hotel}
+                        onChange={(e) => setHotel(e.target.value)}
+                        placeholder="Название отеля"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="button" size="lg" variant="outline" onClick={() => setStep(1)}>
+                        Назад
+                      </Button>
+                      <Button
+                        type="button"
+                        size="lg"
+                        className="flex-1"
+                        disabled={!step2Valid}
+                        onClick={() => setStep(3)}
+                      >
+                        Далее
+                      </Button>
+                    </div>
                   </div>
+                )}
 
-                  <div className="rounded-lg bg-muted/60 px-3 py-3 text-sm">
-                    <p className="font-medium">Что будет дальше</p>
-                    <ol className="mt-2 flex flex-col gap-1.5 text-muted-foreground">
-                      <li>1. Проверяем даты у гида — обычно в течение часа.</li>
-                      <li>
-                        2. Пишем вам в{" "}
-                        {CONTACT_CHANNELS.find((c) => c.code === contactChannel)?.label} с реквизитами
-                        для предоплаты.
-                      </li>
-                      <li>3. Вы подтверждаете бронь.</li>
-                      <li>4. Остальное — наличными при встрече.</li>
-                    </ol>
+                {step === 3 && (
+                  <div className="mt-4 flex flex-col gap-4">
+                    <div>
+                      <label className="text-sm font-medium" htmlFor="notes">Пожелания</label>
+                      <textarea
+                        id="notes"
+                        autoFocus
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        rows={3}
+                        placeholder="Необязательно"
+                        className="mt-1.5 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-base outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+                      />
+                    </div>
+
+                    <div className="rounded-lg bg-muted/60 px-3 py-3 text-sm">
+                      <p className="font-medium">Что будет дальше</p>
+                      <ol className="mt-2 flex flex-col gap-1.5 text-muted-foreground">
+                        <li>1. Проверяем даты у гида — обычно в течение часа.</li>
+                        <li>
+                          2. Пишем вам в{" "}
+                          {CONTACT_CHANNELS.find((c) => c.code === contactChannel)?.label} с реквизитами
+                          для предоплаты.
+                        </li>
+                        <li>3. Вы подтверждаете бронь.</li>
+                        <li>4. Остальное — наличными при встрече.</li>
+                      </ol>
+                    </div>
+
+                    {submitError && (
+                      <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                        {submitError}
+                      </p>
+                    )}
+
+                    <label className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={consentChecked}
+                        onChange={(e) => setConsentChecked(e.target.checked)}
+                        className="mt-0.5 size-4 shrink-0 accent-primary"
+                      />
+                      <span>
+                        Согласен(на) на обработку персональных данных согласно{" "}
+                        <Link href="/privacy" target="_blank" className="text-primary hover:underline">
+                          политике конфиденциальности
+                        </Link>
+                      </span>
+                    </label>
+
+                    <div className="flex gap-2">
+                      <Button type="button" size="lg" variant="outline" onClick={() => setStep(2)}>
+                        Назад
+                      </Button>
+                      <Button
+                        type="button"
+                        size="lg"
+                        className="flex-1"
+                        disabled={!canSubmit}
+                        onClick={handleSubmit}
+                      >
+                        {submitting ? "Отправляем…" : "Отправить заявку"}
+                      </Button>
+                    </div>
                   </div>
-
-                  {submitError && (
-                    <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                      {submitError}
-                    </p>
-                  )}
-
-                  <label className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <input
-                      type="checkbox"
-                      checked={consentChecked}
-                      onChange={(e) => setConsentChecked(e.target.checked)}
-                      className="mt-0.5 size-4 shrink-0 accent-primary"
-                    />
-                    <span>
-                      Согласен(на) на обработку персональных данных согласно{" "}
-                      <Link href="/privacy" target="_blank" className="text-primary hover:underline">
-                        политике конфиденциальности
-                      </Link>
-                    </span>
-                  </label>
-
-                  <div className="flex gap-2">
-                    <Button type="button" size="lg" variant="outline" onClick={() => setStep(2)}>
-                      Назад
-                    </Button>
-                    <Button
-                      type="button"
-                      size="lg"
-                      className="flex-1"
-                      disabled={!canSubmit}
-                      onClick={handleSubmit}
-                    >
-                      {submitting ? "Отправляем…" : "Отправить заявку"}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </section>
+                )}
+              </section>
+            )}
           </>
         )}
       </main>

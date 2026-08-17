@@ -2,25 +2,37 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { HeartIcon } from "lucide-react"
+import { CheckIcon, PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatUsd } from "@/lib/format"
+import { usePackage } from "@/hooks/use-package"
 import type { CatalogTour } from "@/lib/site-data"
 
 export function TourCard({
   tour,
-  isFavorite,
-  onToggleFavorite,
   fill,
 }: {
   tour: CatalogTour
-  isFavorite: boolean
-  onToggleFavorite: () => void
   /** Заполнить родителя целиком вместо фиксированного aspect-3/4 — для
    * использования внутри слайда с уже заданной высотой (см. TourCatalog). */
   fill?: boolean
 }) {
+  // Раньше тут было "избранное" — Виктор попросил заменить на быстрое
+  // добавление в заявку прямо из каталога: можно за пару тапов набрать
+  // 2-3 тура, а дату/гостей донастроить потом на странице заявки.
+  const { items, addPendingTour, removeItem } = usePackage()
+  const inPackage = items.some((i) => i.tourSlug === tour.slug)
+  const atLimit = items.length >= 4 && !inPackage
+
+  function toggle() {
+    if (inPackage) {
+      removeItem(tour.slug)
+    } else if (!atLimit) {
+      addPendingTour({ tourId: tour.id, tourSlug: tour.slug, tourTitle: tour.title })
+    }
+  }
+
   return (
     <article
       className={cn(
@@ -91,12 +103,16 @@ export function TourCard({
       <Button
         variant="secondary"
         size="icon-sm"
-        aria-label={isFavorite ? "Убрать из избранного" : "Добавить в избранное"}
-        aria-pressed={isFavorite}
-        onClick={onToggleFavorite}
-        className="absolute top-3 right-3 z-10 bg-background/70 backdrop-blur-sm hover:bg-background"
+        aria-label={inPackage ? "Убрать тур из заявки" : "Добавить тур в заявку"}
+        aria-pressed={inPackage}
+        disabled={atLimit}
+        onClick={toggle}
+        className={cn(
+          "absolute top-3 right-3 z-10 backdrop-blur-sm",
+          inPackage ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-background/70 hover:bg-background",
+        )}
       >
-        <HeartIcon className={cn(isFavorite && "fill-current text-destructive")} />
+        {inPackage ? <CheckIcon /> : <PlusIcon />}
       </Button>
     </article>
   )

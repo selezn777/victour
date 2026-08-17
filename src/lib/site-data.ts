@@ -9,6 +9,7 @@ function publicClient() {
 }
 
 export type CatalogTour = {
+  id: string
   slug: string
   title: string
   shortDescription: string
@@ -241,7 +242,7 @@ export async function getHomepageData(): Promise<{
   const [toursRes, settingsRes, guideRes] = await Promise.all([
     supabase
       .from("tours")
-      .select("slug, title, short_description, duration_label, hero_image_url, sort_order, pricing_tiers(price_adult_usd)")
+      .select("id, slug, title, short_description, duration_label, hero_image_url, sort_order, pricing_tiers(price_adult_usd)")
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
     supabase.from("settings").select("key, value"),
@@ -266,6 +267,7 @@ export async function getHomepageData(): Promise<{
       (t) => t.price_adult_usd,
     )
     return {
+      id: row.id,
       slug: row.slug,
       title: title.ru,
       shortDescription: shortDescription.ru,
