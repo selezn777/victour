@@ -54,7 +54,12 @@ export function SlideDeck({
       mousewheel={{ releaseOnEdges: true, sensitivity: 1 }}
       keyboard={{ enabled: true }}
       pagination={{ clickable: true, el: ".slide-deck-pagination" }}
-      className={className}
+      // У горизонтальной деки Swiper по умолчанию ставит touch-action: pan-y
+      // (пропускает вертикальный тач-жест браузеру) — вертикальный свайп по
+      // /tours не листал слайды, а скроллил страницу и схлопывал адресную
+      // строку браузера ("весь сайт съезжает наверх"). touch-pan-x запрещает
+      // вертикальный пан у самого элемента — жест целиком достаётся Swiper.
+      className={direction === "horizontal" ? `${className} touch-pan-x!` : className}
     >
       {slides.map((slide, i) => (
         <SwiperSlide key={i} className="h-full w-full">
