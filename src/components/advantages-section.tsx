@@ -10,7 +10,7 @@ function TourCtaButton() {
   return (
     <Link
       href="/tours"
-      className="mt-6 flex w-full max-w-md items-center justify-center self-center rounded-2xl bg-primary px-8 py-5 text-lg font-semibold text-primary-foreground shadow-[0_10px_40px_-8px] shadow-primary/60 ring-1 ring-primary-foreground/10 transition-all hover:scale-[1.02] hover:bg-primary/90 hover:shadow-primary/80 active:scale-[0.98] sm:py-6 sm:text-xl"
+      className="mt-6 flex w-full max-w-md items-center justify-center self-center rounded-2xl bg-primary px-8 py-5 text-lg font-semibold text-primary-foreground shadow-[0_10px_40px_-8px] shadow-primary/35 ring-1 ring-primary-foreground/10 transition-all hover:scale-[1.02] hover:bg-primary/90 hover:shadow-primary/50 active:scale-[0.98] sm:py-6 sm:text-xl"
     >
       Выбрать тур
     </Link>
@@ -407,7 +407,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
 function ToursSlide() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pt-3 pb-6 text-center sm:pl-12 sm:pr-10 sm:pt-5">
+      <div className="flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pt-1 pb-6 text-center sm:pl-12 sm:pr-10 sm:pt-2">
         <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           Ровно пять маршрутов — и ни одного лишнего
         </h2>
@@ -549,7 +549,7 @@ function QuoteSlide({
 }) {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="relative flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pt-6 pb-10 text-center sm:pl-12 sm:pr-10 sm:pt-8 sm:pb-8">
+      <div className="relative flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pt-3 pb-10 text-center sm:pl-12 sm:pr-10 sm:pt-4 sm:pb-8">
         <h2 className="max-w-2xl font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">
           {title}
         </h2>
