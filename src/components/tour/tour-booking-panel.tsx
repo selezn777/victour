@@ -119,33 +119,6 @@ export function TourBookingPanel({
       )}
 
       <div className="mt-5">
-        <span className="text-sm font-medium">Гостей</span>
-        <div className="mt-2 flex items-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            disabled={selectedGuestCount <= 2}
-            onClick={() => onGuestCountChange((c) => Math.max(2, c - 1))}
-            aria-label="Меньше гостей"
-          >
-            −
-          </Button>
-          <span className="w-6 text-center text-sm font-medium">{selectedGuestCount}</span>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            disabled={selectedGuestCount >= 9}
-            onClick={() => onGuestCountChange((c) => Math.min(9, c + 1))}
-            aria-label="Больше гостей"
-          >
-            +
-          </Button>
-        </div>
-      </div>
-
-      <div className="mt-5">
         <span className="text-sm font-medium">Дата</span>
         <div className="mt-2">
           <BookingCalendar
@@ -157,15 +130,42 @@ export function TourBookingPanel({
         </div>
       </div>
 
-      <div className="mt-5 flex items-baseline justify-between border-t border-border pt-4">
+      {/* Гостей — рядом с ценой (не выше, у даты), чтобы менять количество
+          и сразу видеть, как это отражается на итоговой сумме, без скролла
+          между двумя блоками. */}
+      <div className="mt-5 flex items-end justify-between gap-4 border-t border-border pt-4">
         <div>
-          <span className="text-sm text-muted-foreground">Итого за группу</span>
-          <div className="text-xs text-muted-foreground">{formatUsd(priceAdultUsd)} за человека</div>
+          <span className="text-sm font-medium">Гостей</span>
+          <div className="mt-2 flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              disabled={selectedGuestCount <= 2}
+              onClick={() => onGuestCountChange((c) => Math.max(2, c - 1))}
+              aria-label="Меньше гостей"
+            >
+              −
+            </Button>
+            <span className="w-6 text-center text-sm font-medium">{selectedGuestCount}</span>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              disabled={selectedGuestCount >= 9}
+              onClick={() => onGuestCountChange((c) => Math.min(9, c + 1))}
+              aria-label="Больше гостей"
+            >
+              +
+            </Button>
+          </div>
         </div>
         <div className="text-right">
+          <span className="text-sm text-muted-foreground">Итого за группу</span>
           <div className="font-heading text-xl font-semibold text-primary">
             {formatUsd(groupTotalUsd)}
           </div>
+          <div className="text-xs text-muted-foreground">{formatUsd(priceAdultUsd)} за человека</div>
           <div className="text-xs text-muted-foreground">
             {formatVndFromUsd(groupTotalUsd, settings.usdVndRate)} ·{" "}
             {formatRubFromUsd(groupTotalUsd, settings.usdRubRate, settings.rubMarkupPct)}

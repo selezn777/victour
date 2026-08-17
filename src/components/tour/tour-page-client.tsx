@@ -31,7 +31,13 @@ export function TourPageClient({
   tours: TourOption[]
 }) {
   const { toggle, isFavorite } = useFavorites()
-  const [guestCount, setGuestCount] = useState(2)
+  // По умолчанию — самая большая группа (обычно самая дешёвая цена за
+  // человека, тарифы отсортированы по возрастанию guestCount): гость,
+  // который просто листает страницу, должен сначала видеть младшую
+  // цену, а не по умолчанию за двоих. Своё реальное число гостей он
+  // выставит уже в блоке брони.
+  const cheapestTier = tour.pricingTiers[tour.pricingTiers.length - 1]
+  const [guestCount, setGuestCount] = useState(cheapestTier?.guestCount ?? 2)
   const primaryGuide = guides[0] ?? null
   const priceAdultUsd =
     tour.pricingTiers.find((t) => t.guestCount === guestCount)?.priceAdultUsd ?? 0
