@@ -65,6 +65,45 @@ function visibleCountForWidth(width: number) {
   return VISIBLE_AT_BASE
 }
 
+function gridColsForWidth(width: number) {
+  if (width >= 1024) return 12
+  if (width >= 640) return 9
+  return 8
+}
+
+// Сколько раскрытий одновременно — по числу колонок в сетке на этом брейкпоинте
+// (1 на мобиле, 2 с sm, 3 с lg). Каждое привязано к своей "полосе" колонок (см.
+// bandColumnRange), чтобы моргнувшая плитка и большое раскрытие всегда были в
+// одной и той же области экрана, а не в разных.
+function bandCountForWidth(width: number) {
+  if (width >= 1024) return 3
+  if (width >= 640) return 2
+  return 1
+}
+
+function bandColumnRange(bandIndex: number, bandCount: number, cols: number): [number, number] {
+  const start = Math.floor((bandIndex / bandCount) * cols)
+  const end = Math.floor(((bandIndex + 1) / bandCount) * cols)
+  return [start, end]
+}
+
+// Позиция и ширина полосы i из N — те же трети/половины, что и в CSS-классах
+// BAND_LAYOUT ниже (держать в синхроне вручную, т.к. Tailwind-классы должны
+// быть статичными строками для сборки). z-20 обязателен: ни .grid, ни внешний
+// контейнер коллажа не создают свой stacking context (нет z-index/transform), так
+// что z-10 у "приподнятой" плитки внутри сетки иначе всплывает выше полосы
+// раскрытия (сравнение идёт не по DOM-порядку, а по z-index — 10 > auto).
+const BAND_LAYOUT = [
+  "absolute inset-y-0 left-0 z-20 w-full overflow-hidden pointer-events-none sm:w-1/2 lg:w-1/3",
+  "absolute inset-y-0 z-20 hidden w-1/2 overflow-hidden pointer-events-none sm:left-1/2 sm:block lg:left-1/3 lg:w-1/3",
+  "absolute inset-y-0 z-20 hidden overflow-hidden pointer-events-none lg:left-2/3 lg:block lg:w-1/3",
+]
+const BAND_SIZES = [
+  "(min-width: 1024px) 34vw, (min-width: 640px) 50vw, 100vw",
+  "(min-width: 1024px) 34vw, 50vw",
+  "34vw",
+]
+
 // "closing" — отдельная фаза между open и idle: масштаб уже вернулся к 1, но
 // z-index/overflow-visible ещё держатся TRANSITION_MS, пока идёт CSS-переход
 // "стягивания обратно" — иначе тайл мгновенно обрезался бы своим overflow-hidden
@@ -86,38 +125,67 @@ function preloadImage(src: string) {
   })
 }
 
-// Раскрытие — строго одно за раз, по очереди (Виктор: "рандомно по очереди все
-// картинки открываются") — раньше крутилось до 5 параллельных независимых
-// циклов (staggerMs разводил их по слотам на широких экранах), но с раскрытием
-// "на месте" плитки несколько одновременных были бы визуальным шумом, да и не
-// тем, о чём просил Виктор.
-function useRevealCycle() {
+// Раскрытие — по одному за раз В КАЖДОЙ полосе колонок (см. bandCountForWidth) —
+// на мобиле полоса одна (всё раскрытие целиком), с sm и lg — 2 и 3 независимых
+// параллельных цикла, каждый выбирает случайную плитку ТОЛЬКО из своей полосы
+// (Виктор: "2 фото, 2 разных фото должны открываться, или 3" — раскрытий
+// одновременно должно быть несколько на широком экране, как было раньше, но
+// теперь блик и большое раскрытие всегда в одной и той же области, не вразнобой).
+function useRevealCycle(bandIndex: number) {
   const [phase, setPhase] = useState<Phase>("idle")
   const [target, setTarget] = useState(0)
+  const [origin, setOrigin] = useState("50% 50%")
 
   useEffect(() => {
     let cancelled = false
+    let order: number[] = []
     let step = 0
-    // Новая случайная перетасовка при каждом заходе на сайт (не фиксированный порядок) —
-    // при этом каждое фото гарантированно показывается один раз за полный проход, прежде
-    // чем перетасовать заново и начать следующий круг. Перетасовка ограничена видимыми на
-    // этом экране плитками (см. visibleCountForWidth).
-    let order = shuffledIndices(visibleCountForWidth(window.innerWidth))
     const timers: ReturnType<typeof setTimeout>[] = []
     const after = (fn: () => void, ms: number) => {
       timers.push(setTimeout(fn, ms))
     }
     const wait = (ms: number) => new Promise<void>((resolve) => after(resolve, ms))
 
+    // Пул плиток пересчитывается на лету по текущей ширине окна (тот же приём,
+    // что уже был для visibleCountForWidth) — если у этой полосы на текущем
+    // брейкпоинте вообще нет места (bandIndex >= число полос), цикл просто ждёт.
+    const currentPool = () => {
+      const width = window.innerWidth
+      const cols = gridColsForWidth(width)
+      const rows = visibleCountForWidth(width) / cols
+      const bandCount = bandCountForWidth(width)
+      if (bandIndex >= bandCount) return null
+      const [start, end] = bandColumnRange(bandIndex, bandCount, cols)
+      const visibleCount = cols * rows
+      const pool = Array.from({ length: visibleCount }, (_, i) => i).filter((i) => {
+        const col = i % cols
+        return col >= start && col < end
+      })
+      return { pool, cols, rows, start, end }
+    }
+
     const runCycle = () => {
       if (cancelled) return
+      const ctx = currentPool()
+      if (!ctx || ctx.pool.length === 0) {
+        after(runCycle, GAP_MS)
+        return
+      }
       if (step >= order.length) {
-        order = shuffledIndices(visibleCountForWidth(window.innerWidth))
+        order = shuffledIndices(ctx.pool.length).map((i) => ctx.pool[i])
         step = 0
       }
       const idx = order[step]
       step += 1
+      // Точка, откуда визуально "вырастает" полоса раскрытия — позиция плитки
+      // внутри СВОЕЙ полосы (не всей сетки), в процентах, чисто арифметикой.
+      const col = idx % ctx.cols
+      const row = Math.floor(idx / ctx.cols)
+      const bandCols = ctx.end - ctx.start
+      const originX = ((col - ctx.start + 0.5) / bandCols) * 100
+      const originY = ((row + 0.5) / ctx.rows) * 100
       setTarget(idx)
+      setOrigin(`${originX}% ${originY}%`)
       setPhase("priming")
       Promise.all([preloadImage(COLLAGE_PHOTOS[idx]), wait(PRIME_MS)]).then(() => {
         if (cancelled) return
@@ -139,11 +207,9 @@ function useRevealCycle() {
       cancelled = true
       timers.forEach(clearTimeout)
     }
-    // Разовая настройка цикла при монтировании — не нужно перезапускать.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [bandIndex])
 
-  return { phase, target }
+  return { phase, target, origin }
 }
 
 // Насколько раскрытая плитка "вырастает" от своей же позиции в сетке — transform
@@ -153,7 +219,12 @@ function useRevealCycle() {
 const REVEAL_SCALE = 2.6
 
 function PhotoCollage() {
-  const { phase, target } = useRevealCycle()
+  // Три параллельных цикла (по числу полос на самом широком брейкпоинте — lg),
+  // каждый на своём брейкпоинте либо активен (своя полоса колонок), либо просто
+  // ждёт (bandIndex >= bandCountForWidth). Хуков всегда ровно 3 — иначе нарушится
+  // React Rules of Hooks при смене ширины окна.
+  const reveals = [useRevealCycle(0), useRevealCycle(1), useRevealCycle(2)]
+  const activeByTile = new Map(reveals.filter((r) => r.phase !== "idle").map((r) => [r.target, r]))
 
   return (
     // База (< sm) — без ограничения высоты, ряды сетки всегда полные (см.
@@ -165,12 +236,12 @@ function PhotoCollage() {
     <div className="relative w-full shrink-0 overflow-hidden sm:h-[38svh] lg:h-[32svh]">
       <div className="grid w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
         {COLLAGE_PHOTOS.map((src, i) => {
-          const isTarget = target === i
-          const isPriming = phase === "priming" && isTarget
-          const isScaled = phase === "open" && isTarget
+          const active = activeByTile.get(i)
+          const isPriming = active?.phase === "priming"
+          const isScaled = active?.phase === "open"
           // held elevated through "closing" too, so the shrink-back transition
           // is not clipped by the tile's own overflow-hidden mid-animation.
-          const isElevated = (phase === "open" || phase === "closing") && isTarget
+          const isElevated = active?.phase === "open" || active?.phase === "closing"
           return (
             <div
               key={src}
@@ -205,6 +276,32 @@ function PhotoCollage() {
           )
         })}
       </div>
+      {/* Раскрытие "на весь блок" (Виктор: "должны раскрываться на весь размер
+          блока") — своя полоса колонок на каждый цикл (BAND_LAYOUT), фото внутри
+          неё растёт от той же точки, где моргнула плитка (см. origin), пока не
+          займёт всю полосу целиком, и так же стягивается обратно. */}
+      {reveals.map((reveal, b) => {
+        const visible = reveal.phase === "open" || reveal.phase === "closing"
+        return (
+          <div key={b} className={BAND_LAYOUT[b]}>
+            <div
+              className="absolute inset-0"
+              style={{
+                transformOrigin: reveal.origin,
+                transform: visible ? "scale(1)" : "scale(0.15)",
+                opacity: visible ? 1 : 0,
+                transitionProperty: "transform, opacity",
+                transitionTimingFunction: "ease-out",
+                transitionDuration: `${TRANSITION_MS}ms`,
+                boxShadow: visible ? "0 20px 45px -12px rgba(0,0,0,0.55)" : undefined,
+              }}
+            >
+              <Image src={COLLAGE_PHOTOS[reveal.target]} alt="" fill sizes={BAND_SIZES[b]} className="object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -217,10 +314,12 @@ function IntroSlide() {
         <h1 className="max-w-xl font-heading text-2xl leading-[1.1] font-semibold sm:text-5xl">
           Вьетнам без чужих
         </h1>
-        <p className="mt-2 max-w-xl text-sm leading-snug text-muted-foreground sm:leading-relaxed sm:text-base">
-          Мы — лучшие в приватных турах по Вьетнаму. Проверенные маршруты, надёжный транспорт и
-          гид, который отвечает за вашу безопасность на каждом шаге — здесь всё настроено на вашу
-          волну, и ничего не оставлено на волю случая.
+        <p className="mt-3 max-w-md text-base leading-snug font-medium text-foreground sm:mt-4 sm:max-w-xl sm:text-xl">
+          Лучшие приватные туры по Вьетнаму — без чужих людей рядом.
+        </p>
+        <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground sm:max-w-xl sm:text-base">
+          Проверенные маршруты, надёжный транспорт и гид, который отвечает за вашу безопасность на
+          каждом шаге — здесь всё настроено на вашу волну, и ничего не оставлено на волю случая.
         </p>
         <TourCtaButton />
       </div>
