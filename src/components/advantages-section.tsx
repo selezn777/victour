@@ -367,7 +367,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
   const [active, setActive] = useState<number | null>(null)
 
   return (
-    <div className="mt-4 flex h-72 w-full max-w-2xl gap-1 sm:h-80 md:max-w-3xl lg:h-96 lg:max-w-5xl">
+    <div className="mt-4 flex h-72 w-full max-w-3xl gap-1 sm:h-80 sm:max-w-4xl md:max-w-5xl lg:h-96 lg:max-w-6xl xl:max-w-7xl">
       {tours.map((tour, i) => {
         const isActive = i === active
         return (
@@ -376,8 +376,8 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
             href={`/tours/${tour.slug}`}
             onMouseEnter={() => setActive(i)}
             onMouseLeave={() => setActive(null)}
-            className={`group relative flex-1 overflow-hidden rounded-sm bg-muted ring-1 transition-all duration-500 ease-out ${
-              isActive ? "ring-primary/60" : "ring-white/10"
+            className={`group relative flex-1 overflow-hidden bg-muted ring-1 ring-white/10 transition-shadow duration-500 ease-out ${
+              isActive ? "shadow-[0_10px_28px_-6px_rgba(0,0,0,0.55)]" : ""
             }`}
           >
             <Image
@@ -385,11 +385,9 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
               alt={tour.title}
               fill
               sizes="(min-width: 1024px) 700px, (min-width: 640px) 400px, 60vw"
-              className={`object-cover transition-[filter] duration-700 ease-out ${
-                isActive ? "brightness-100" : "brightness-95"
-              }`}
+              className="object-cover brightness-100"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/5 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/10" />
             <div
               className={`absolute inset-x-0 bottom-0 p-2.5 text-left transition-opacity duration-500 sm:p-3 ${
                 isActive ? "opacity-100" : "opacity-0"
@@ -406,7 +404,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
               <>
                 {/* Уже/lg колонка узкая — вертикальное название. С lg колонка
                     достаточно широкая для обычной горизонтальной подписи. */}
-                <span className="absolute inset-0 flex items-center justify-center px-1 text-center text-[11px] font-semibold text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.9),0_0_12px_rgba(0,0,0,0.6)] [writing-mode:vertical-rl] lg:hidden">
+                <span className="absolute inset-0 flex items-center justify-center px-1 text-center text-[11px] font-semibold text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.95),0_0_16px_rgba(0,0,0,0.8)] [writing-mode:vertical-rl] lg:hidden">
                   {tour.title}
                 </span>
                 <div className="absolute inset-x-0 bottom-0 hidden p-3 text-left lg:block">
@@ -430,12 +428,12 @@ function ToursSlide() {
         <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           Ровно пять маршрутов — и ни одного лишнего
         </h2>
-        <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+        <TourSelector tours={CATALOG_TOURS} />
+        <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
           Не каталог на любой вкус, а отбор самых безопасных и проверенных программ. Никаких
           однодневных марш-бросков и вечеров, когда гости бродят по незнакомому городу сами по
           себе — каждый маршрут выстроен так, чтобы риск был минимальным.
         </p>
-        <TourSelector tours={CATALOG_TOURS} />
         <TourCtaButton />
       </div>
     </div>
