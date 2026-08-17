@@ -283,6 +283,37 @@ function PhotoSlide({
   )
 }
 
+// Слайд без фото — три коротких тезиса под общим заголовком, разделённые
+// линиями (Виктор попросил объединить 3 прежних отдельных слайда —
+// компания/темп/еда — в один; фото убрали совсем, чтобы под три тезиса
+// хватило места без утомительного скролла на мобиле).
+function ValuesSlide({
+  title,
+  points,
+}: {
+  title: string
+  points: { title: string; body: string }[]
+}) {
+  return (
+    <div className="flex h-full w-full flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto pl-7 pr-5 py-6 text-center sm:pl-12 sm:pr-10">
+        <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
+          {title}
+        </h2>
+        <div className="mt-5 w-full max-w-md divide-y divide-border">
+          {points.map((point) => (
+            <div key={point.title} className="py-4 first:pt-0 last:pb-0">
+              <h3 className="font-heading text-base font-semibold sm:text-lg">{point.title}</h3>
+              <p className="mt-1 text-sm text-muted-foreground sm:text-base">{point.body}</p>
+            </div>
+          ))}
+        </div>
+        <TourCtaButton />
+      </div>
+    </div>
+  )
+}
+
 const CATALOG_TOURS = [
   {
     slug: "severnye-ostrova",
@@ -578,19 +609,23 @@ export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
           body="Внимание к мелочам и забота о безопасности — вот что нам чаще всего пишут после поездки."
           quotes={heroQuotes.map(reviewToQuote)}
         />,
-        <PhotoSlide
-          key="company"
-          title="Это ваш день, и в нём больше никого"
-          body="Никто не опаздывает к автобусу и не тащит всех в дьюти-фри. Программа собрана под вашу компанию — от встречи в отеле до прощания вечером."
-          imageSrc="/images/tours/mayak-dai-lan.jpg"
-          imageAlt="Пляж у маяка Дай Лань, где кроме вас почти никого нет"
-        />,
-        <PhotoSlide
-          key="pace"
-          title="Ваш темп — а не расписание тургруппы"
-          body="Никакой обязательной лавки, где гиду капает процент с покупок, и столовой по расписанию автобуса. Понравилось место — сидим сколько хочется, проголодались — просто скажите. Мы не гонимся за галочками в чек-листе: даём настоящую поездку — выверенную и профессиональную, но без туристической суеты и толпы."
-          imageSrc="/images/tours/severnye-ostrova.jpg"
-          imageAlt="Северные острова, тихая бухта в стороне от туристических троп"
+        <ValuesSlide
+          key="values"
+          title="Ваша поездка — под вас, а не под группу"
+          points={[
+            {
+              title: "Только для вас",
+              body: "Никого не надо ждать — программа собрана под вашу компанию, от встречи в отеле до прощания вечером.",
+            },
+            {
+              title: "Без туристических магазинов",
+              body: "Никакой обязательной лавки, где гиду капает процент с покупок. Понравилось место — сидим сколько хочется.",
+            },
+            {
+              title: "Еду выбираете вы",
+              body: "Блюда на обед выбираете сами — не кормим тем, что решили за вас. Для многих гостей это принципиально важно.",
+            },
+          ]}
         />,
       ]}
     />
