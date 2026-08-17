@@ -32,8 +32,8 @@ export function TourCard({
   return (
     <article
       className={cn(
-        "group relative overflow-hidden rounded-2xl bg-muted",
-        fill ? "h-full w-full" : "aspect-3/4",
+        "group relative overflow-hidden bg-muted",
+        fill ? "h-full w-full" : "aspect-3/4 rounded-2xl",
       )}
     >
       <Link href={`/tours/${tour.slug}`} className="absolute inset-0">
