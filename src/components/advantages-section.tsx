@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { ChevronDownIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { SlideDeck } from "@/components/slide-deck"
 import type { Review } from "@/lib/reviews-data"
@@ -355,29 +356,27 @@ const CATALOG_TOURS = [
 ]
 
 /**
- * Полосы туров "выбор персонажа" — равной ширины (без resize, чтобы не бросались в
- * глаза), по одной подсвечивается по очереди сама (лёгкая яркость + тонкая рамка),
- * ховер ставит на паузу и подсвечивает выбранную.
+ * Полосы туров "выбор персонажа" — равной ширины, ховер (десктоп) чуть
+ * приподнимает тенью. Подпись — ПОД картинкой, не поверх неё: раньше текст
+ * поверх фото либо обрезался (line-clamp), либо терялся на светлом фото
+ * при любой технике контраста (тень/плашка) — Виктор много раз забраковал
+ * оба варианта. Подпись снаружи фото решает это раз и навсегда — полный
+ * текст, без ограничения по высоте, стрелка-коннектор указывает на фото.
  */
 function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
-  // Было автопереключение по таймеру — убрано совсем (не только скорость/порядок
-  // оказались не при чём: заголовок вроде "Северные острова" не помещался в узкую
-  // колонку и обрезался посреди слова — см. break-words/line-clamp-2 на h3 ниже,
-  // это была настоящая причина "отвратительно"). Осталась только подсветка по ховеру.
   const [active, setActive] = useState<number | null>(null)
 
   return (
-    <div className="mt-2 flex h-72 w-full max-w-3xl gap-1 sm:mt-4 sm:h-80 sm:max-w-4xl md:max-w-5xl lg:h-96 lg:max-w-6xl xl:max-w-7xl">
-      {tours.map((tour, i) => {
-        const isActive = i === active
-        return (
+    <div className="mt-2 w-full max-w-3xl sm:mt-4 sm:max-w-4xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl">
+      <div className="flex h-56 gap-1 sm:h-64 lg:h-72">
+        {tours.map((tour, i) => (
           <Link
             key={tour.slug}
             href={`/tours/${tour.slug}`}
             onMouseEnter={() => setActive(i)}
             onMouseLeave={() => setActive(null)}
-            className={`group relative flex-1 overflow-hidden rounded-[1px] bg-muted ring-1 ring-white/10 transition-shadow duration-500 ease-out ${
-              isActive ? "shadow-[0_10px_28px_-6px_rgba(0,0,0,0.55)]" : ""
+            className={`relative flex-1 overflow-hidden rounded-[1px] bg-muted ring-1 ring-white/10 transition-shadow duration-500 ease-out ${
+              i === active ? "shadow-[0_10px_28px_-6px_rgba(0,0,0,0.55)]" : ""
             }`}
           >
             <Image
@@ -387,28 +386,19 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
               sizes="(min-width: 1024px) 700px, (min-width: 640px) 400px, 60vw"
               className="object-cover brightness-100"
             />
-            <div
-              className={`absolute inset-x-0 bottom-0 p-2.5 text-left transition-opacity duration-500 sm:p-3 ${
-                isActive ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              <h3 className="line-clamp-2 font-heading text-sm leading-tight font-semibold break-words text-white sm:text-base">
-                {tour.title}
-              </h3>
-              <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug break-words text-white/80 sm:text-xs">
-                {tour.annotation}
-              </p>
-            </div>
-            {!isActive && (
-              <div className="absolute inset-x-0 bottom-0 p-1 text-center sm:p-2 lg:p-3 lg:text-left">
-                <h3 className="line-clamp-2 font-heading text-[9px] leading-tight font-semibold break-words text-white/80 sm:text-xs lg:text-sm">
-                  {tour.title}
-                </h3>
-              </div>
-            )}
           </Link>
-        )
-      })}
+        ))}
+      </div>
+      <div className="mt-1.5 flex gap-1">
+        {tours.map((tour) => (
+          <div key={tour.slug} className="flex flex-1 flex-col items-center gap-0.5 px-0.5 text-center">
+            <ChevronDownIcon className="size-3 shrink-0 text-primary/60" />
+            <span className="font-heading text-[10px] leading-tight font-semibold text-foreground sm:text-xs">
+              {tour.title}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -416,7 +406,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
 function ToursSlide() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pt-6 pb-6 text-center sm:pl-12 sm:pr-10 sm:pt-8">
+      <div className="flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pt-3 pb-6 text-center sm:pl-12 sm:pr-10 sm:pt-5">
         <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           Ровно пять маршрутов — и ни одного лишнего
         </h2>
