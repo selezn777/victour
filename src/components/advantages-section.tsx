@@ -4,6 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { SlideDeck } from "@/components/slide-deck"
+import { PhotoStack } from "@/components/photo-stack"
 import type { Review } from "@/lib/reviews-data"
 
 function TourCtaButton() {
@@ -253,24 +254,37 @@ function PhotoSlide({
   imageSrc,
   imageAlt,
   imagePosition,
+  stackImages,
 }: {
   title: string
   body: string
   imageSrc: string
   imageAlt: string
   imagePosition?: string
+  /** Если задано (2+ фото) — вместо статичного фото рендерится интерактивная
+   * стопка (PhotoStack): фото падают друг на друга при появлении, тап
+   * перемешивает по кругу. */
+  stackImages?: string[]
 }) {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="relative h-[36%] shrink-0 overflow-hidden sm:h-[40%]">
-        <Image
-          src={imageSrc}
-          alt={imageAlt}
-          fill
-          style={imagePosition ? { objectPosition: imagePosition } : undefined}
-          className="kenburns-img object-cover"
-          sizes="100vw"
-        />
+      <div className="relative h-[36%] shrink-0 sm:h-[40%]">
+        {stackImages && stackImages.length > 1 ? (
+          <div className="h-full w-full p-5 pb-8 sm:p-7 sm:pb-10">
+            <PhotoStack photos={stackImages} alt={imageAlt} />
+          </div>
+        ) : (
+          <div className="relative h-full w-full overflow-hidden">
+            <Image
+              src={imageSrc}
+              alt={imageAlt}
+              fill
+              style={imagePosition ? { objectPosition: imagePosition } : undefined}
+              className="kenburns-img object-cover"
+              sizes="100vw"
+            />
+          </div>
+        )}
       </div>
       <div className="flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pt-5 pb-6 text-center sm:pl-12 sm:pr-10 sm:pt-7">
         <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
@@ -590,6 +604,11 @@ export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
           imageSrc="/images/hero/premium-van-interior.jpg"
           imageAlt="Салон премиального минивэна с кожаными креслами"
           imagePosition="30% 50%"
+          stackImages={[
+            "/images/hero/premium-van-interior-2.jpg",
+            "/images/hero/premium-van-exterior.jpg",
+            "/images/hero/premium-van-interior-3.jpg",
+          ]}
         />,
         <ToursSlide key="tours" />,
         <ValuesSlide
