@@ -5,11 +5,14 @@ import { Button } from "@/components/ui/button"
 import { usePackage } from "@/hooks/use-package"
 import { formatUsd } from "@/lib/format"
 
-// Панель бронирования есть только вверху страницы тура — стоило пролистать
-// описание маршрута/цены/отзывы/вопросы, и кнопки "Добавить в заявку" уже не
-// видно, приходится листать обратно наверх. Эта планка следит через
-// IntersectionObserver, видна ли настоящая панель бронирования (targetId), и
-// показывается вместо неё, пока её не видно — кнопка просто скроллит обратно к ней.
+// Бронь стоит в середине потока страницы (после маршрута/что входит/цены,
+// перед отзывами/вопросами) — стоило пролистать до отзывов, и кнопки
+// "Добавить в заявку" уже не видно, приходится листать обратно наверх. Эта
+// планка следит через IntersectionObserver, видна ли настоящая панель
+// бронирования (targetId), и показывается вместо неё, пока её не видно —
+// кнопка просто скроллит обратно к ней. Раньше была только на мобиле (на
+// десктопе бронь висела sticky-сайдбаром сбоку) — теперь бронь встроена в
+// общий поток на ВСЕХ размерах экрана, поэтому и планка работает везде.
 export function TourStickyCta({
   priceAdultUsd,
   targetId,
@@ -37,7 +40,7 @@ export function TourStickyCta({
 
   return (
     <div
-      className={`fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur transition-transform duration-300 ease-out lg:hidden supports-backdrop-filter:bg-card/80 ${
+      className={`fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur transition-transform duration-300 ease-out supports-backdrop-filter:bg-card/80 ${
         panelVisible ? "translate-y-full" : "translate-y-0"
       }`}
     >

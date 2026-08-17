@@ -47,51 +47,53 @@ export function TourPageClient({
       <main className="flex-1">
         <TourHero tour={tour} />
 
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_360px] lg:items-start lg:gap-12">
-            <div className="order-2 flex flex-col gap-10 lg:order-1">
-              <TourIncludesExcludes includes={tour.includes} excludes={tour.excludes} />
-              {/* Цена — решающий фактор, раньше стояла после длинного описания маршрута
-                  по дням; подняли выше, ближе к панели бронирования наверху страницы. */}
-              <TourPriceTable
-                tiers={tour.pricingTiers}
-                selectedGuestCount={guestCount}
-                onSelectGuestCount={setGuestCount}
-              />
-              <TourItinerary itinerary={tour.itinerary} isTwoDay={tour.isDalatTwoDay} />
-
-              <ReviewsSection
-                title="Отзывы об этом туре"
-                reviews={reviews}
-                tours={[]}
-                guideId={primaryGuide?.id ?? null}
-                guideName={primaryGuide?.name ?? null}
-                lockedTourId={tour.id}
-                hideTarget="tour"
-                emptyMessage="Пока нет отзывов об этом туре — станьте первым."
-              />
-
-              <FaqSection
-                title="Вопросы и ответы"
-                items={faq}
-                tours={tours}
-                lockedTourId={tour.id}
-                emptyMessage="Вопросов пока нет — задайте свой."
-              />
-            </div>
-
-            <div id="tour-booking-panel" className="order-1 lg:sticky lg:top-20 lg:order-2">
-              <TourBookingPanel
-                tour={tour}
-                guides={guides}
-                settings={settings}
-                selectedGuestCount={guestCount}
-                onGuestCountChange={setGuestCount}
-              />
-            </div>
+        {/* Виктор задал строгий порядок чтения: маршрут → что входит → цена
+            (с выбором гостей) → бронь (дата, сразу тут же) → отзывы → вопросы.
+            Раньше бронь была отдельной sticky-колонкой справа на десктопе —
+            теперь она встроена в общий поток на своём месте, одна колонка на
+            всех размерах экрана. */}
+        <div className="mx-auto flex max-w-3xl flex-col gap-10 px-4 py-10 sm:px-6 sm:py-14">
+          <TourItinerary itinerary={tour.itinerary} isTwoDay={tour.isDalatTwoDay} />
+          <TourIncludesExcludes includes={tour.includes} excludes={tour.excludes} />
+          <TourPriceTable
+            tiers={tour.pricingTiers}
+            selectedGuestCount={guestCount}
+            onSelectGuestCount={setGuestCount}
+          />
+          <div id="tour-booking-panel">
+            <TourBookingPanel
+              tour={tour}
+              guides={guides}
+              settings={settings}
+              selectedGuestCount={guestCount}
+              onGuestCountChange={setGuestCount}
+            />
           </div>
+
+          <ReviewsSection
+            title="Отзывы об этом туре"
+            reviews={reviews}
+            tours={[]}
+            guideId={primaryGuide?.id ?? null}
+            guideName={primaryGuide?.name ?? null}
+            lockedTourId={tour.id}
+            hideTarget="tour"
+            emptyMessage="Пока нет отзывов об этом туре — станьте первым."
+          />
+
+          <FaqSection
+            title="Вопросы и ответы"
+            items={faq}
+            tours={tours}
+            lockedTourId={tour.id}
+            emptyMessage="Вопросов пока нет — задайте свой."
+          />
         </div>
       </main>
+      {/* Бронь теперь не sticky-сайдбар, а обычный блок в потоке — эта
+          плашка следит, виден ли он, и на любом размере экрана предлагает
+          быстро вернуться к брони (нужнее всего именно у отзывов/вопросов,
+          которые идут ниже брони). */}
       <TourStickyCta priceAdultUsd={priceAdultUsd} targetId="tour-booking-panel" />
     </>
   )
