@@ -51,10 +51,13 @@ export function TourCard({
           )}
         />
 
+        {/* На весь экран (fill) — отступ снизу увеличен: под карточкой теперь
+            горизонтальный ряд точек-переключателя между турами, текст не
+            должен на него наезжать. */}
         <div
           className={cn(
             "absolute inset-x-0 bottom-0 z-10 flex flex-col gap-2 px-5 pt-5 text-white",
-            fill ? "pb-8" : "pb-6",
+            fill ? "pb-14" : "pb-6",
           )}
         >
           <span className="text-xs tracking-wide text-white/70 uppercase">
@@ -78,7 +81,7 @@ export function TourCard({
             <span className="text-base font-medium text-primary">
               от {formatUsd(tour.priceFromUsd)} / чел
             </span>
-            <span className="rounded-full border border-white/30 px-3 py-1.5 text-xs font-medium transition-colors group-hover:border-white/70">
+            <span className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition-opacity group-hover:opacity-90">
               Программа тура
             </span>
           </div>

@@ -15,20 +15,41 @@ import "swiper/css/pagination"
  * стежков-делений слева сверху, поверх зоны фото у каждого слайда (никогда не
  * заходит в текстовую зону), показывает прогресс — стилизована под переплёт книги.
  */
+const PAGINATION_WRAPPER_CLASS = {
+  "top-left": "pointer-events-none absolute top-4 left-3 z-20 sm:top-5 sm:left-5",
+  "bottom-center": "pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center sm:bottom-5",
+}
+
+const PAGINATION_DOTS_CLASS = {
+  "top-left": "flex flex-col items-center gap-2",
+  // Swiper сам добавляет класс swiper-pagination-horizontal, у которого в
+  // его собственном CSS зашита ширина 100% — без !w-fit ряд точек
+  // растягивался на всю ширину экрана вместо компактной кучки по центру.
+  "bottom-center": "flex! w-fit! flex-row items-center gap-2",
+}
+
 export function SlideDeck({
   slides,
   className = "h-[calc(100svh-3.5rem)] w-full sm:h-[calc(100svh-4rem)]",
+  direction = "vertical",
+  paginationPosition = "top-left",
 }: {
   slides: ReactNode[]
   /** Переопределяет высоту/ширину — по умолчанию "вся высота вьюпорта минус
    * хедер" (как на главной). Задать явную высоту, если дека встроена НЕ
    * первым блоком под хедером, а ниже другого контента на странице. */
   className?: string
+  /** По умолчанию вертикальная (как на главной). */
+  direction?: "vertical" | "horizontal"
+  /** По умолчанию "переплёт" сверху слева (книжный стиль, как на главной).
+   * "bottom-center" — горизонтальный ряд точек снизу по центру, для
+   * горизонтальной деки (переключение вбок). */
+  paginationPosition?: "top-left" | "bottom-center"
 }) {
   return (
     <Swiper
       modules={[Mousewheel, Pagination, Keyboard]}
-      direction="vertical"
+      direction={direction}
       speed={420}
       mousewheel={{ releaseOnEdges: true, sensitivity: 1 }}
       keyboard={{ enabled: true }}
@@ -40,8 +61,8 @@ export function SlideDeck({
           {slide}
         </SwiperSlide>
       ))}
-      <div className="pointer-events-none absolute top-4 left-3 z-20 sm:top-5 sm:left-5">
-        <div className="slide-deck-pagination pointer-events-auto flex flex-col items-center gap-2" />
+      <div className={PAGINATION_WRAPPER_CLASS[paginationPosition]}>
+        <div className={`slide-deck-pagination pointer-events-auto ${PAGINATION_DOTS_CLASS[paginationPosition]}`} />
       </div>
     </Swiper>
   )
