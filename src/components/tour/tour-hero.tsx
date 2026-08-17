@@ -5,25 +5,24 @@ import { useState } from "react"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Pagination } from "swiper/modules"
 import type { Swiper as SwiperType } from "swiper/types"
-import { Button } from "@/components/ui/button"
 import type { TourDetail } from "@/lib/site-data"
 
 import "swiper/css"
 import "swiper/css/pagination"
 
-export function TourHero({ tour, onBookClick }: { tour: TourDetail; onBookClick: () => void }) {
+export function TourHero({ tour }: { tour: TourDetail }) {
   const [active, setActive] = useState(0)
   const photos = tour.galleryUrls.length > 0 ? tour.galleryUrls : tour.heroImageUrl ? [tour.heroImageUrl] : []
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden">
+    <section>
       {photos.length > 0 && (
-        <div className="relative h-[38%] shrink-0 overflow-hidden sm:h-[42%]">
+        <div className="relative">
           <Swiper
             modules={[Pagination]}
             pagination={{ clickable: true, el: ".tour-hero-pagination" }}
             onSlideChange={(swiper: SwiperType) => setActive(swiper.activeIndex)}
-            className="h-full w-full"
+            className="h-[68svh] min-h-[380px] w-full sm:h-[78svh]"
           >
             {photos.map((url, i) => (
               <SwiperSlide key={url} className="relative h-full w-full">
@@ -49,18 +48,15 @@ export function TourHero({ tour, onBookClick }: { tour: TourDetail; onBookClick:
         </div>
       )}
 
-      <div className="flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pt-5 pb-6 text-center sm:pl-12 sm:pr-10 sm:pt-7">
+      <div className="mx-auto max-w-3xl px-4 pt-6 pb-2 text-center sm:px-6 sm:pt-8">
         <span className="text-xs font-medium tracking-widest text-primary uppercase">{tour.durationLabel}</span>
-        <h1 className="mt-2 max-w-xl font-heading text-2xl leading-tight font-semibold sm:text-4xl">
+        <h1 className="mt-2 font-heading text-3xl leading-tight font-semibold sm:text-5xl">
           {tour.title}
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground sm:text-base">
           {tour.shortDescription}
         </p>
-        <Button type="button" size="lg" className="mt-6 w-full max-w-md" onClick={onBookClick}>
-          Забронировать
-        </Button>
       </div>
-    </div>
+    </section>
   )
 }

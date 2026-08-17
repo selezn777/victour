@@ -53,7 +53,7 @@ export function TourPriceTable({
       {selectedTier && (
         <p className="mt-3 text-sm text-muted-foreground">
           Группа из {selectedTier.guestCount} платит {formatUsd(selectedTier.priceAdultUsd * selectedTier.guestCount)}.
-          Способ оплаты подскажем на слайде брони — жмите «Забронировать».
+          Способ оплаты подскажем в блоке брони справа.
         </p>
       )}
       <p className="mt-1 text-xs text-muted-foreground">

@@ -1,52 +1,19 @@
 "use client"
 
-import { useRef, useState, type ReactNode } from "react"
-import type { Swiper as SwiperType } from "swiper/types"
+import { useState } from "react"
 import { TourHeader } from "@/components/tour/tour-header"
 import { TourHero } from "@/components/tour/tour-hero"
 import { TourItinerary } from "@/components/tour/tour-itinerary"
 import { TourIncludesExcludes } from "@/components/tour/tour-includes-excludes"
 import { TourPriceTable } from "@/components/tour/tour-price-table"
 import { TourBookingPanel } from "@/components/tour/tour-booking-panel"
+import { TourStickyCta } from "@/components/tour/tour-sticky-cta"
 import { ReviewsSection } from "@/components/reviews/reviews-section"
 import { FaqSection } from "@/components/faq/faq-section"
-import { SlideDeck } from "@/components/slide-deck"
-import { Button } from "@/components/ui/button"
 import { useFavorites } from "@/hooks/use-favorites"
 import type { SiteSettings, TourDetail, TourGuide } from "@/lib/site-data"
 import type { Review, TourOption } from "@/lib/reviews-data"
 import type { FaqItem } from "@/lib/faq-data"
-
-// Слайд брони — 5-й по счёту (индекс 4): фото → что входит → цена →
-// маршрут по дням → БРОНЬ → отзывы → вопросы. Кнопка "Забронировать" в
-// каждом из остальных слайдов переключает деку сюда через Swiper API —
-// тот же принцип, что и книжный "переплёт"-индикатор на главной, вместо
-// прежнего scrollIntoView (та механика имела смысл только при обычном
-// непрерывном скролле страницы, которого теперь нет).
-const BOOKING_SLIDE_INDEX = 4
-
-function ContentSlide({ children, onBookClick }: { children: ReactNode; onBookClick: () => void }) {
-  return (
-    <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="flex flex-1 flex-col overflow-y-auto pl-7 pr-5 pt-6 pb-6 sm:pl-12 sm:pr-10 sm:pt-8">
-        <div className="mx-auto w-full max-w-3xl">{children}</div>
-        <Button type="button" size="lg" className="mt-8 w-full max-w-md self-center" onClick={onBookClick}>
-          Забронировать
-        </Button>
-      </div>
-    </div>
-  )
-}
-
-function BookingSlide({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="flex flex-1 flex-col overflow-y-auto pl-7 pr-5 pt-6 pb-6 sm:pl-12 sm:pr-10 sm:pt-8">
-        <div className="mx-auto w-full max-w-3xl">{children}</div>
-      </div>
-    </div>
-  )
-}
 
 export function TourPageClient({
   tour,
@@ -66,8 +33,8 @@ export function TourPageClient({
   const { toggle, isFavorite } = useFavorites()
   const [guestCount, setGuestCount] = useState(2)
   const primaryGuide = guides[0] ?? null
-  const swiperRef = useRef<SwiperType | null>(null)
-  const goToBooking = () => swiperRef.current?.slideTo(BOOKING_SLIDE_INDEX)
+  const priceAdultUsd =
+    tour.pricingTiers.find((t) => t.guestCount === guestCount)?.priceAdultUsd ?? 0
 
   return (
     <>
@@ -78,35 +45,21 @@ export function TourPageClient({
         onToggleFavorite={() => toggle(tour.slug)}
       />
       <main className="flex-1">
-        <SlideDeck
-          onSwiper={(swiper) => {
-            swiperRef.current = swiper
-          }}
-          slides={[
-            <TourHero key="hero" tour={tour} onBookClick={goToBooking} />,
-            <ContentSlide key="includes" onBookClick={goToBooking}>
+        <TourHero tour={tour} />
+
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_360px] lg:items-start lg:gap-12">
+            <div className="order-2 flex flex-col gap-10 lg:order-1">
               <TourIncludesExcludes includes={tour.includes} excludes={tour.excludes} />
-            </ContentSlide>,
-            <ContentSlide key="price" onBookClick={goToBooking}>
+              {/* Цена — решающий фактор, раньше стояла после длинного описания маршрута
+                  по дням; подняли выше, ближе к панели бронирования наверху страницы. */}
               <TourPriceTable
                 tiers={tour.pricingTiers}
                 selectedGuestCount={guestCount}
                 onSelectGuestCount={setGuestCount}
               />
-            </ContentSlide>,
-            <ContentSlide key="itinerary" onBookClick={goToBooking}>
               <TourItinerary itinerary={tour.itinerary} isTwoDay={tour.isDalatTwoDay} />
-            </ContentSlide>,
-            <BookingSlide key="booking">
-              <TourBookingPanel
-                tour={tour}
-                guides={guides}
-                settings={settings}
-                selectedGuestCount={guestCount}
-                onGuestCountChange={setGuestCount}
-              />
-            </BookingSlide>,
-            <ContentSlide key="reviews" onBookClick={goToBooking}>
+
               <ReviewsSection
                 title="Отзывы об этом туре"
                 reviews={reviews}
@@ -117,8 +70,7 @@ export function TourPageClient({
                 hideTarget="tour"
                 emptyMessage="Пока нет отзывов об этом туре — станьте первым."
               />
-            </ContentSlide>,
-            <ContentSlide key="faq" onBookClick={goToBooking}>
+
               <FaqSection
                 title="Вопросы и ответы"
                 items={faq}
@@ -126,10 +78,21 @@ export function TourPageClient({
                 lockedTourId={tour.id}
                 emptyMessage="Вопросов пока нет — задайте свой."
               />
-            </ContentSlide>,
-          ]}
-        />
+            </div>
+
+            <div id="tour-booking-panel" className="order-1 lg:sticky lg:top-20 lg:order-2">
+              <TourBookingPanel
+                tour={tour}
+                guides={guides}
+                settings={settings}
+                selectedGuestCount={guestCount}
+                onGuestCountChange={setGuestCount}
+              />
+            </div>
+          </div>
+        </div>
       </main>
+      <TourStickyCta priceAdultUsd={priceAdultUsd} targetId="tour-booking-panel" />
     </>
   )
 }
