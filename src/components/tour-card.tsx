@@ -93,7 +93,7 @@ export function TourCard({
             <span className="text-base font-medium text-primary">
               от {formatUsd(tour.priceFromUsd)} / чел
             </span>
-            <span className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition-opacity group-hover:opacity-90">
+            <span className="rounded-full border border-white/30 px-3 py-1.5 text-xs font-medium transition-colors group-hover:border-white/70">
               Программа тура
             </span>
           </div>
