@@ -367,7 +367,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
   const [active, setActive] = useState<number | null>(null)
 
   return (
-    <div className="mt-4 flex h-72 w-full max-w-3xl gap-1 sm:h-80 sm:max-w-4xl md:max-w-5xl lg:h-96 lg:max-w-6xl xl:max-w-7xl">
+    <div className="mt-2 flex h-72 w-full max-w-3xl gap-1 sm:mt-4 sm:h-80 sm:max-w-4xl md:max-w-5xl lg:h-96 lg:max-w-6xl xl:max-w-7xl">
       {tours.map((tour, i) => {
         const isActive = i === active
         return (
@@ -387,16 +387,15 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
               sizes="(min-width: 1024px) 700px, (min-width: 640px) 400px, 60vw"
               className="object-cover brightness-100"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/10" />
             <div
               className={`absolute inset-x-0 bottom-0 p-2.5 text-left transition-opacity duration-500 sm:p-3 ${
                 isActive ? "opacity-100" : "opacity-0"
               }`}
             >
-              <h3 className="line-clamp-2 font-heading text-sm leading-tight font-semibold break-words text-white sm:text-base">
+              <h3 className="line-clamp-2 font-heading text-sm leading-tight font-semibold break-words text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.95),0_0_16px_rgba(0,0,0,0.8)] sm:text-base">
                 {tour.title}
               </h3>
-              <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug break-words text-white/80 sm:text-xs">
+              <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug break-words text-white/80 [text-shadow:0_1px_4px_rgba(0,0,0,0.9)] sm:text-xs">
                 {tour.annotation}
               </p>
             </div>
@@ -566,7 +565,7 @@ function QuoteSlide({
 }) {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="relative flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pt-6 pb-6 text-center sm:pl-12 sm:pr-10 sm:pt-8">
+      <div className="relative flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pt-6 pb-10 text-center sm:pl-12 sm:pr-10 sm:pt-8 sm:pb-8">
         <h2 className="max-w-2xl font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">
           {title}
         </h2>
