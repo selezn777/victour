@@ -3,15 +3,10 @@
 import Image from "next/image"
 import Link from "next/link"
 import { HeartIcon } from "lucide-react"
-import { Swiper, SwiperSlide } from "swiper/react"
-import { Pagination } from "swiper/modules"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatUsd } from "@/lib/format"
 import type { CatalogTour } from "@/lib/site-data"
-
-import "swiper/css"
-import "swiper/css/pagination"
 
 export function TourCard({
   tour,
@@ -26,9 +21,6 @@ export function TourCard({
    * использования внутри слайда с уже заданной высотой (см. TourCatalog). */
   fill?: boolean
 }) {
-  const photos = tour.galleryUrls.length > 0 ? tour.galleryUrls : tour.heroImageUrl ? [tour.heroImageUrl] : []
-  const paginationClass = `tour-card-pagination-${tour.slug}`
-
   return (
     <article
       className={cn(
@@ -37,25 +29,18 @@ export function TourCard({
       )}
     >
       <Link href={`/tours/${tour.slug}`} className="absolute inset-0">
-        {photos.length > 0 && (
-          <Swiper
-            modules={[Pagination]}
-            pagination={photos.length > 1 ? { clickable: false, el: `.${paginationClass}` } : false}
-            className="absolute inset-0 h-full w-full"
-          >
-            {photos.map((url, i) => (
-              <SwiperSlide key={url} className="relative h-full w-full">
-                <Image
-                  src={url}
-                  alt={tour.title}
-                  fill
-                  priority={i === 0}
-                  sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 100vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-              </SwiperSlide>
-            ))}
-          </Swiper>
+        {/* Один статичный кадр — Виктор попросил убрать внутреннюю карусель
+            фото на карточке совсем ("переключение убираем"), сам выберет,
+            какое единственное фото ставить на каждый тур. */}
+        {tour.heroImageUrl && (
+          <Image
+            src={tour.heroImageUrl}
+            alt={tour.title}
+            fill
+            priority
+            sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 100vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-110"
+          />
         )}
         {/* На весь экран (fill) — затемнение мягче: Виктор попросил убрать
             почти совсем, но оставить чуть-чуть для контраста текста. */}
@@ -65,14 +50,6 @@ export function TourCard({
             fill ? "from-black/70 via-black/5" : "from-black/95 via-black/20",
           )}
         />
-
-        {photos.length > 1 && (
-          // top-right, под кнопкой избранного (не top-left — там, когда карточка
-          // используется в SlideDeck, сидит книжный "переплёт"-индикатор колоды).
-          <div className="pointer-events-none absolute top-14 right-3 z-10 rounded-full bg-black/25 px-2.5 py-1.5 backdrop-blur-md">
-            <div className={`flex items-center gap-1.5 ${paginationClass}`} />
-          </div>
-        )}
 
         <div
           className={cn(

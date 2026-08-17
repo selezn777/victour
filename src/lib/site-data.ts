@@ -14,7 +14,6 @@ export type CatalogTour = {
   shortDescription: string
   durationLabel: string
   heroImageUrl: string | null
-  galleryUrls: string[]
   priceFromUsd: number
 }
 
@@ -242,7 +241,7 @@ export async function getHomepageData(): Promise<{
   const [toursRes, settingsRes, guideRes] = await Promise.all([
     supabase
       .from("tours")
-      .select("slug, title, short_description, duration_label, hero_image_url, gallery_urls, sort_order, pricing_tiers(price_adult_usd)")
+      .select("slug, title, short_description, duration_label, hero_image_url, sort_order, pricing_tiers(price_adult_usd)")
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
     supabase.from("settings").select("key, value"),
@@ -272,7 +271,6 @@ export async function getHomepageData(): Promise<{
       shortDescription: shortDescription.ru,
       durationLabel: durationLabel.ru,
       heroImageUrl: row.hero_image_url,
-      galleryUrls: row.gallery_urls ?? [],
       priceFromUsd: Math.min(...prices),
     }
   })
