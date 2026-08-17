@@ -232,11 +232,11 @@ function IntroSlide() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <PhotoCollage />
-      <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto pl-7 pr-5 py-2 text-center sm:pl-12 sm:pr-10 sm:py-4">
+      <div className="flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pt-5 pb-6 text-center sm:pl-12 sm:pr-10 sm:pt-7">
         <h1 className="max-w-xl font-heading text-2xl leading-[1.1] font-semibold sm:text-5xl">
           Вьетнам без чужих
         </h1>
-        <p className="mt-2 max-w-xl text-sm leading-snug text-muted-foreground sm:mt-3 sm:leading-relaxed sm:text-base">
+        <p className="mt-2 max-w-xl text-sm leading-snug text-muted-foreground sm:leading-relaxed sm:text-base">
           Мы — лучшие в приватных турах по Вьетнаму. Проверенные маршруты, надёжный транспорт и
           гид, который отвечает за вашу безопасность на каждом шаге — здесь всё настроено на вашу
           волну, и ничего не оставлено на волю случая.
