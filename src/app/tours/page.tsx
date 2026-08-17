@@ -6,21 +6,8 @@ export const metadata: Metadata = {
   title: "Туры — ВикТур",
 }
 
-export default async function ToursPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string; favorites?: string }>
-}) {
+export default async function ToursPage() {
   const { tours, settings, guide } = await getHomepageData()
-  const { q, favorites } = await searchParams
 
-  return (
-    <ToursPageClient
-      tours={tours}
-      settings={settings}
-      guide={guide}
-      initialQuery={q ?? ""}
-      initialFavoritesOnly={favorites === "1"}
-    />
-  )
+  return <ToursPageClient tours={tours} settings={settings} guide={guide} />
 }

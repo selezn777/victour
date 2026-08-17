@@ -57,7 +57,14 @@ export function TourCard({
             ))}
           </Swiper>
         )}
-        <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/95 via-black/20 to-transparent" />
+        {/* На весь экран (fill) — затемнение мягче: Виктор попросил убрать
+            почти совсем, но оставить чуть-чуть для контраста текста. */}
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-0 z-10 bg-gradient-to-t to-transparent",
+            fill ? "from-black/70 via-black/5" : "from-black/95 via-black/20",
+          )}
+        />
 
         {photos.length > 1 && (
           // top-right, под кнопкой избранного (не top-left — там, когда карточка
