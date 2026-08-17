@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { TourHeader } from "@/components/tour/tour-header"
 import { TourHero } from "@/components/tour/tour-hero"
+import { TourPhotoGallery } from "@/components/tour/tour-photo-gallery"
 import { TourItinerary } from "@/components/tour/tour-itinerary"
 import { TourIncludesExcludes } from "@/components/tour/tour-includes-excludes"
 import { TourPriceTable } from "@/components/tour/tour-price-table"
@@ -53,14 +54,16 @@ export function TourPageClient({
       <main className="flex-1">
         <TourHero tour={tour} />
 
-        {/* Виктор задал строгий порядок чтения: маршрут → что входит → цена
-            (с выбором гостей) → бронь (дата, сразу тут же) → отзывы → вопросы.
-            Раньше бронь была отдельной sticky-колонкой справа на десктопе —
-            теперь она встроена в общий поток на своём месте, одна колонка на
-            всех размерах экрана. */}
+        {/* Виктор задал строгий порядок чтения: маршрут → что входит → фото
+            → цена (с выбором гостей) → бронь (дата, сразу тут же) → отзывы
+            → вопросы. Раньше бронь была отдельной sticky-колонкой справа на
+            десктопе — теперь она встроена в общий поток на своём месте,
+            одна колонка на всех размерах экрана. Фото-карусель раньше стояла
+            наверху страницы — перенесена сюда, после "Что входит". */}
         <div className="mx-auto flex max-w-3xl flex-col gap-10 px-4 py-10 sm:px-6 sm:py-14">
           <TourItinerary itinerary={tour.itinerary} isTwoDay={tour.isDalatTwoDay} />
           <TourIncludesExcludes includes={tour.includes} excludes={tour.excludes} />
+          <TourPhotoGallery tour={tour} />
           <TourPriceTable
             tiers={tour.pricingTiers}
             selectedGuestCount={guestCount}
