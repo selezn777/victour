@@ -29,13 +29,15 @@ export function TourCatalog({
   favoritesCount: number
 }) {
   return (
-    <section id="catalog" className="mx-auto max-w-6xl px-4 pt-6 pb-10 sm:px-6 sm:pt-8 sm:pb-14">
-      <h2 className="font-heading text-xl font-semibold sm:text-2xl">Наши туры</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Пять авторских программ. Дата и гид — на странице каждого тура.
-      </p>
-
-      <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
+    <section id="catalog" className="mx-auto max-w-6xl px-4 sm:px-6">
+      {/* Заголовок "Наши туры" и подпись убраны — Виктор попросил открыть
+          максимум места под саму карточку тура ("прям как в каталоге в
+          журнале"), а не под текст сверху. Осталась только компактная
+          строка поиска/избранного, той же высоты, что и хедер SiteHeader
+          (h-16/sm:h-20) — симметрично, и высота деки под ней считается
+          точной формулой (100svh минус хедер минус эта строка), а не
+          приблизительной svh-долей, как раньше. */}
+      <div className="flex h-16 items-center gap-2 sm:h-20 sm:gap-4">
         <div className="relative flex-1 sm:max-w-xs">
           <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -52,7 +54,7 @@ export function TourCatalog({
           size="sm"
           aria-pressed={favoritesOnly}
           onClick={onToggleFavoritesOnly}
-          className="w-fit gap-1.5"
+          className="w-fit shrink-0 gap-1.5"
         >
           <HeartIcon className={cn("size-3.5", favoritesOnly && "fill-current")} />
           Избранное
@@ -65,18 +67,15 @@ export function TourCatalog({
       </div>
 
       {tours.length === 0 ? (
-        <p className="mt-10 text-sm text-muted-foreground">{emptyMessage}</p>
+        <p className="pb-10 text-sm text-muted-foreground">{emptyMessage}</p>
       ) : (
-        // Виктор попросил ту же поэтапную "блоковую" пролистку, что на
-        // главной (переплёт слева, ровно один блок за раз, без обычного
-        // скролла) — вместо сетки карточек здесь одна карточка на весь
-        // блок, свайп/колесо переключает на следующий тур. Высота
-        // фиксированная (не formula "вся высота вьюпорта минус хедер" —
-        // дека здесь встроена НЕ первым блоком под хедером, а ниже
-        // заголовка и поиска).
-        <div className="mt-6 mx-auto w-full max-w-sm sm:max-w-md">
+        // Поэтапная "блоковая" пролистка, как на главной (переплёт слева,
+        // ровно один блок за раз, без обычного скролла) — одна карточка на
+        // весь экран (минус хедер и строка поиска сверху), свайп/колесо
+        // переключает на следующий тур.
+        <div className="mx-auto w-full max-w-sm sm:max-w-md">
           <SlideDeck
-            className="h-[72svh] min-h-[420px] w-full sm:h-[76svh]"
+            className="h-[calc(100svh-8rem)] w-full sm:h-[calc(100svh-10rem)]"
             slides={tours.map((tour) => (
               <TourCard
                 key={tour.slug}

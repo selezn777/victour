@@ -67,12 +67,28 @@ export function TourCard({
           </div>
         )}
 
-        <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col gap-2 px-5 pt-5 pb-6 text-white">
+        <div
+          className={cn(
+            "absolute inset-x-0 bottom-0 z-10 flex flex-col gap-2 px-5 pt-5 text-white",
+            fill ? "pb-8" : "pb-6",
+          )}
+        >
           <span className="text-xs tracking-wide text-white/70 uppercase">
             {tour.durationLabel}
           </span>
-          <h3 className="font-heading text-2xl leading-tight font-semibold">{tour.title}</h3>
-          <p className="line-clamp-2 text-sm text-white/80">{tour.shortDescription}</p>
+          <h3
+            className={cn(
+              "font-heading leading-tight font-semibold",
+              fill ? "text-3xl" : "text-2xl",
+            )}
+          >
+            {tour.title}
+          </h3>
+          {/* На весь экран (fill) — без обрезки, Виктор хотел видеть описание
+              полностью, не line-clamp-2 как в компактной сетке. */}
+          <p className={cn("text-white/80", fill ? "text-base" : "line-clamp-2 text-sm")}>
+            {tour.shortDescription}
+          </p>
 
           <div className="mt-2 flex items-center justify-between border-t border-white/15 pt-3">
             <span className="text-base font-medium text-primary">
