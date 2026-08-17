@@ -232,7 +232,7 @@ function IntroSlide() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <PhotoCollage />
-      <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto pl-7 pr-5 py-2 text-center sm:pl-12 sm:pr-10 sm:py-4">
+      <div className="flex flex-1 flex-col items-center overflow-y-auto pl-7 pr-5 pt-3 pb-2 text-center sm:pl-12 sm:pr-10 sm:pt-4 sm:pb-4">
         <h1 className="max-w-xl font-heading text-2xl leading-[1.1] font-semibold sm:text-5xl">
           Вьетнам без чужих
         </h1>
