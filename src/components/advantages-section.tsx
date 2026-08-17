@@ -347,7 +347,7 @@ const CATALOG_TOURS = [
   },
   {
     slug: "dalat-2-dnya",
-    title: "Далат — 2 дня",
+    title: "Далат, 2 дня",
     imageSrc: "/images/tours/dalat-2-dnya.jpg",
     annotation:
       "Не однодневный марш-бросок в горы: два спокойных дня, а вечер в городе — под присмотром, не самостоятельная прогулка.",
