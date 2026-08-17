@@ -171,6 +171,21 @@
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
 }
 
+/* Горизонтальный вариант (переключение вбок, например /tours) — та же
+   плоская чёрточка-эстетика, но без вертикальной линии-стежка (она
+   рассчитана на вертикальный ряд) и с ростом ширины у активной точки. */
+.slide-deck-pagination.pagination-flat-h::before {
+  display: none;
+}
+.slide-deck-pagination.pagination-flat-h .swiper-pagination-bullet {
+  width: 9px;
+  height: 3px;
+}
+.slide-deck-pagination.pagination-flat-h .swiper-pagination-bullet-active {
+  width: 18px;
+  height: 3px;
+}
+
 .tour-hero-pagination .swiper-pagination-bullet {
   width: 5px;
   height: 5px;

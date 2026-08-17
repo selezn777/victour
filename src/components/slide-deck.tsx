@@ -25,7 +25,10 @@ const PAGINATION_DOTS_CLASS = {
   // Swiper сам добавляет класс swiper-pagination-horizontal, у которого в
   // его собственном CSS зашита ширина 100% — без !w-fit ряд точек
   // растягивался на всю ширину экрана вместо компактной кучки по центру.
-  "bottom-center": "flex! w-fit! flex-row items-center gap-2",
+  // pagination-flat-h — та же плоская чёрточка-эстетика, что и у "переплёта"
+  // слева, но без вертикальной линии-стежка (она осмысленна только вдоль
+  // вертикального ряда) и с ростом ШИРИНЫ у активной точки, а не высоты.
+  "bottom-center": "flex! w-fit! flex-row items-center gap-2 pagination-flat-h",
 }
 
 export function SlideDeck({
