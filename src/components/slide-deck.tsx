@@ -44,10 +44,11 @@ export function SlideDeck({
   className?: string
   /** По умолчанию вертикальная (как на главной). */
   direction?: "vertical" | "horizontal"
-  /** По умолчанию "переплёт" сверху слева (книжный стиль, как на главной).
-   * "bottom-center" — горизонтальный ряд точек снизу по центру, для
-   * горизонтальной деки (переключение вбок). */
-  paginationPosition?: "top-left" | "bottom-center"
+  /** "bottom-center" — горизонтальный ряд точек снизу по центру, для
+   * горизонтальной деки (переключение вбок). "none" — без индикатора вообще
+   * (Виктор попросил убрать "переплёт" на главной — он визуально сдвигал
+   * контент влево, раз он был только слева, а не с обеих сторон). */
+  paginationPosition?: "top-left" | "bottom-center" | "none"
 }) {
   return (
     <Swiper
@@ -56,7 +57,7 @@ export function SlideDeck({
       speed={420}
       mousewheel={{ releaseOnEdges: true, sensitivity: 1 }}
       keyboard={{ enabled: true }}
-      pagination={{ clickable: true, el: ".slide-deck-pagination" }}
+      pagination={paginationPosition === "none" ? false : { clickable: true, el: ".slide-deck-pagination" }}
       // У горизонтальной деки Swiper по умолчанию ставит touch-action: pan-y
       // (пропускает вертикальный тач-жест браузеру) — вертикальный свайп по
       // /tours не листал слайды, а скроллил страницу и схлопывал адресную
@@ -69,9 +70,11 @@ export function SlideDeck({
           {slide}
         </SwiperSlide>
       ))}
-      <div className={PAGINATION_WRAPPER_CLASS[paginationPosition]}>
-        <div className={`slide-deck-pagination pointer-events-auto ${PAGINATION_DOTS_CLASS[paginationPosition]}`} />
-      </div>
+      {paginationPosition !== "none" && (
+        <div className={PAGINATION_WRAPPER_CLASS[paginationPosition]}>
+          <div className={`slide-deck-pagination pointer-events-auto ${PAGINATION_DOTS_CLASS[paginationPosition]}`} />
+        </div>
+      )}
     </Swiper>
   )
 }
