@@ -459,18 +459,56 @@ function ValuesSlide({
         <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {title}
         </h2>
-        <div className="mt-6 w-full max-w-md space-y-5 text-left">
-          {points.map((point, i) => (
-            <div key={point.title} className="flex items-start gap-3">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 font-heading text-sm font-semibold text-primary">
-                {i + 1}
-              </span>
-              <div>
-                <h3 className="font-heading text-base font-semibold sm:text-lg">{point.title}</h3>
-                <p className="mt-0.5 text-sm text-muted-foreground sm:text-base">{point.body}</p>
+        <div className="relative mt-6 w-full max-w-md">
+          {/* Слайд без фото — Виктор попросил "искру", бегущую по фону сверху
+              вниз от цифры к цифре, не перекрывая текст: слегка светящаяся
+              точка идёт по волнистой дорожке, прижатой к колонке цифр (x
+              внутри viewBox держится левее того места, где начинается
+              текст), и никогда не заходит в зону заголовков/описаний. Один
+              SVG на весь список тезисов — не на каждый пункт отдельно,
+              путь просто проходит мимо всех трёх подряд. */}
+          <svg
+            aria-hidden
+            viewBox="0 0 100 260"
+            preserveAspectRatio="none"
+            className="pointer-events-none absolute inset-0 z-0 h-full w-full text-primary"
+          >
+            <defs>
+              <filter id="values-spark-glow" x="-300%" y="-300%" width="700%" height="700%">
+                <feGaussianBlur stdDeviation="2.5" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+            <path
+              id="values-spark-path"
+              d="M4 0 C 8 20, 0 35, 4 55 S 8 85, 3 105 S -1 130, 5 155 S 8 180, 3 205 S -1 230, 4 255"
+              fill="none"
+              stroke="currentColor"
+              strokeOpacity="0.16"
+              strokeWidth="1.5"
+            />
+            <circle r="3" fill="currentColor" filter="url(#values-spark-glow)">
+              <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
+                <mpath href="#values-spark-path" />
+              </animateMotion>
+            </circle>
+          </svg>
+          <div className="relative z-10 space-y-5 text-left">
+            {points.map((point, i) => (
+              <div key={point.title} className="flex items-start gap-3">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 font-heading text-sm font-semibold text-primary">
+                  {i + 1}
+                </span>
+                <div>
+                  <h3 className="font-heading text-base font-semibold sm:text-lg">{point.title}</h3>
+                  <p className="mt-0.5 text-sm text-muted-foreground sm:text-base">{point.body}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
         <TourCtaButton />
       </div>
