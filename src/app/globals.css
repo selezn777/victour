@@ -246,6 +246,27 @@
   z-index: 5;
 }
 
+/* Тот же приём "моргания" (яркость), что у .tile-priming, но без scale —
+   для подписи под карточкой тура (TourSelector): текст не должен визуально
+   "прыгать" вместе с картинкой, только чуть притухать/разгораться. */
+@keyframes caption-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  20%,
+  60% {
+    opacity: 0.5;
+  }
+  40%,
+  80% {
+    opacity: 1;
+  }
+}
+.caption-blinking {
+  animation: caption-blink 0.9s ease-in-out 1;
+}
+
 .phone-input {
   height: 2.75rem;
   width: 100%;

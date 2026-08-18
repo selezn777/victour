@@ -528,11 +528,71 @@ const STAGGER = ["", "mt-2.5", "mt-4", "mt-2.5", ""]
  * текст, без ограничения по высоте. Коннектор — тонкая линия с точкой
  * (не иконка-стрелка, которую Виктор посчитал слишком прямолинейной).
  */
+// Пауза/длительность "моргания" одной карточки — то же 0.9s, что и у
+// tile-prime-blink в globals.css (анимации CSS с фиксированной длительностью,
+// таймеры здесь просто должны с ними совпадать).
+const TOUR_BLINK_MS = 900
+const TOUR_BLINK_GAP_MS = 650
+
 function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
   const [active, setActive] = useState<number | null>(null)
+  // По одной карточке за раз "моргает" — по кругу, в случайном порядке
+  // (Виктор: "по очереди рандомно, чуть-чуть, как будто моргает"), без
+  // всплывающих подписей — только яркость картинки (см. .tile-priming) и
+  // прозрачность заголовка (см. .caption-blinking) на СУЩЕСТВУЮЩЕМ тексте.
+  // Стартует, когда блок реально попал в зону видимости (слайды в SlideDeck
+  // смонтированы все сразу — см. аналогичный приём в PhotoStack).
+  const [blinking, setBlinking] = useState<number | null>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const startedRef = useRef(false)
+
+  useEffect(() => {
+    const el = rootRef.current
+    if (!el) return
+    let cancelled = false
+    const timers: ReturnType<typeof setTimeout>[] = []
+    const after = (fn: () => void, ms: number) => {
+      timers.push(setTimeout(fn, ms))
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || startedRef.current) return
+        startedRef.current = true
+        let order = shuffledIndices(tours.length)
+        let step = 0
+        const runCycle = () => {
+          if (cancelled) return
+          if (step >= order.length) {
+            order = shuffledIndices(tours.length)
+            step = 0
+          }
+          const idx = order[step]
+          step += 1
+          setBlinking(idx)
+          after(() => {
+            if (cancelled) return
+            setBlinking(null)
+            after(runCycle, TOUR_BLINK_GAP_MS)
+          }, TOUR_BLINK_MS)
+        }
+        after(runCycle, 500)
+      },
+      { threshold: 0.4 },
+    )
+    observer.observe(el)
+    return () => {
+      cancelled = true
+      observer.disconnect()
+      timers.forEach(clearTimeout)
+    }
+  }, [tours.length])
 
   return (
-    <div className="mt-2 flex w-full max-w-3xl items-start gap-1 sm:mt-4 sm:max-w-4xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl">
+    <div
+      ref={rootRef}
+      className="mt-2 flex w-full max-w-3xl items-start gap-1 sm:mt-4 sm:max-w-4xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl"
+    >
       {tours.map((tour, i) => (
         <div key={tour.slug} className={`flex flex-1 flex-col items-center ${STAGGER[i % STAGGER.length]}`}>
           <Link
@@ -543,18 +603,24 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
               i === active ? "shadow-[0_10px_28px_-6px_rgba(0,0,0,0.55)]" : ""
             }`}
           >
-            <Image
-              src={tour.imageSrc}
-              alt={tour.title}
-              fill
-              sizes="(min-width: 1024px) 700px, (min-width: 640px) 400px, 60vw"
-              className="object-cover brightness-100"
-            />
+            <div className={`absolute inset-0 ${i === blinking ? "tile-priming" : ""}`}>
+              <Image
+                src={tour.imageSrc}
+                alt={tour.title}
+                fill
+                sizes="(min-width: 1024px) 700px, (min-width: 640px) 400px, 60vw"
+                className="object-cover brightness-100"
+              />
+            </div>
           </Link>
           <div className="relative mt-1.5 h-3 w-px shrink-0 bg-primary/40">
             <span className="absolute -bottom-px left-1/2 size-1.5 -translate-x-1/2 rounded-full bg-primary/70" />
           </div>
-          <span className="mt-1 text-center font-heading text-[10px] leading-tight font-semibold text-foreground sm:text-xs">
+          <span
+            className={`mt-1 text-center font-heading text-[10px] leading-tight font-semibold text-foreground sm:text-xs ${
+              i === blinking ? "caption-blinking" : ""
+            }`}
+          >
             {tour.title}
           </span>
         </div>
