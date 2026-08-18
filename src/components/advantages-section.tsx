@@ -329,6 +329,7 @@ function IntroSlide() {
 
 function PhotoSlide({
   title,
+  accent,
   body,
   imageSrc,
   imageAlt,
@@ -336,6 +337,9 @@ function PhotoSlide({
   stackImages,
 }: {
   title: string
+  /** Короткая акцентная строка между заголовком и описанием — тот же приём,
+   * что на первом слайде (IntroSlide). */
+  accent?: string
   body: string
   imageSrc: string
   imageAlt: string
@@ -369,7 +373,14 @@ function PhotoSlide({
         <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {title}
         </h2>
-        <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">{body}</p>
+        {accent && (
+          <p className="mt-2 max-w-md text-base leading-snug font-medium text-foreground sm:mt-3 sm:max-w-xl sm:text-xl">
+            {accent}
+          </p>
+        )}
+        <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground sm:max-w-xl sm:text-base">
+          {body}
+        </p>
         <TourCtaButton />
       </div>
     </div>
@@ -505,10 +516,12 @@ function ToursSlide() {
           Ровно пять маршрутов — и ни одного лишнего
         </h2>
         <TourSelector tours={CATALOG_TOURS} />
-        <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-          Не каталог на любой вкус, а отбор самых безопасных и проверенных программ. Никаких
-          однодневных марш-бросков и вечеров, когда гости бродят по незнакомому городу сами по
-          себе — каждый маршрут выстроен так, чтобы риск был минимальным.
+        <p className="mt-4 max-w-md text-base leading-snug font-medium text-foreground sm:max-w-xl sm:text-xl">
+          Отбор — а не каталог на любой вкус.
+        </p>
+        <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground sm:max-w-xl sm:text-base">
+          Никаких однодневных марш-бросков и вечеров, когда гости бродят по незнакомому городу сами
+          по себе — каждый маршрут обкатан лично.
         </p>
         <TourCtaButton />
       </div>
@@ -679,7 +692,8 @@ export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
         <PhotoSlide
           key="transport"
           title="Забудьте, каким должен быть трансфер в отпуске"
-          body="Кожаные кресла с массажем и кондиционер, который реально спасает от вьетнамской жары, а не просто гудит для вида. За рулём — один и тот же проверенный водитель, которого лично знает Виктор, а не случайный человек с трассы. Наши гости выходят из машины будто их только что подвезли до дома, а не через три часа тряски."
+          accent="Гости выходят из машины так, будто их подвезли до дома, а не трясли три часа."
+          body="Кожаные кресла с массажем, кондиционер, который реально спасает от жары, и за рулём — один и тот же проверенный водитель, которого лично знает Виктор, а не случайный человек с трассы."
           imageSrc="/images/hero/premium-van-interior.jpg"
           imageAlt="Салон премиального минивэна с кожаными креслами"
           imagePosition="30% 50%"
