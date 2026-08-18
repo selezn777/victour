@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { SlideDeck } from "@/components/slide-deck"
 import { PhotoStack } from "@/components/photo-stack"
 import type { Review } from "@/lib/reviews-data"
@@ -131,7 +131,21 @@ function preloadImage(src: string) {
 // (Виктор: "2 фото, 2 разных фото должны открываться, или 3" — раскрытий
 // одновременно должно быть несколько на широком экране, как было раньше, но
 // теперь блик и большое раскрытие всегда в одной и той же области, не вразнобой).
-function useRevealCycle(bandIndex: number) {
+//
+// getOrigin(idx) — точка роста считается ИЗМЕРЕНИЕМ реального DOM (см.
+// makeGetOrigin в PhotoCollage), а не арифметикой по cols/rows. Раньше origin
+// вычислялся ЧИСТО в цифрах (idx % cols, bandColumnRange...), в предположении,
+// что эти числа всегда совпадают с тем, что реально отрисовал CSS grid —
+// именно это и было источником "открывается не та плитка": оба места (Tailwind
+// grid-cols-* и JS-константы gridColsForWidth/bandColumnRange) приходилось
+// вручную держать в синхроне (см. комментарий у BAND_LAYOUT), и любое малейшее
+// расхождение (например, между JS-снятым window.innerWidth в момент выбора
+// плитки и тем, что браузер реально отрендерил через media query) сдвигало
+// точку раскрытия на соседнюю плитку/колонку. Измерение через
+// getBoundingClientRect устраняет этот класс багов в принципе — раскрытие
+// физически не может разъехаться с плиткой, потому что берёт координаты
+// напрямую из уже отрисованного макета.
+function useRevealCycle(bandIndex: number, getOrigin: (idx: number) => string) {
   const [phase, setPhase] = useState<Phase>("idle")
   const [target, setTarget] = useState(0)
   const [origin, setOrigin] = useState("50% 50%")
@@ -161,7 +175,7 @@ function useRevealCycle(bandIndex: number) {
         const col = i % cols
         return col >= start && col < end
       })
-      return { pool, cols, rows, start, end }
+      return { pool }
     }
 
     const runCycle = () => {
@@ -177,15 +191,8 @@ function useRevealCycle(bandIndex: number) {
       }
       const idx = order[step]
       step += 1
-      // Точка, откуда визуально "вырастает" полоса раскрытия — позиция плитки
-      // внутри СВОЕЙ полосы (не всей сетки), в процентах, чисто арифметикой.
-      const col = idx % ctx.cols
-      const row = Math.floor(idx / ctx.cols)
-      const bandCols = ctx.end - ctx.start
-      const originX = ((col - ctx.start + 0.5) / bandCols) * 100
-      const originY = ((row + 0.5) / ctx.rows) * 100
       setTarget(idx)
-      setOrigin(`${originX}% ${originY}%`)
+      setOrigin(getOrigin(idx))
       setPhase("priming")
       Promise.all([preloadImage(COLLAGE_PHOTOS[idx]), wait(PRIME_MS)]).then(() => {
         if (cancelled) return
@@ -207,17 +214,52 @@ function useRevealCycle(bandIndex: number) {
       cancelled = true
       timers.forEach(clearTimeout)
     }
-  }, [bandIndex])
+  }, [bandIndex, getOrigin])
 
   return { phase, target, origin }
 }
 
 function PhotoCollage() {
+  // Реальные DOM-узлы плиток и полос — источник истины для origin (см.
+  // makeGetOrigin ниже). tileRefs держит саму map между рендерами (не влияет на
+  // рендер сам по себе, поэтому обычный useRef, а не state).
+  const tileRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+  const bandRefs = [
+    useRef<HTMLDivElement>(null),
+    useRef<HTMLDivElement>(null),
+    useRef<HTMLDivElement>(null),
+  ]
+
+  // Координаты точки роста — измерением реального расположения плитки
+  // относительно её полосы (getBoundingClientRect), а не арифметикой по
+  // cols/rows/брейкпоинтам. Пустые deps: функция читает .current в момент
+  // вызова, ей нечему устаревать — но её identity ОБЯЗАНА быть стабильной
+  // между рендерами, иначе useEffect в useRevealCycle (у него getOrigin в
+  // deps) перезапускался бы на каждый ре-рендер и сбрасывал весь цикл.
+  const measureOrigin = useCallback((bandIndex: number, idx: number) => {
+    const tile = tileRefs.current.get(idx)
+    const band = bandRefs[bandIndex].current
+    if (!tile || !band) return "50% 50%"
+    const tileRect = tile.getBoundingClientRect()
+    const bandRect = band.getBoundingClientRect()
+    const originX = ((tileRect.left + tileRect.width / 2 - bandRect.left) / bandRect.width) * 100
+    const originY = ((tileRect.top + tileRect.height / 2 - bandRect.top) / bandRect.height) * 100
+    return `${originX}% ${originY}%`
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bandRefs — массив useRef, стабилен между рендерами
+  }, [])
+  const getOrigin0 = useCallback((idx: number) => measureOrigin(0, idx), [measureOrigin])
+  const getOrigin1 = useCallback((idx: number) => measureOrigin(1, idx), [measureOrigin])
+  const getOrigin2 = useCallback((idx: number) => measureOrigin(2, idx), [measureOrigin])
+
   // Три параллельных цикла (по числу полос на самом широком брейкпоинте — lg),
   // каждый на своём брейкпоинте либо активен (своя полоса колонок), либо просто
   // ждёт (bandIndex >= bandCountForWidth). Хуков всегда ровно 3 — иначе нарушится
   // React Rules of Hooks при смене ширины окна.
-  const reveals = [useRevealCycle(0), useRevealCycle(1), useRevealCycle(2)]
+  const reveals = [
+    useRevealCycle(0, getOrigin0),
+    useRevealCycle(1, getOrigin1),
+    useRevealCycle(2, getOrigin2),
+  ]
   const activeByTile = new Map(reveals.filter((r) => r.phase !== "idle").map((r) => [r.target, r]))
 
   return (
@@ -232,6 +274,10 @@ function PhotoCollage() {
           return (
             <div
               key={src}
+              ref={(el) => {
+                if (el) tileRefs.current.set(i, el)
+                else tileRefs.current.delete(i)
+              }}
               className={`relative aspect-square overflow-hidden ${tileVisibilityClass(i)} ${
                 isPriming ? "tile-priming" : ""
               }`}
@@ -274,7 +320,7 @@ function PhotoCollage() {
         const open = reveal.phase === "open"
         const rendered = open || reveal.phase === "closing"
         return (
-          <div key={b} className={BAND_LAYOUT[b]}>
+          <div key={b} ref={bandRefs[b]} className={BAND_LAYOUT[b]}>
             <div
               className="absolute inset-0"
               style={{
