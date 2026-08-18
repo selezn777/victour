@@ -12,17 +12,19 @@ const STACK_TRANSFORM = [
   "translate(0px, 0px) rotate(0deg) scale(1)",
   "translate(30px, 14px) rotate(-7deg) scale(0.95)",
   "translate(-28px, 26px) rotate(8deg) scale(0.9)",
+  "translate(4px, -24px) rotate(-3deg) scale(0.86)",
 ]
 
 // Задержка между "падениями" фото при появлении — должна быть заметной
 // (Виктор: "эффект от падения я так и не увидел" — раньше было 280мс).
-const DROP_STAGGER_MS = 1200
-const DROP_INITIAL_DELAY_MS = 400
+// Все интервалы этого файла ускорены на 10% (Виктор попросил чуть быстрее).
+const DROP_STAGGER_MS = 1080
+const DROP_INITIAL_DELAY_MS = 360
 
 // Автопереключение вместо тапа — Виктор решил, что гости всё равно не будут
 // тыкать по фото, пусть стопка сама листает себя с тем же ритмом, как будто
 // кто-то по ней тапает.
-const AUTO_SHUFFLE_MS = 3200
+const AUTO_SHUFFLE_MS = 2880
 
 /**
  * Стопка фото "как будто уронили друг на друга" — при появлении фото падают
@@ -82,7 +84,7 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
     setTimeout(() => {
       setPositions((prev) => prev.map((pos) => (pos + 1) % photos.length))
       setLifted(false)
-    }, 200)
+    }, 180)
   }
 
   // Всегда актуальная ссылка на shuffle для таймера ниже — обычный setInterval
@@ -114,7 +116,7 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
             zIndex: photos.length - positions[i],
             opacity: entered[i] ? 1 : 0,
             transitionProperty: "transform, opacity",
-            transitionDuration: lifted ? "200ms" : "750ms",
+            transitionDuration: lifted ? "180ms" : "675ms",
             transitionTimingFunction: lifted ? "ease-out" : "cubic-bezier(0.34, 1.56, 0.64, 1)",
             transform: entered[i]
               ? `${STACK_TRANSFORM[positions[i]]}${lifted ? " translateY(-26px) scale(1.02)" : ""}`

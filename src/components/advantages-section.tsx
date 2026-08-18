@@ -738,6 +738,7 @@ export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
             "/images/hero/premium-van-interior-2.jpg",
             "/images/hero/premium-van-exterior.jpg",
             "/images/hero/premium-van-interior-3.jpg",
+            "/images/hero/premium-van-interior-4.jpg",
           ]}
         />,
         <ToursSlide key="tours" />,
