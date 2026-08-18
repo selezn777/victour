@@ -104,10 +104,10 @@ const BAND_SIZES = [
   "34vw",
 ]
 
-// "closing" — отдельная фаза между open и idle: масштаб уже вернулся к 1, но
-// z-index/overflow-visible ещё держатся TRANSITION_MS, пока идёт CSS-переход
-// "стягивания обратно" — иначе тайл мгновенно обрезался бы своим overflow-hidden
-// в момент переключения фазы, ещё не успев визуально сжаться.
+// "closing" — отдельная фаза между open и idle: ровно TRANSITION_MS, за
+// которые полоса раскрытия (см. PhotoCollage) визуально стягивается обратно
+// к точке блика, прежде чем цикл продолжится дальше и переиспользует этот
+// же узел под следующую плитку.
 type Phase = "idle" | "priming" | "open" | "closing"
 
 // Полноразмерный вариант (sizes=100vw) — это ДРУГОЙ файл/URL у Next/Image, чем маленькая
@@ -212,12 +212,6 @@ function useRevealCycle(bandIndex: number) {
   return { phase, target, origin }
 }
 
-// Насколько раскрытая плитка "вырастает" от своей же позиции в сетке — transform
-// не участвует в layout, так что соседние плитки не сдвигаются, а увеличенная
-// просто перекрывает их визуально (z-index). Это и даёт эффект "вытягивается
-// изнутри на месте / стягивается обратно туда же", без расчёта координат в JS.
-const REVEAL_SCALE = 2.6
-
 function PhotoCollage() {
   // Три параллельных цикла (по числу полос на самом широком брейкпоинте — lg),
   // каждый на своём брейкпоинте либо активен (своя полоса колонок), либо просто
@@ -228,50 +222,28 @@ function PhotoCollage() {
 
   return (
     // База (< sm) — без ограничения высоты, ряды сетки всегда полные (см.
-    // tileVisibilityClass), overflow-hidden всё равно нужен теперь всегда (не
-    // только с sm) — иначе выросшая крайняя плитка вылезала бы за пределы блока.
-    // С sm и выше высота дополнительно ограничена явно (% от высоты слайда) —
-    // на широком экране та же формула строк даёт сетку выше, чем есть места под
-    // заголовок, overflow-hidden подчищает то, что не влезло.
+    // tileVisibilityClass). С sm и выше высота дополнительно ограничена явно
+    // (% от высоты слайда) — на широком экране та же формула строк даёт сетку
+    // выше, чем есть места под заголовок, overflow-hidden подчищает лишнее.
     <div className="relative w-full shrink-0 overflow-hidden sm:h-[38svh] lg:h-[32svh]">
       <div className="grid w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
         {COLLAGE_PHOTOS.map((src, i) => {
-          const active = activeByTile.get(i)
-          const isPriming = active?.phase === "priming"
-          const isScaled = active?.phase === "open"
-          // held elevated through "closing" too, so the shrink-back transition
-          // is not clipped by the tile's own overflow-hidden mid-animation.
-          const isElevated = active?.phase === "open" || active?.phase === "closing"
+          const isPriming = activeByTile.get(i)?.phase === "priming"
           return (
             <div
               key={src}
-              className={`relative aspect-square ${tileVisibilityClass(i)} ${isPriming ? "tile-priming" : ""} ${
-                isElevated ? "z-10 overflow-visible" : "overflow-hidden"
+              className={`relative aspect-square overflow-hidden ${tileVisibilityClass(i)} ${
+                isPriming ? "tile-priming" : ""
               }`}
             >
-              <div
-                className="absolute inset-0 overflow-hidden transition-transform ease-out"
-                style={{
-                  transitionDuration: `${TRANSITION_MS}ms`,
-                  transform: isScaled ? `scale(${REVEAL_SCALE})` : "scale(1)",
-                  boxShadow: isElevated ? "0 20px 45px -12px rgba(0,0,0,0.55)" : undefined,
-                }}
-              >
-                <Image
-                  src={src}
-                  alt=""
-                  fill
-                  priority={i < 16}
-                  sizes="(min-width: 1024px) 8vw, (min-width: 640px) 11vw, 12.5vw"
-                  className="object-cover"
-                />
-                {isElevated && (
-                  <div
-                    className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent transition-opacity ease-out"
-                    style={{ transitionDuration: `${TRANSITION_MS}ms`, opacity: isScaled ? 1 : 0 }}
-                  />
-                )}
-              </div>
+              <Image
+                src={src}
+                alt=""
+                fill
+                priority={i < 16}
+                sizes="(min-width: 1024px) 8vw, (min-width: 640px) 11vw, 12.5vw"
+                className="object-cover"
+              />
             </div>
           )
         })}
@@ -280,30 +252,39 @@ function PhotoCollage() {
           блока") — своя полоса колонок на каждый цикл (BAND_LAYOUT), фото внутри
           неё растёт от той же точки, где моргнула плитка (см. origin), пока не
           займёт всю полосу целиком, и так же стягивается обратно.
-          visible строго === "open" (не включает "closing"!) — раньше включало
-          и "closing", из-за чего полоса стояла полностью раскрытой всю фазу
-          closing и начинала стягиваться только когда phase уже стал "idle". Но
-          именно в этот момент следующий цикл (после GAP_MS, который короче
-          TRANSITION_MS) успевал переиспользовать этот же DOM-узел под НОВую
-          плитку раньше, чем старое стягивание визуально завершалось — картинка
-          прямо посреди ещё видимого сжатия резко подменялась на другую (баг,
-          который Виктор описал как "открывается не та" / "видно переход").
-          Стягивание теперь стартует синхронно с самой плиткой (см. isScaled
-          ниже) и всегда успевает закончиться ДО idle. */}
+
+          Раньше плитка САМА тоже увеличивалась (scale до 2.6x на своём месте в
+          сетке) ОДНОВРЕМЕННО с этой полосой — два независимых слоя с разными
+          конечными размерами росли на одной и той же фотографии, и наложение
+          двух несинхронных по итоговому размеру анимаций читалось как "рывок,
+          картинка вдруг становится другой" (то, что Виктор описал даже когда
+          фото было одно и то же). Плитка больше не растёт — весь рост теперь
+          только в этом единственном слое (band), не с чем конфликтовать.
+
+          opacity переключается МГНОВЕННО (не входит в transitionProperty) —
+          только transform (scale) анимируется плавно все TRANSITION_MS и на
+          открытии, и на закрытии. rendered держит слой видимым (opacity:1) всю
+          фазу "closing", пока transform идёт от scale(1) обратно к малому —
+          иначе стягивание было бы не видно (пропадало бы вместе с opacity).
+          open переключает саму цель transform ровно на границе open→closing —
+          синхронно с моментом, когда полоса должна начать именно стягиваться
+          (не раньше и не позже), так что рост/сжатие идут одним непрерывным
+          движением от блика до полного размера и обратно. */}
       {reveals.map((reveal, b) => {
-        const visible = reveal.phase === "open"
+        const open = reveal.phase === "open"
+        const rendered = open || reveal.phase === "closing"
         return (
           <div key={b} className={BAND_LAYOUT[b]}>
             <div
               className="absolute inset-0"
               style={{
                 transformOrigin: reveal.origin,
-                transform: visible ? "scale(1)" : "scale(0.15)",
-                opacity: visible ? 1 : 0,
-                transitionProperty: "transform, opacity",
+                transform: open ? "scale(1)" : "scale(0.15)",
+                opacity: rendered ? 1 : 0,
+                transitionProperty: "transform",
                 transitionTimingFunction: "ease-out",
                 transitionDuration: `${TRANSITION_MS}ms`,
-                boxShadow: visible ? "0 20px 45px -12px rgba(0,0,0,0.55)" : undefined,
+                boxShadow: rendered ? "0 20px 45px -12px rgba(0,0,0,0.55)" : undefined,
               }}
             >
               <Image src={COLLAGE_PHOTOS[reveal.target]} alt="" fill sizes={BAND_SIZES[b]} className="object-cover" />
