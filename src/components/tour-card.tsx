@@ -40,7 +40,10 @@ export function TourCard({
         fill ? "h-full w-full" : "aspect-3/4 rounded-2xl",
       )}
     >
-      <Link href={`/tours/${tour.slug}`} className="absolute inset-0">
+      <Link
+        href={`/tours/${tour.slug}`}
+        className="absolute inset-0 transition-transform duration-150 active:scale-[0.97]"
+      >
         {/* Один статичный кадр — Виктор попросил убрать внутреннюю карусель
             фото на карточке совсем ("переключение убираем"), сам выберет,
             какое единственное фото ставить на каждый тур. */}
