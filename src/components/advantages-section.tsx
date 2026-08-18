@@ -9,18 +9,22 @@ import { PhotoStack } from "@/components/photo-stack"
 import type { Review } from "@/lib/reviews-data"
 
 // hint — на последнем слайде свайпать вниз уже некуда (следующего слайда
-// нет), поэтому вместо общей подсказки "листай дальше" (см. SwipeHint в
-// SlideDeck) именно здесь, над кнопкой, — свой стрелка-указатель, покрупнее
-// и прямо над кнопкой, а не общий намёк снизу экрана (Виктор: "чтобы
-// стрелочка показывала именно на кнопку выбрать тур").
+// нет), поэтому вместо общей подсказки "листай дальше" (см. swipeHint в
+// SlideDeck) именно здесь, над кнопкой, — свой указатель, прямо над кнопкой,
+// а не общий намёк снизу экрана (Виктор: "чтобы стрелочка показывала именно
+// на кнопку выбрать тур"). Без анимации и тише по цвету — тот же принцип,
+// что и у общей подсказки: намёк на направление, а не поторапливание.
 function TourCtaButton({ hint = false }: { hint?: boolean }) {
   return (
     <div className="relative mt-6 w-full self-stretch">
       {hint && (
-        <ChevronDownIcon
+        <div
           aria-hidden
-          className="pointer-events-none absolute -top-8 left-1/2 size-7 -translate-x-1/2 animate-bounce text-primary"
-        />
+          className="pointer-events-none absolute -top-8 left-1/2 flex -translate-x-1/2 flex-col items-center -space-y-3 text-primary opacity-50"
+        >
+          <ChevronDownIcon className="size-5" />
+          <ChevronDownIcon className="size-5" />
+        </div>
       )}
       <Link
         href="/tours"

@@ -89,8 +89,15 @@ export function SlideDeck({
         </div>
       )}
       {swipeHint && !isLastSlide && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-center sm:bottom-4">
-          <ChevronDownIcon aria-hidden className="size-7 animate-bounce text-white/60" />
+        // Виктор про первую версию (одна крупная моргающая стрелка): "не
+        // должно мешать читать текст, не должно торопить — человек должен
+        // иметь право погрузиться, просто видеть тренд, что можно
+        // перелистнуть". Убрана анимация (bounce ощущался как "торопит"),
+        // сдвоенный шеврон вместо одного — читается как статичный намёк на
+        // направление, а не активный призыв к действию, тише по цвету.
+        <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex flex-col items-center -space-y-3 opacity-35 sm:bottom-4">
+          <ChevronDownIcon aria-hidden className="size-4" />
+          <ChevronDownIcon aria-hidden className="size-4" />
         </div>
       )}
     </Swiper>
