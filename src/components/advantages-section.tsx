@@ -466,7 +466,16 @@ function ValuesSlide({
               внутри viewBox держится левее того места, где начинается
               текст), и никогда не заходит в зону заголовков/описаний. Один
               SVG на весь список тезисов — не на каждый пункт отдельно,
-              путь просто проходит мимо всех трёх подряд. */}
+              путь просто проходит мимо всех трёх подряд.
+
+              Путь держится в x=[5,9] — с запасом от x=0: у svg-элемента по
+              умолчанию overflow:hidden по границе viewBox, а свечение
+              (feGaussianBlur) расползается за пределы самой точки — первая
+              версия ныряла к x=-1 и получала обрезанный слева край свечения
+              ровно в тех местах ("видно что как будто обрезается сбоку
+              слева"). После правки амплитуда волны меньше — Виктор попросил
+              "аккуратнее", помимо самого бага с обрезкой. Скорость движения
+              (dur) увеличена вдвое с лишним — "медленнее". */}
           <svg
             aria-hidden
             viewBox="0 0 100 260"
@@ -475,7 +484,7 @@ function ValuesSlide({
           >
             <defs>
               <filter id="values-spark-glow" x="-300%" y="-300%" width="700%" height="700%">
-                <feGaussianBlur stdDeviation="2.5" result="blur" />
+                <feGaussianBlur stdDeviation="2" result="blur" />
                 <feMerge>
                   <feMergeNode in="blur" />
                   <feMergeNode in="SourceGraphic" />
@@ -484,14 +493,14 @@ function ValuesSlide({
             </defs>
             <path
               id="values-spark-path"
-              d="M4 0 C 8 20, 0 35, 4 55 S 8 85, 3 105 S -1 130, 5 155 S 8 180, 3 205 S -1 230, 4 255"
+              d="M7 0 C 8 20, 6 30, 7 50 S 8 75, 6 95 S 5 115, 7 135 S 8 160, 6 180 S 5 200, 7 220 S 8 240, 7 258"
               fill="none"
               stroke="currentColor"
-              strokeOpacity="0.16"
+              strokeOpacity="0.14"
               strokeWidth="1.5"
             />
-            <circle r="3" fill="currentColor" filter="url(#values-spark-glow)">
-              <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
+            <circle r="2.5" fill="currentColor" filter="url(#values-spark-glow)">
+              <animateMotion dur="14s" repeatCount="indefinite" rotate="auto">
                 <mpath href="#values-spark-path" />
               </animateMotion>
             </circle>
@@ -566,20 +575,25 @@ const STAGGER = ["", "mt-2.5", "mt-4", "mt-2.5", ""]
  * текст, без ограничения по высоте. Коннектор — тонкая линия с точкой
  * (не иконка-стрелка, которую Виктор посчитал слишком прямолинейной).
  */
-// Пауза/длительность "моргания" одной карточки — то же 0.9s, что и у
-// tile-prime-blink в globals.css (анимации CSS с фиксированной длительностью,
-// таймеры здесь просто должны с ними совпадать).
+// Длительность "моргания" одной карточки — совпадает с CSS-анимациями
+// .tour-priming/.tour-caption-blinking в globals.css (0.9s). GAP — пауза
+// МЕЖДУ карточками в течение одного прохода (Виктор попросил помягче и
+// пореже после первой версии — было 650мс с полноценным tile-priming
+// (1.7x яркость), теперь мягче и с бо́льшим интервалом).
 const TOUR_BLINK_MS = 900
-const TOUR_BLINK_GAP_MS = 650
+const TOUR_BLINK_GAP_MS = 1100
 
 function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
   const [active, setActive] = useState<number | null>(null)
-  // По одной карточке за раз "моргает" — по кругу, в случайном порядке
-  // (Виктор: "по очереди рандомно, чуть-чуть, как будто моргает"), без
-  // всплывающих подписей — только яркость картинки (см. .tile-priming) и
-  // прозрачность заголовка (см. .caption-blinking) на СУЩЕСТВУЮЩЕМ тексте.
-  // Стартует, когда блок реально попал в зону видимости (слайды в SlideDeck
-  // смонтированы все сразу — см. аналогичный приём в PhotoStack).
+  // По одной карточке за раз "моргает", в случайном порядке — но ОДИН
+  // проход по всем карточкам и остановка (не бесконечный цикл): Виктор
+  // после первой версии попросил "один раз, чуть мягче и чуть реже" —
+  // слайд без фото должен быть местом, где можно спокойно погрузиться в
+  // текст, а не постоянно мельтешащим фоном. Без всплывающих подписей —
+  // только яркость картинки (см. .tour-priming) и прозрачность заголовка
+  // (см. .tour-caption-blinking) на СУЩЕСТВУЮЩЕМ тексте. Стартует, когда
+  // блок реально попал в зону видимости (слайды в SlideDeck смонтированы
+  // все сразу — см. аналогичный приём в PhotoStack).
   const [blinking, setBlinking] = useState<number | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const startedRef = useRef(false)
@@ -597,21 +611,17 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
       ([entry]) => {
         if (!entry.isIntersecting || startedRef.current) return
         startedRef.current = true
-        let order = shuffledIndices(tours.length)
+        const order = shuffledIndices(tours.length)
         let step = 0
         const runCycle = () => {
-          if (cancelled) return
-          if (step >= order.length) {
-            order = shuffledIndices(tours.length)
-            step = 0
-          }
+          if (cancelled || step >= order.length) return
           const idx = order[step]
           step += 1
           setBlinking(idx)
           after(() => {
             if (cancelled) return
             setBlinking(null)
-            after(runCycle, TOUR_BLINK_GAP_MS)
+            if (step < order.length) after(runCycle, TOUR_BLINK_GAP_MS)
           }, TOUR_BLINK_MS)
         }
         after(runCycle, 500)
@@ -641,7 +651,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
               i === active ? "shadow-[0_10px_28px_-6px_rgba(0,0,0,0.55)]" : ""
             }`}
           >
-            <div className={`absolute inset-0 ${i === blinking ? "tile-priming" : ""}`}>
+            <div className={`absolute inset-0 ${i === blinking ? "tour-priming" : ""}`}>
               <Image
                 src={tour.imageSrc}
                 alt={tour.title}
@@ -656,7 +666,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
           </div>
           <span
             className={`mt-1 text-center font-heading text-[10px] leading-tight font-semibold text-foreground sm:text-xs ${
-              i === blinking ? "caption-blinking" : ""
+              i === blinking ? "tour-caption-blinking" : ""
             }`}
           >
             {tour.title}

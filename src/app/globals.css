@@ -246,25 +246,50 @@
   z-index: 5;
 }
 
-/* Тот же приём "моргания" (яркость), что у .tile-priming, но без scale —
-   для подписи под карточкой тура (TourSelector): текст не должен визуально
-   "прыгать" вместе с картинкой, только чуть притухать/разгораться. */
-@keyframes caption-blink {
+/* Карточки туров (TourSelector) — тот же принцип "моргания", что у
+   .tile-priming/.tile-prime-blink, но мягче: Виктор попросил после первой
+   версии приглушить (было 1.7x яркость + scale(1.1), как у коллажа —
+   для одиночной короткой вспышки на цельной фотографии это смотрелось
+   слишком резко). */
+@keyframes tour-prime-blink {
+  0%,
+  100% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
+  20%,
+  60% {
+    filter: brightness(1.35);
+    transform: scale(1.035);
+  }
+  40%,
+  80% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
+}
+.tour-priming {
+  animation: tour-prime-blink 0.9s ease-in-out 1;
+}
+
+/* Тот же приём для подписи под карточкой — без scale (текст не должен
+   визуально "прыгать"), только чуть притухать/разгораться. */
+@keyframes tour-caption-blink {
   0%,
   100% {
     opacity: 1;
   }
   20%,
   60% {
-    opacity: 0.5;
+    opacity: 0.65;
   }
   40%,
   80% {
     opacity: 1;
   }
 }
-.caption-blinking {
-  animation: caption-blink 0.9s ease-in-out 1;
+.tour-caption-blinking {
+  animation: tour-caption-blink 0.9s ease-in-out 1;
 }
 
 .phone-input {
