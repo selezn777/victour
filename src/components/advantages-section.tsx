@@ -315,11 +315,11 @@ function IntroSlide() {
           Вьетнам без чужих
         </h1>
         <p className="mt-3 max-w-md text-base leading-snug font-medium text-foreground sm:mt-4 sm:max-w-xl sm:text-xl">
-          Лучшие приватные туры по Вьетнаму — без чужих людей рядом.
+          Лучшие приватные туры по Вьетнаму.
         </p>
-        <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground sm:max-w-xl sm:text-base">
+        <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground sm:max-w-xl sm:text-base">
           Проверенные маршруты, надёжный транспорт и гид, который отвечает за вашу безопасность на
-          каждом шаге — здесь всё настроено на вашу волну, и ничего не оставлено на волю случая.
+          каждом шаге.
         </p>
         <TourCtaButton />
       </div>
