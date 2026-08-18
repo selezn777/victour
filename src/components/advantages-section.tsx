@@ -2,19 +2,33 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { ChevronDownIcon } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { SlideDeck } from "@/components/slide-deck"
 import { PhotoStack } from "@/components/photo-stack"
 import type { Review } from "@/lib/reviews-data"
 
-function TourCtaButton() {
+// hint — на последнем слайде свайпать вниз уже некуда (следующего слайда
+// нет), поэтому вместо общей подсказки "листай дальше" (см. SwipeHint в
+// SlideDeck) именно здесь, над кнопкой, — свой стрелка-указатель, покрупнее
+// и прямо над кнопкой, а не общий намёк снизу экрана (Виктор: "чтобы
+// стрелочка показывала именно на кнопку выбрать тур").
+function TourCtaButton({ hint = false }: { hint?: boolean }) {
   return (
-    <Link
-      href="/tours"
-      className="mt-6 flex w-full items-center justify-center self-stretch rounded-2xl bg-primary px-8 py-5 text-lg font-semibold text-primary-foreground shadow-[0_10px_40px_-8px] shadow-primary/35 ring-1 ring-primary-foreground/10 transition-all hover:scale-[1.02] hover:bg-primary/90 hover:shadow-primary/50 active:scale-[0.98] sm:py-6 sm:text-xl"
-    >
-      Выбрать тур
-    </Link>
+    <div className="relative mt-6 w-full self-stretch">
+      {hint && (
+        <ChevronDownIcon
+          aria-hidden
+          className="pointer-events-none absolute -top-8 left-1/2 size-7 -translate-x-1/2 animate-bounce text-primary"
+        />
+      )}
+      <Link
+        href="/tours"
+        className="flex w-full items-center justify-center rounded-2xl bg-primary px-8 py-5 text-lg font-semibold text-primary-foreground shadow-[0_10px_40px_-8px] shadow-primary/35 ring-1 ring-primary-foreground/10 transition-all hover:scale-[1.02] hover:bg-primary/90 hover:shadow-primary/50 active:scale-[0.98] sm:py-6 sm:text-xl"
+      >
+        Выбрать тур
+      </Link>
+    </div>
   )
 }
 
@@ -712,7 +726,7 @@ function QuoteSlide({
           </div>
         )}
 
-        <TourCtaButton />
+        <TourCtaButton hint />
         <Link href="/reviews" className="mt-3 text-sm text-primary hover:underline">
           Все отзывы →
         </Link>
@@ -725,6 +739,7 @@ export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
   return (
     <SlideDeck
       paginationPosition="none"
+      swipeHint
       slides={[
         <IntroSlide key="intro" />,
         <PhotoSlide
