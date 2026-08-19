@@ -24,8 +24,8 @@ const ARROWS = [
 // отступ сверху (см. TourCtaButton/FeaturedReviews), чтобы длинный хвост
 // не наезжал на карточки отзывов.
 const PRESETS = {
-  lg: { rx: 128, ry: 92, width: 20 },
-  sm: { rx: 90, ry: 64, width: 15 },
+  lg: { rx: 128, ry: 92, width: 23 },
+  sm: { rx: 90, ry: 64, width: 17 },
 }
 
 export function ButtonComets({ size = "sm" }: { size?: "sm" | "lg" }) {
@@ -62,14 +62,19 @@ export function ButtonComets({ size = "sm" }: { size?: "sm" | "lg" }) {
               <defs>
                 <linearGradient id={`${idPrefix}-tail-${i}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="currentColor" stopOpacity="0" />
+                  <stop offset="55%" stopColor="currentColor" stopOpacity="0.55" />
                   <stop offset="100%" stopColor="currentColor" stopOpacity="1" />
                 </linearGradient>
               </defs>
-              <path d="M12 0 L12 29" stroke={`url(#${idPrefix}-tail-${i})`} strokeWidth="1.75" strokeLinecap="round" fill="none" />
+              {/* Хвост — заливка (не тонкая линия), сужается к дальнему концу и
+                  растворяется там же: это и делает стрелку кометой, а не
+                  галочкой (Виктор, много раз: "где хвостик у кометы"). Голова
+                  осталась тонким контуром — сплошного треугольника не хотели. */}
+              <polygon points="11,0 13,0 18,29 6,29" fill={`url(#${idPrefix}-tail-${i})`} />
               <path
                 d="M5 25 L12 33 L19 25"
                 stroke="currentColor"
-                strokeWidth="1.75"
+                strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 fill="none"
