@@ -486,15 +486,20 @@ function ValuesSlide({
               (было x=[5,9]) — виляет по всей ширине блока (x от 22 до 78),
               так что проходит и мимо цифр, и заходит фоном под текст, а не
               только вдоль левого края (Виктор: "не только через цифры,
-              вокруг текста ехала"). Пальмы вдоль обочины — чисто декоративные
-              <use> одного и того же контура, без анимации. У машинки крутятся
-              колёса (свой animateTransform на каждом, независимо от скорости
-              по дороге) — Виктор: "а то странно смотреться будет", если едет,
-              а колёса стоят. rotate="auto" у animateMotion разворачивает
-              машинку носом по касательной к дороге — она "вписывается" в
-              повороты, как на виде сверху. Скорость (dur) и общая тихая
-              подача (низкая непрозрачность дороги/пальм) — как у прежней
-              искры, просто не перекрывать текст. */}
+              вокруг текста ехала"). Разметка — та же кривая вторым, тонким
+              пунктирным штрихом поверх (Виктор: "дорогу — на разметку").
+              Пальмы вдоль обочины — чисто декоративные <use> одного и того же
+              контура, без анимации, поярче обычного фона (Виктор: "пальмы
+              чуть поярче"). У машинки крутятся колёса (свой animateTransform
+              на каждом, независимо от скорости по дороге) — Виктор: "а то
+              странно смотреться будет", если едет, а колёса стоят. Кузов
+              почти прямоугольный (rx маленький, не "таблетка") и с полосой
+              окон почти во всю длину борта — Виктор: "видно, что прям
+              газелька", силуэт-пилюля без окон читался слишком абстрактно.
+              rotate="auto" у animateMotion разворачивает машинку носом по
+              касательной к дороге — она "вписывается" в повороты, как на
+              виде сверху. Скорость (dur) — 22s, помедленнее прежних 14s
+              (Виктор после первой версии: "помедленнее"). */}
           <svg
             aria-hidden
             viewBox="0 0 100 260"
@@ -506,10 +511,18 @@ function ValuesSlide({
               d="M50,0 C78,15 78,35 78,50 C78,68 22,80 22,95 C22,110 78,122 78,135 C78,155 22,165 22,180 C22,197 78,207 78,220 C78,235 50,248 50,258"
               fill="none"
               stroke="currentColor"
-              strokeOpacity="0.14"
-              strokeWidth="1.5"
+              strokeOpacity="0.16"
+              strokeWidth="2"
             />
-            <g id="values-palm-tree" opacity="0.16">
+            <path
+              d="M50,0 C78,15 78,35 78,50 C78,68 22,80 22,95 C22,110 78,122 78,135 C78,155 22,165 22,180 C22,197 78,207 78,220 C78,235 50,248 50,258"
+              fill="none"
+              stroke="currentColor"
+              strokeOpacity="0.4"
+              strokeWidth="0.5"
+              strokeDasharray="3 3"
+            />
+            <g id="values-palm-tree" opacity="0.32">
               <path d="M0,0 C-0.5,-3 0.5,-6 0,-9" fill="none" stroke="currentColor" strokeWidth="0.6" strokeLinecap="round" />
               <path d="M0,-9 C-3,-10.5 -4.5,-8.5 -5,-6.5" fill="none" stroke="currentColor" strokeWidth="0.6" strokeLinecap="round" />
               <path d="M0,-9 C2.5,-11 4.5,-9.5 5.5,-7.5" fill="none" stroke="currentColor" strokeWidth="0.6" strokeLinecap="round" />
@@ -524,7 +537,7 @@ function ValuesSlide({
               {/* Колёса — тёмная заливка (не currentColor), иначе сливаются с
                   кузовом того же оттенка и на маленьком масштабе выглядят
                   просто пятном, а не колесом. */}
-              <g transform="translate(-3.6,2.6)">
+              <g transform="translate(-3.8,2.8)">
                 <circle r="1.7" fill="#111827" />
                 <g>
                   <line x1="-1.2" y1="0" x2="1.2" y2="0" stroke="#9ca3af" strokeWidth="0.5" />
@@ -532,7 +545,7 @@ function ValuesSlide({
                   <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="0.35s" repeatCount="indefinite" />
                 </g>
               </g>
-              <g transform="translate(3.6,2.6)">
+              <g transform="translate(3.8,2.8)">
                 <circle r="1.7" fill="#111827" />
                 <g>
                   <line x1="-1.2" y1="0" x2="1.2" y2="0" stroke="#9ca3af" strokeWidth="0.5" />
@@ -540,9 +553,13 @@ function ValuesSlide({
                   <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="0.35s" repeatCount="indefinite" />
                 </g>
               </g>
-              <rect x="-6.6" y="-3" width="13.2" height="5.6" rx="1.9" fill="currentColor" />
-              <rect x="2.8" y="-2" width="3.2" height="4" rx="0.7" fill="#111827" opacity="0.45" />
-              <animateMotion dur="14s" repeatCount="indefinite" rotate="auto">
+              {/* Почти прямоугольный кузов (rx 1, не "таблетка") + полоса
+                  окон почти во всю длину борта — это и читается как
+                  "газелька", а не абстрактная капсула. */}
+              <rect x="-6.8" y="-3.2" width="13.6" height="6" rx="1" fill="currentColor" />
+              <rect x="-5.6" y="-2.2" width="10.6" height="1.7" rx="0.4" fill="#111827" opacity="0.4" />
+              <rect x="3" y="-2.1" width="3.4" height="4.2" rx="0.5" fill="#111827" opacity="0.5" />
+              <animateMotion dur="22s" repeatCount="indefinite" rotate="auto">
                 <mpath href="#values-road-path" />
               </animateMotion>
             </g>
