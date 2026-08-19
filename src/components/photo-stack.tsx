@@ -25,6 +25,13 @@ const STACK_TRANSFORM = [
 const DROP_STAGGER_MS = 650
 const DROP_INITIAL_DELAY_MS = 300
 
+// Ровно 3 автопереключения после того, как стопка легла — Виктор:
+// "переключатель прикольно смотрится, но потом не надо, чтобы они
+// продолжались", просто лёгкое движение, а не бесконечный цикл. Интервал
+// чуть быстрее, чем было (2450мс), но заметно медленнее выпадения фото.
+const AUTO_SHUFFLE_MS = 2100
+const AUTO_SHUFFLE_COUNT = 3
+
 /**
  * Стопка фото "как будто уронили друг на друга" — при появлении фото падают
  * по очереди (снизу стопки наверх) с заметной паузой между каждым, а по тапу
@@ -86,11 +93,28 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
     }, 180)
   }
 
-  // Автопереключения больше нет (Виктор: "чтоб не переключалось потом, а
-  // можно было тыкнуть") — вместо него тихая статичная подсказка-иконка
-  // (тот же принцип, что у swipeHint в SlideDeck: не мигает и не торопит,
-  // просто даёт понять, что по фото можно нажать), появляется, когда вся
-  // стопка легла.
+  // Всегда актуальная ссылка на shuffle для таймера ниже — обычный setInterval
+  // захватил бы устаревшее замыкание (и устаревший lifted) из момента запуска.
+  const shuffleRef = useRef(shuffle)
+  useEffect(() => {
+    shuffleRef.current = shuffle
+  })
+
+  useEffect(() => {
+    if (!entered.every(Boolean)) return
+    let count = 0
+    const interval = setInterval(() => {
+      count += 1
+      shuffleRef.current()
+      if (count >= AUTO_SHUFFLE_COUNT) clearInterval(interval)
+    }, AUTO_SHUFFLE_MS)
+    return () => clearInterval(interval)
+  }, [entered])
+
+  // Тихая статичная подсказка-иконка (тот же принцип, что у swipeHint в
+  // SlideDeck: не мигает и не торопит) — на случай, если гость не застанет
+  // автопереключения или захочет полистать дальше сам. Пропадает после
+  // первого собственного тапа.
   const [tapped, setTapped] = useState(false)
 
   return (

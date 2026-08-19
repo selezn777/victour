@@ -662,7 +662,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
       className="mt-2 flex w-full max-w-3xl items-start gap-1 sm:mt-4 sm:max-w-4xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl"
     >
       {tours.map((tour, i) => (
-        <div key={tour.slug} className={`flex flex-1 flex-col items-center ${STAGGER[i % STAGGER.length]}`}>
+        <div key={tour.slug} className={`flex min-w-0 flex-1 flex-col items-center ${STAGGER[i % STAGGER.length]}`}>
           <Link
             href={`/tours/${tour.slug}`}
             onMouseEnter={() => setActive(i)}
