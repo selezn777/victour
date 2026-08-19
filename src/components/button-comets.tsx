@@ -2,51 +2,43 @@
 
 import { useId } from "react"
 
-// Финальный CTA ("Выбрать тур" в конце воронки — последний слайд героя и
-// блок отзывов внизу главной) — тонкие стрелки-кометы летят в кнопку со
-// всех сторон по кругу. Раньше пробовали сплошную заливку (треугольник +
-// клин) — Виктор забраковал: "жирные, отвратительно смотрятся" рядом с
-// остальным тонким, аккуратным дизайном страницы. Голова — тонкий контур-
-// "домик" (два штриха под углом, без заливки), хвост — тонкая линия с
-// градиентом (прозрачная на дальнем конце → видимая у головы), плюс мягкое
-// свечение (drop-shadow) вместо жирной заливки — "аккуратная подсветка".
-//
-// Радиус — ЭЛЛИПС (rx/ry), а не окружность: кнопка сильно шире, чем выше,
-// с общим радиусом стрелки сбоку утыкались вглубь кнопки. rx/ry подобраны
-// под фактические пропорции кнопки каждого размера (см. PRESETS), чтобы
-// голова стрелки останавливалась СНАРУЖИ, у самого края.
+// Финальный CTA ("Выбрать тур") — 5 одинаковых тонких стрелок ведут к
+// кнопке ТОЛЬКО сверху и с боков (3 сверху, по одной с каждой стороны) —
+// снизу стрелок нет (Виктор: "стрелочки только сверху... кнопка была
+// ниже" — снизу стрелка визуально не может "вести от отзывов", отзывы
+// всегда выше). Хвостик длинный и хорошо читается (Виктор: "где хвостик
+// для хвостика" — раньше он был слишком коротким/незаметным). Все 5 —
+// одного размера и с одинаковым мягким свечением, без вразнобой разных
+// расстояний/масштабов (Виктор: "маленькая на большом расстоянии, другая
+// по-другому — какой-то общий экшн надо").
 const ARROWS = [
-  { angle: 0, r: 1, w: 1, opacity: 0.85, delay: 0 },
-  { angle: 51, r: 1, w: 0.88, opacity: 0.7, delay: 0.16 },
-  { angle: 103, r: 1, w: 1, opacity: 0.9, delay: 0.32 },
-  { angle: 154, r: 1, w: 0.82, opacity: 0.65, delay: 0.48 },
-  { angle: 206, r: 1, w: 0.82, opacity: 0.65, delay: 0.64 },
-  { angle: 257, r: 1, w: 1, opacity: 0.9, delay: 0.8 },
-  { angle: 309, r: 1, w: 0.88, opacity: 0.7, delay: 0.96 },
+  { angle: 270, delay: 0.5 }, // слева
+  { angle: 325, delay: 0.25 }, // сверху-слева
+  { angle: 0, delay: 0 }, // сверху по центру
+  { angle: 35, delay: 0.25 }, // сверху-справа
+  { angle: 90, delay: 0.5 }, // справа
 ]
 
-// rx/ry — расстояние от центра кнопки до центра стрелки по горизонтали и
-// вертикали; width — базовая ширина SVG стрелки (высота считается из её
-// пропорции). Подобраны так, чтобы голова стрелки вставала за фактическим
-// краем кнопки этого размера, а не поверх текста.
+// rx/ry — расстояние от центра кнопки до центра стрелки; width — базовая
+// ширина SVG (высота — из её пропорции). Кнопке под них добавлен больший
+// отступ сверху (см. TourCtaButton/FeaturedReviews), чтобы длинный хвост
+// не наезжал на карточки отзывов.
 const PRESETS = {
-  // Слайд 5 героя — крупная кнопка (py-5/6, text-lg/xl).
-  lg: { rx: 140, ry: 62, width: 20 },
-  // Блок отзывов внизу главной — обычная кнопка (buttonVariants()).
-  sm: { rx: 98, ry: 44, width: 15 },
+  lg: { rx: 128, ry: 92, width: 20 },
+  sm: { rx: 90, ry: 64, width: 15 },
 }
 
 export function ButtonComets({ size = "sm" }: { size?: "sm" | "lg" }) {
   const idPrefix = useId()
-  const { rx, ry, width: baseWidth } = PRESETS[size]
+  const { rx, ry, width } = PRESETS[size]
+  const height = (width * 44) / 24
 
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 text-primary">
       {ARROWS.map((a, i) => {
         const rad = (a.angle * Math.PI) / 180
-        const dx = rx * a.r * Math.sin(rad)
-        const dy = -ry * a.r * Math.cos(rad)
-        const width = baseWidth * a.w
+        const dx = rx * Math.sin(rad)
+        const dy = -ry * Math.cos(rad)
         return (
           <div
             key={i}
@@ -56,14 +48,14 @@ export function ButtonComets({ size = "sm" }: { size?: "sm" | "lg" }) {
             }}
           >
             <svg
-              viewBox="0 0 24 34"
+              viewBox="0 0 24 44"
               className="comet-arrow"
               style={{
                 width,
-                height: (width * 34) / 24,
+                height,
                 filter: "drop-shadow(0 0 3px currentColor)",
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- CSS custom property
-                ["--comet-opacity" as any]: a.opacity,
+                ["--comet-opacity" as any]: 0.85,
                 animationDelay: `${a.delay}s`,
               }}
             >
@@ -73,9 +65,9 @@ export function ButtonComets({ size = "sm" }: { size?: "sm" | "lg" }) {
                   <stop offset="100%" stopColor="currentColor" stopOpacity="1" />
                 </linearGradient>
               </defs>
-              <path d="M12 0 L12 19" stroke={`url(#${idPrefix}-tail-${i})`} strokeWidth="1.75" strokeLinecap="round" fill="none" />
+              <path d="M12 0 L12 29" stroke={`url(#${idPrefix}-tail-${i})`} strokeWidth="1.75" strokeLinecap="round" fill="none" />
               <path
-                d="M5 15 L12 23 L19 15"
+                d="M5 25 L12 33 L19 25"
                 stroke="currentColor"
                 strokeWidth="1.75"
                 strokeLinecap="round"

@@ -76,7 +76,7 @@ export function FeaturedReviews({ reviews, guideName }: { reviews: Review[]; gui
         ))}
       </div>
 
-      <div className="mt-14 flex flex-col items-center gap-10">
+      <div className="mt-16 flex flex-col items-center gap-6">
         <div className="relative inline-flex">
           <Link ref={ctaRef} href="/tours" className={cn(buttonVariants(), ctaVisible && "cta-blink-once")}>
             Выбрать тур

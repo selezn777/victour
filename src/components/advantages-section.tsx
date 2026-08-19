@@ -17,7 +17,7 @@ import type { Review } from "@/lib/reviews-data"
 function TourCtaButton({ hint = false }: { hint?: boolean }) {
   const { ref, visible } = useOnceVisible<HTMLAnchorElement>()
   return (
-    <div className={cn("flex w-full self-stretch", hint ? "mt-14 justify-center" : "mt-6")}>
+    <div className={cn("flex w-full self-stretch", hint ? "mt-20 justify-center" : "mt-6")}>
       <div className={cn("relative", hint ? "inline-flex" : "w-full")}>
         <Link
           ref={hint ? ref : undefined}
@@ -879,11 +879,18 @@ function useQuoteSlot(quotes: Quote[], startIndex: number) {
     setIndex((i) => (i + dir + quotes.length) % quotes.length)
   }
 
+  const goTo = (i: number) => {
+    setDirection(i > index ? 1 : -1)
+    setEntering(true)
+    setIndex(i)
+  }
+
   return {
     quote: quotes[index],
     index,
     direction,
     entering,
+    goTo,
     onTouchStart: (e: React.TouchEvent) => {
       touchStartX.current = e.touches[0].clientX
     },
@@ -897,17 +904,35 @@ function useQuoteSlot(quotes: Quote[], startIndex: number) {
   }
 }
 
-function QuoteSlotView({ slot }: { slot: ReturnType<typeof useQuoteSlot> }) {
+// Точки под каждой карточкой — видно, что это не единственный отзыв и его
+// можно листать (Виктор: "надо видеть, что отзывы можно листать"), а не
+// только через сам факт свайпа, который никак не подсказан визуально.
+function QuoteSlotView({ slot, count }: { slot: ReturnType<typeof useQuoteSlot>; count: number }) {
   return (
-    <div className="overflow-hidden" onTouchStart={slot.onTouchStart} onTouchEnd={slot.onTouchEnd}>
-      <div
-        key={slot.index}
-        className={`transition-all duration-[380ms] ease-out ${
-          slot.entering ? (slot.direction === 1 ? "translate-x-4 opacity-0" : "-translate-x-4 opacity-0") : "translate-x-0 opacity-100"
-        }`}
-      >
-        <QuoteCard quote={slot.quote.quote} author={slot.quote.author} />
+    <div>
+      <div className="overflow-hidden" onTouchStart={slot.onTouchStart} onTouchEnd={slot.onTouchEnd}>
+        <div
+          key={slot.index}
+          className={`transition-all duration-[380ms] ease-out ${
+            slot.entering ? (slot.direction === 1 ? "translate-x-4 opacity-0" : "-translate-x-4 opacity-0") : "translate-x-0 opacity-100"
+          }`}
+        >
+          <QuoteCard quote={slot.quote.quote} author={slot.quote.author} />
+        </div>
       </div>
+      {count > 1 && (
+        <div className="mt-2 flex justify-center gap-1.5">
+          {Array.from({ length: count }, (_, i) => (
+            <button
+              key={i}
+              type="button"
+              aria-label={`Отзыв ${i + 1}`}
+              onClick={() => slot.goTo(i)}
+              className={cn("size-1.5 rounded-full transition-colors", i === slot.index ? "bg-primary" : "bg-primary/25")}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -920,9 +945,9 @@ function QuotePairs({ quotes }: { quotes: Quote[] }) {
   if (quotes.length === 0) return null
 
   return (
-    <div className="mt-5 flex w-full max-w-xs flex-col gap-3 sm:hidden">
-      <QuoteSlotView slot={top} />
-      <QuoteSlotView slot={bottom} />
+    <div className="mt-5 flex w-full max-w-xs flex-col gap-4 sm:hidden">
+      <QuoteSlotView slot={top} count={safeQuotes.length} />
+      <QuoteSlotView slot={bottom} count={safeQuotes.length} />
     </div>
   )
 }
@@ -954,7 +979,7 @@ function QuoteSlide({
         )}
 
         <TourCtaButton hint />
-        <Link href="/reviews" className="mt-10 text-sm text-primary hover:underline">
+        <Link href="/reviews" className="mt-6 text-sm text-primary hover:underline">
           Все отзывы →
         </Link>
       </div>
