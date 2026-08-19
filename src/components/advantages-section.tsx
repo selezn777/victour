@@ -480,50 +480,72 @@ function ValuesSlide({
           {title}
         </h2>
         <div className="relative mt-6 w-full max-w-md">
-          {/* Слайд без фото — Виктор попросил "искру", бегущую по фону сверху
-              вниз от цифры к цифре, не перекрывая текст: слегка светящаяся
-              точка идёт по волнистой дорожке, прижатой к колонке цифр (x
-              внутри viewBox держится левее того места, где начинается
-              текст), и никогда не заходит в зону заголовков/описаний. Один
-              SVG на весь список тезисов — не на каждый пункт отдельно,
-              путь просто проходит мимо всех трёх подряд.
-
-              Путь держится в x=[5,9] — с запасом от x=0: у svg-элемента по
-              умолчанию overflow:hidden по границе viewBox, а свечение
-              (feGaussianBlur) расползается за пределы самой точки — первая
-              версия ныряла к x=-1 и получала обрезанный слева край свечения
-              ровно в тех местах ("видно что как будто обрезается сбоку
-              слева"). После правки амплитуда волны меньше — Виктор попросил
-              "аккуратнее", помимо самого бага с обрезкой. Скорость движения
-              (dur) увеличена вдвое с лишним — "медленнее". */}
+          {/* Слайд без фото — вместо статичной картинки едет микроавтобус по
+              вьющейся дороге (Виктор: "не кружочек, а машинка... микроавтобус,
+              туристы едут куда-то"). Дорога больше не жмётся к колонке цифр
+              (было x=[5,9]) — виляет по всей ширине блока (x от 22 до 78),
+              так что проходит и мимо цифр, и заходит фоном под текст, а не
+              только вдоль левого края (Виктор: "не только через цифры,
+              вокруг текста ехала"). Пальмы вдоль обочины — чисто декоративные
+              <use> одного и того же контура, без анимации. У машинки крутятся
+              колёса (свой animateTransform на каждом, независимо от скорости
+              по дороге) — Виктор: "а то странно смотреться будет", если едет,
+              а колёса стоят. rotate="auto" у animateMotion разворачивает
+              машинку носом по касательной к дороге — она "вписывается" в
+              повороты, как на виде сверху. Скорость (dur) и общая тихая
+              подача (низкая непрозрачность дороги/пальм) — как у прежней
+              искры, просто не перекрывать текст. */}
           <svg
             aria-hidden
             viewBox="0 0 100 260"
             preserveAspectRatio="none"
             className="pointer-events-none absolute inset-0 z-0 h-full w-full text-primary"
           >
-            <defs>
-              <filter id="values-spark-glow" x="-300%" y="-300%" width="700%" height="700%">
-                <feGaussianBlur stdDeviation="2" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
             <path
-              id="values-spark-path"
-              d="M7 0 C 8 20, 6 30, 7 50 S 8 75, 6 95 S 5 115, 7 135 S 8 160, 6 180 S 5 200, 7 220 S 8 240, 7 258"
+              id="values-road-path"
+              d="M50,0 C78,15 78,35 78,50 C78,68 22,80 22,95 C22,110 78,122 78,135 C78,155 22,165 22,180 C22,197 78,207 78,220 C78,235 50,248 50,258"
               fill="none"
               stroke="currentColor"
               strokeOpacity="0.14"
               strokeWidth="1.5"
             />
-            <circle r="2.5" fill="currentColor" filter="url(#values-spark-glow)">
+            <g id="values-palm-tree" opacity="0.16">
+              <path d="M0,0 C-0.5,-3 0.5,-6 0,-9" fill="none" stroke="currentColor" strokeWidth="0.6" strokeLinecap="round" />
+              <path d="M0,-9 C-3,-10.5 -4.5,-8.5 -5,-6.5" fill="none" stroke="currentColor" strokeWidth="0.6" strokeLinecap="round" />
+              <path d="M0,-9 C2.5,-11 4.5,-9.5 5.5,-7.5" fill="none" stroke="currentColor" strokeWidth="0.6" strokeLinecap="round" />
+              <path d="M0,-9 C-1.5,-12 -1,-14.5 0.5,-16" fill="none" stroke="currentColor" strokeWidth="0.6" strokeLinecap="round" />
+              <path d="M0,-9 C1.5,-12 3.5,-13 5,-12.5" fill="none" stroke="currentColor" strokeWidth="0.6" strokeLinecap="round" />
+            </g>
+            <use href="#values-palm-tree" x="84" y="46" />
+            <use href="#values-palm-tree" x="16" y="93" />
+            <use href="#values-palm-tree" x="16" y="178" />
+            <use href="#values-palm-tree" x="84" y="216" />
+            <g>
+              {/* Колёса — тёмная заливка (не currentColor), иначе сливаются с
+                  кузовом того же оттенка и на маленьком масштабе выглядят
+                  просто пятном, а не колесом. */}
+              <g transform="translate(-3.6,2.6)">
+                <circle r="1.7" fill="#111827" />
+                <g>
+                  <line x1="-1.2" y1="0" x2="1.2" y2="0" stroke="#9ca3af" strokeWidth="0.5" />
+                  <line x1="0" y1="-1.2" x2="0" y2="1.2" stroke="#9ca3af" strokeWidth="0.5" />
+                  <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="0.35s" repeatCount="indefinite" />
+                </g>
+              </g>
+              <g transform="translate(3.6,2.6)">
+                <circle r="1.7" fill="#111827" />
+                <g>
+                  <line x1="-1.2" y1="0" x2="1.2" y2="0" stroke="#9ca3af" strokeWidth="0.5" />
+                  <line x1="0" y1="-1.2" x2="0" y2="1.2" stroke="#9ca3af" strokeWidth="0.5" />
+                  <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="0.35s" repeatCount="indefinite" />
+                </g>
+              </g>
+              <rect x="-6.6" y="-3" width="13.2" height="5.6" rx="1.9" fill="currentColor" />
+              <rect x="2.8" y="-2" width="3.2" height="4" rx="0.7" fill="#111827" opacity="0.45" />
               <animateMotion dur="14s" repeatCount="indefinite" rotate="auto">
-                <mpath href="#values-spark-path" />
+                <mpath href="#values-road-path" />
               </animateMotion>
-            </circle>
+            </g>
           </svg>
           <div className="relative z-10 space-y-5 text-left">
             {points.map((point, i) => (
