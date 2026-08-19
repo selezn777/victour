@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import { SlideDeck } from "@/components/slide-deck"
 import { PhotoStack } from "@/components/photo-stack"
 import type { Review } from "@/lib/reviews-data"
@@ -512,6 +512,50 @@ function PhotoSlide({
 // линиями (Виктор попросил объединить 3 прежних отдельных слайда —
 // компания/темп/еда — в один; фото убрали совсем, чтобы под три тезиса
 // хватило места без утомительного скролла на мобиле).
+// Длительность одного круга машинки по дороге — синхронна с animateMotion,
+// который тут раньше был (см. useVanOnRoad).
+const VAN_DURATION_MS = 22000
+
+// SMIL rotate="auto" крутил машинку СТРОГО по касательной — на разворотах
+// серпантина касательная временами смотрела влево (dx<0), и разворот на
+// ~180° от "носом вправо" временно показывал её вверх колёсами (Виктор:
+// "едет вниз головой"). Штатная попытка это исправить — вообще убрать
+// поворот — тоже не понравилась ("было лучше, надо было наоборот
+// отражение"): машинка должна КРЕНИТЬСЯ в повороты, а не просто ехать
+// плашмя. Правильный приём (как в 2D-играх у спрайтов персонажа) — вместо
+// вращения через "спину" на развороте ЗЕРКАЛИМ машинку по горизонтали:
+// поворот всегда считается от |dx| (что даёт угол строго в [-90°, 90°],
+// физически не может перевернуть), а если реальный dx отрицательный — весь
+// уже повёрнутый силуэт отражаем scale(-1,1), как будто смотрим на неё с
+// другого борта дороги. Из-за зеркала это не SMIL-анимация (mpath/rotate не
+// умеют так) — здесь ручной rAF-луп поверх getPointAtLength той же кривой.
+function useVanOnRoad(roadRef: RefObject<SVGPathElement | null>, vanRef: RefObject<SVGGElement | null>) {
+  useEffect(() => {
+    const road = roadRef.current
+    const van = vanRef.current
+    if (!road || !van) return
+    const total = road.getTotalLength()
+    const step = Math.max(0.5, total * 0.006)
+    let raf = 0
+    let start: number | null = null
+    const frame = (ts: number) => {
+      if (start === null) start = ts
+      const t = ((ts - start) % VAN_DURATION_MS) / VAN_DURATION_MS
+      const len = t * total
+      const p0 = road.getPointAtLength(len)
+      const p1 = road.getPointAtLength(Math.min(total, len + step))
+      const dx = p1.x - p0.x
+      const dy = p1.y - p0.y
+      const mirrored = dx < 0
+      const angle = (Math.atan2(dy, Math.abs(dx) || 0.0001) * 180) / Math.PI
+      van.setAttribute("transform", `translate(${p0.x} ${p0.y}) scale(${mirrored ? -1 : 1},1) rotate(${angle})`)
+      raf = requestAnimationFrame(frame)
+    }
+    raf = requestAnimationFrame(frame)
+    return () => cancelAnimationFrame(raf)
+  }, [roadRef, vanRef])
+}
+
 function ValuesSlide({
   title,
   points,
@@ -519,6 +563,10 @@ function ValuesSlide({
   title: string
   points: { title: string; body: string }[]
 }) {
+  const roadPathRef = useRef<SVGPathElement>(null)
+  const vanGroupRef = useRef<SVGGElement>(null)
+  useVanOnRoad(roadPathRef, vanGroupRef)
+
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-6 text-center sm:px-11">
@@ -542,12 +590,11 @@ function ValuesSlide({
               почти прямоугольный (rx маленький, не "таблетка") и с полосой
               окон почти во всю длину борта — Виктор: "видно, что прям
               газелька", силуэт-пилюля без окон читался слишком абстрактно.
-              Машинка НЕ разворачивается по касательной к дороге (было
-              rotate="auto" — на разворотах серпантина её временами крутило
-              вверх колёсами, см. комментарий у animateMotion ниже) — едет
-              всегда одной стороной вверх, только двигаясь по кривой.
-              Скорость (dur) — 22s, помедленнее прежних 14s (Виктор после
-              первой версии: "помедленнее"). */}
+              Машинка крутится по касательной к дороге, но не через SMIL
+              rotate="auto" — тот на разворотах серпантина временами крутил
+              её вверх колёсами (см. useVanOnRoad выше: там же зеркалирование
+              вместо разворота "через спину"). Скорость — 22s, помедленнее
+              прежних 14s (Виктор после первой версии: "помедленнее"). */}
           <svg
             aria-hidden
             viewBox="0 0 100 260"
@@ -555,6 +602,7 @@ function ValuesSlide({
             className="pointer-events-none absolute inset-0 z-0 h-full w-full text-primary"
           >
             <path
+              ref={roadPathRef}
               id="values-road-path"
               d="M50,0 C78,15 78,35 78,50 C78,68 22,80 22,95 C22,110 78,122 78,135 C78,155 22,165 22,180 C22,197 78,207 78,220 C78,235 50,248 50,258"
               fill="none"
@@ -582,62 +630,39 @@ function ValuesSlide({
             <use href="#values-palm-tree" x="16" y="178" />
             <use href="#values-palm-tree" x="84" y="216" />
             <g>
-              {/* rotate="auto" крутил машинку строго по касательной к дороге —
-                  на разворотах серпантина касательная временами смотрит
-                  вбок/назад, и машинка на миг оказывалась "вверх колёсами"
-                  (Виктор: "едет вниз головой, так не может быть"). Машинка
-                  вместо этого едет ВСЕГДА одной и той же стороной вверх —
-                  силуэт "вид сверху" (кузов вытянут по вертикали, колёса по
-                  бокам двух осей), без rotate у animateMotion, только
-                  перемещение по кривой. Это не идеально повторяет реальный
-                  разворот носа в поворотах, зато никогда не переворачивается —
-                  чинить "прыгающий" угол через одну лишь SMIL-анимацию
-                  (без JS) надёжно нельзя, так что решили не рисковать снова. */}
-              {/* Колёса — тёмная заливка (не currentColor), иначе сливаются с
-                  кузовом того же оттенка и на маленьком масштабе выглядят
-                  просто пятном, а не колесом. Две оси (перед/зад) по бокам
-                  кузова — вид сверху. */}
-              <g transform="translate(-3.3,-4)">
-                <circle r="1.5" fill="#111827" />
-                <g>
-                  <line x1="-1.05" y1="0" x2="1.05" y2="0" stroke="#9ca3af" strokeWidth="0.45" />
-                  <line x1="0" y1="-1.05" x2="0" y2="1.05" stroke="#9ca3af" strokeWidth="0.45" />
-                  <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="0.35s" repeatCount="indefinite" />
+              {/* Позицию/поворот/зеркало считает useVanOnRoad (см. выше) —
+                  transform на этом <g> проставляется через JS каждый кадр,
+                  здесь только сама форма машинки в её "домашней" ориентации
+                  (нос вправо, при повороте 0° и без зеркала). */}
+              <g ref={vanGroupRef}>
+                {/* Колёса — тёмная заливка (не currentColor), иначе сливаются
+                    с кузовом того же оттенка и на маленьком масштабе
+                    выглядят просто пятном, а не колесом. */}
+                <g transform="translate(-3.8,2.8)">
+                  <circle r="1.7" fill="#111827" />
+                  <g>
+                    <line x1="-1.2" y1="0" x2="1.2" y2="0" stroke="#9ca3af" strokeWidth="0.5" />
+                    <line x1="0" y1="-1.2" x2="0" y2="1.2" stroke="#9ca3af" strokeWidth="0.5" />
+                    <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="0.35s" repeatCount="indefinite" />
+                  </g>
                 </g>
-              </g>
-              <g transform="translate(3.3,-4)">
-                <circle r="1.5" fill="#111827" />
-                <g>
-                  <line x1="-1.05" y1="0" x2="1.05" y2="0" stroke="#9ca3af" strokeWidth="0.45" />
-                  <line x1="0" y1="-1.05" x2="0" y2="1.05" stroke="#9ca3af" strokeWidth="0.45" />
-                  <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="0.35s" repeatCount="indefinite" />
+                <g transform="translate(3.8,2.8)">
+                  <circle r="1.7" fill="#111827" />
+                  <g>
+                    <line x1="-1.2" y1="0" x2="1.2" y2="0" stroke="#9ca3af" strokeWidth="0.5" />
+                    <line x1="0" y1="-1.2" x2="0" y2="1.2" stroke="#9ca3af" strokeWidth="0.5" />
+                    <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="0.35s" repeatCount="indefinite" />
+                  </g>
                 </g>
+                {/* Почти прямоугольный кузов (rx 1, не "таблетка") + полоса
+                    окон почти во всю длину борта — "видно, что прям
+                    газелька", силуэт-пилюля без окон читался слишком
+                    абстрактно. Лобовое стекло у правого (переднего в
+                    "домашней" ориентации) края. */}
+                <rect x="-6.8" y="-3.2" width="13.6" height="6" rx="1" fill="currentColor" />
+                <rect x="-5.6" y="-2.2" width="10.6" height="1.7" rx="0.4" fill="#111827" opacity="0.4" />
+                <rect x="3" y="-2.1" width="3.4" height="4.2" rx="0.5" fill="#111827" opacity="0.5" />
               </g>
-              <g transform="translate(-3.3,4)">
-                <circle r="1.5" fill="#111827" />
-                <g>
-                  <line x1="-1.05" y1="0" x2="1.05" y2="0" stroke="#9ca3af" strokeWidth="0.45" />
-                  <line x1="0" y1="-1.05" x2="0" y2="1.05" stroke="#9ca3af" strokeWidth="0.45" />
-                  <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="0.35s" repeatCount="indefinite" />
-                </g>
-              </g>
-              <g transform="translate(3.3,4)">
-                <circle r="1.5" fill="#111827" />
-                <g>
-                  <line x1="-1.05" y1="0" x2="1.05" y2="0" stroke="#9ca3af" strokeWidth="0.45" />
-                  <line x1="0" y1="-1.05" x2="0" y2="1.05" stroke="#9ca3af" strokeWidth="0.45" />
-                  <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="0.35s" repeatCount="indefinite" />
-                </g>
-              </g>
-              {/* Кузов вытянут по вертикали (вид сверху, нос вниз, куда в
-                  среднем и идёт дорога) — полоса окон + затемнённое лобовое
-                  стекло у переднего (нижнего) края. */}
-              <rect x="-3.2" y="-6.6" width="6.4" height="13.2" rx="1" fill="currentColor" />
-              <rect x="-2.5" y="-5.6" width="5" height="9.6" rx="0.4" fill="#111827" opacity="0.4" />
-              <rect x="-2.3" y="3.4" width="4.6" height="2.6" rx="0.5" fill="#111827" opacity="0.5" />
-              <animateMotion dur="22s" repeatCount="indefinite">
-                <mpath href="#values-road-path" />
-              </animateMotion>
             </g>
           </svg>
           <div className="relative z-10 space-y-5 text-left">
