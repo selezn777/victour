@@ -542,10 +542,12 @@ function ValuesSlide({
               почти прямоугольный (rx маленький, не "таблетка") и с полосой
               окон почти во всю длину борта — Виктор: "видно, что прям
               газелька", силуэт-пилюля без окон читался слишком абстрактно.
-              rotate="auto" у animateMotion разворачивает машинку носом по
-              касательной к дороге — она "вписывается" в повороты, как на
-              виде сверху. Скорость (dur) — 22s, помедленнее прежних 14s
-              (Виктор после первой версии: "помедленнее"). */}
+              Машинка НЕ разворачивается по касательной к дороге (было
+              rotate="auto" — на разворотах серпантина её временами крутило
+              вверх колёсами, см. комментарий у animateMotion ниже) — едет
+              всегда одной стороной вверх, только двигаясь по кривой.
+              Скорость (dur) — 22s, помедленнее прежних 14s (Виктор после
+              первой версии: "помедленнее"). */}
           <svg
             aria-hidden
             viewBox="0 0 100 260"
@@ -580,32 +582,60 @@ function ValuesSlide({
             <use href="#values-palm-tree" x="16" y="178" />
             <use href="#values-palm-tree" x="84" y="216" />
             <g>
+              {/* rotate="auto" крутил машинку строго по касательной к дороге —
+                  на разворотах серпантина касательная временами смотрит
+                  вбок/назад, и машинка на миг оказывалась "вверх колёсами"
+                  (Виктор: "едет вниз головой, так не может быть"). Машинка
+                  вместо этого едет ВСЕГДА одной и той же стороной вверх —
+                  силуэт "вид сверху" (кузов вытянут по вертикали, колёса по
+                  бокам двух осей), без rotate у animateMotion, только
+                  перемещение по кривой. Это не идеально повторяет реальный
+                  разворот носа в поворотах, зато никогда не переворачивается —
+                  чинить "прыгающий" угол через одну лишь SMIL-анимацию
+                  (без JS) надёжно нельзя, так что решили не рисковать снова. */}
               {/* Колёса — тёмная заливка (не currentColor), иначе сливаются с
                   кузовом того же оттенка и на маленьком масштабе выглядят
-                  просто пятном, а не колесом. */}
-              <g transform="translate(-3.8,2.8)">
-                <circle r="1.7" fill="#111827" />
+                  просто пятном, а не колесом. Две оси (перед/зад) по бокам
+                  кузова — вид сверху. */}
+              <g transform="translate(-3.3,-4)">
+                <circle r="1.5" fill="#111827" />
                 <g>
-                  <line x1="-1.2" y1="0" x2="1.2" y2="0" stroke="#9ca3af" strokeWidth="0.5" />
-                  <line x1="0" y1="-1.2" x2="0" y2="1.2" stroke="#9ca3af" strokeWidth="0.5" />
+                  <line x1="-1.05" y1="0" x2="1.05" y2="0" stroke="#9ca3af" strokeWidth="0.45" />
+                  <line x1="0" y1="-1.05" x2="0" y2="1.05" stroke="#9ca3af" strokeWidth="0.45" />
                   <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="0.35s" repeatCount="indefinite" />
                 </g>
               </g>
-              <g transform="translate(3.8,2.8)">
-                <circle r="1.7" fill="#111827" />
+              <g transform="translate(3.3,-4)">
+                <circle r="1.5" fill="#111827" />
                 <g>
-                  <line x1="-1.2" y1="0" x2="1.2" y2="0" stroke="#9ca3af" strokeWidth="0.5" />
-                  <line x1="0" y1="-1.2" x2="0" y2="1.2" stroke="#9ca3af" strokeWidth="0.5" />
+                  <line x1="-1.05" y1="0" x2="1.05" y2="0" stroke="#9ca3af" strokeWidth="0.45" />
+                  <line x1="0" y1="-1.05" x2="0" y2="1.05" stroke="#9ca3af" strokeWidth="0.45" />
                   <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="0.35s" repeatCount="indefinite" />
                 </g>
               </g>
-              {/* Почти прямоугольный кузов (rx 1, не "таблетка") + полоса
-                  окон почти во всю длину борта — это и читается как
-                  "газелька", а не абстрактная капсула. */}
-              <rect x="-6.8" y="-3.2" width="13.6" height="6" rx="1" fill="currentColor" />
-              <rect x="-5.6" y="-2.2" width="10.6" height="1.7" rx="0.4" fill="#111827" opacity="0.4" />
-              <rect x="3" y="-2.1" width="3.4" height="4.2" rx="0.5" fill="#111827" opacity="0.5" />
-              <animateMotion dur="22s" repeatCount="indefinite" rotate="auto">
+              <g transform="translate(-3.3,4)">
+                <circle r="1.5" fill="#111827" />
+                <g>
+                  <line x1="-1.05" y1="0" x2="1.05" y2="0" stroke="#9ca3af" strokeWidth="0.45" />
+                  <line x1="0" y1="-1.05" x2="0" y2="1.05" stroke="#9ca3af" strokeWidth="0.45" />
+                  <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="0.35s" repeatCount="indefinite" />
+                </g>
+              </g>
+              <g transform="translate(3.3,4)">
+                <circle r="1.5" fill="#111827" />
+                <g>
+                  <line x1="-1.05" y1="0" x2="1.05" y2="0" stroke="#9ca3af" strokeWidth="0.45" />
+                  <line x1="0" y1="-1.05" x2="0" y2="1.05" stroke="#9ca3af" strokeWidth="0.45" />
+                  <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="0.35s" repeatCount="indefinite" />
+                </g>
+              </g>
+              {/* Кузов вытянут по вертикали (вид сверху, нос вниз, куда в
+                  среднем и идёт дорога) — полоса окон + затемнённое лобовое
+                  стекло у переднего (нижнего) края. */}
+              <rect x="-3.2" y="-6.6" width="6.4" height="13.2" rx="1" fill="currentColor" />
+              <rect x="-2.5" y="-5.6" width="5" height="9.6" rx="0.4" fill="#111827" opacity="0.4" />
+              <rect x="-2.3" y="3.4" width="4.6" height="2.6" rx="0.5" fill="#111827" opacity="0.5" />
+              <animateMotion dur="22s" repeatCount="indefinite">
                 <mpath href="#values-road-path" />
               </animateMotion>
             </g>
