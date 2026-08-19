@@ -283,25 +283,22 @@
   animation: tour-caption-blink 0.9s ease-in-out 1;
 }
 
-/* Кнопка "Выбрать тур" на последнем слайде героя периодически коротко
-   "моргает" — 2 быстрых пульса подряд, потом долгая пауза, и по кругу
-   (Виктор, после того как стрелки-подсказки не прижились: "чтобы моргала,
-   приглашала нажать, 2 раза с каким-то интервалом"). */
+/* Кнопка "Выбрать тур" на последнем слайде героя непрерывно "моргает" —
+   раз в полсекунды (Виктор, после первой версии с паузой между пульсами:
+   "почаще, чуть не 2 раза в секунду... раз в полсекунды"). */
 @keyframes cta-invite-pulse {
   0%,
-  16%,
   100% {
     transform: scale(1);
     box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-primary) 55%, transparent);
   }
-  4%,
-  12% {
+  50% {
     transform: scale(1.035);
     box-shadow: 0 0 0 10px color-mix(in oklch, var(--color-primary) 0%, transparent);
   }
 }
 .cta-invite-pulse {
-  animation: cta-invite-pulse 3s ease-in-out infinite;
+  animation: cta-invite-pulse 0.5s ease-in-out infinite;
 }
 
 .phone-input {
