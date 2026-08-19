@@ -17,13 +17,13 @@ import { useId } from "react"
 // ориентации (остриём к центру, как будто угол 0), так что общий поворот
 // контейнера довершает дело без отдельной пересчитки геометрии.
 const COMETS = [
-  { angle: 0, radius: 62, width: 30, opacity: 0.95, delay: 0 },
-  { angle: 51, radius: 68, width: 26, opacity: 0.8, delay: 0.16 },
-  { angle: 103, radius: 74, width: 32, opacity: 1, delay: 0.32 },
-  { angle: 154, radius: 66, width: 24, opacity: 0.75, delay: 0.48 },
-  { angle: 206, radius: 66, width: 24, opacity: 0.75, delay: 0.64 },
-  { angle: 257, radius: 74, width: 32, opacity: 1, delay: 0.8 },
-  { angle: 309, radius: 68, width: 26, opacity: 0.8, delay: 0.96 },
+  { angle: 0, radius: 40, width: 20, opacity: 0.95, delay: 0 },
+  { angle: 51, radius: 44, width: 17, opacity: 0.8, delay: 0.16 },
+  { angle: 103, radius: 48, width: 21, opacity: 1, delay: 0.32 },
+  { angle: 154, radius: 43, width: 16, opacity: 0.75, delay: 0.48 },
+  { angle: 206, radius: 43, width: 16, opacity: 0.75, delay: 0.64 },
+  { angle: 257, radius: 48, width: 21, opacity: 1, delay: 0.8 },
+  { angle: 309, radius: 44, width: 17, opacity: 0.8, delay: 0.96 },
 ]
 
 export function ButtonComets() {
