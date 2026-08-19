@@ -240,9 +240,15 @@ function useRevealCycle(bandIndex: number, getOrigin: (idx: number) => string) {
 // не собирался как пазл (Виктор дважды: "видно, что страница грузится",
 // "чтобы как будто из пазла собирали"). Реальную загрузку каждой картинки
 // (<Image onLoad>) больше не используем для показа — вместо этого сами гоним
-// перемешанный порядок через preloadImage с фиксированным шагом (см. эффект
-// ниже), так что визуальная последовательность появления плиток — рандом,
-// не зависящий от того, в каком порядке реально ответила сеть.
+// перемешанный порядок через preloadImage (см. эффект ниже).
+//
+// ВАЖНО: все preloadImage запускаются СРАЗУ, параллельно (не await в цикле
+// по одному) — первая версия этого эффекта ждала каждую картинку по очереди
+// и на реальной мобильной сети коллаж из-за этого не показывался очень
+// долго (Виктор: "открыл — долго ничего не грузится"), хотя раньше, когда
+// <Image> грузились каждая сама по себе, было быстрее. Задержка на каждую
+// плитку теперь чисто визуальная (для темпа появления) и включается ПОСЛЕ
+// того, как картинка реально пришла, а не блокирует остальные загрузки.
 const TILE_FADE_MS = 260
 const TILE_STAGGER_MS = 45
 
@@ -254,18 +260,17 @@ function PhotoCollage() {
 
   useEffect(() => {
     let cancelled = false
+    const timers: ReturnType<typeof setTimeout>[] = []
     const order = shuffledIndices(COLLAGE_PHOTO_COUNT)
-    ;(async () => {
-      for (const idx of order) {
+    order.forEach((idx, i) => {
+      preloadImage(COLLAGE_PHOTOS[idx]).then(() => {
         if (cancelled) return
-        await preloadImage(COLLAGE_PHOTOS[idx])
-        if (cancelled) return
-        markLoaded(idx)
-        await new Promise((resolve) => setTimeout(resolve, TILE_STAGGER_MS))
-      }
-    })()
+        timers.push(setTimeout(() => !cancelled && markLoaded(idx), i * TILE_STAGGER_MS))
+      })
+    })
     return () => {
       cancelled = true
+      timers.forEach(clearTimeout)
     }
   }, [markLoaded])
 
@@ -329,7 +334,7 @@ function PhotoCollage() {
               }}
               className={`relative aspect-square overflow-hidden ${tileVisibilityClass(i)} ${
                 isPriming ? "tile-priming" : ""
-              }`}
+              } ${loadedTiles.has(i) ? "" : "animate-pulse bg-white/15"}`}
             >
               <Image
                 src={src}
