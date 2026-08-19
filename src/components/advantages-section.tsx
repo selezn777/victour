@@ -48,6 +48,11 @@ const PRIME_MS = 1000
 const HOLD_MS = 3040
 const GAP_MS = 850
 const TRANSITION_MS = 1000
+// Первое раскрытие в каждой полосе стартует почти сразу, а не после полной
+// паузы GAP_MS — крупное фото приходит раньше и на время заслоняет ещё не
+// догрузившиеся плитки под собой (Виктор: "чтобы начинали открываться до
+// того, как всё загрузилось").
+const INITIAL_GAP_MS = 150
 
 function shuffledIndices(count: number) {
   const arr = Array.from({ length: count }, (_, i) => i)
@@ -227,7 +232,7 @@ function useRevealCycle(bandIndex: number, getOrigin: (idx: number) => string) {
       })
     }
 
-    after(runCycle, GAP_MS)
+    after(runCycle, INITIAL_GAP_MS)
     return () => {
       cancelled = true
       timers.forEach(clearTimeout)
@@ -237,7 +242,20 @@ function useRevealCycle(bandIndex: number, getOrigin: (idx: number) => string) {
   return { phase, target, origin }
 }
 
+// Плитки грузятся параллельно, но раньше проступали в строгом порядке слева
+// направо/сверху вниз — читалось как "страница ещё грузится" (Виктор: "видно,
+// что страница грузится"). Плитка теперь непрозрачна, пока её файл реально не
+// пришёл (onLoad), и мягко проявляется — плитки с более быстрым соединением
+// (не обязательно те, что раньше в DOM) проступают раньше остальных, эффект
+// читается как "тут-там" заполнение коллажа, а не последовательная протирка.
+const TILE_FADE_MS = 260
+
 function PhotoCollage() {
+  const [loadedTiles, setLoadedTiles] = useState<Set<number>>(() => new Set())
+  const markLoaded = useCallback((i: number) => {
+    setLoadedTiles((prev) => (prev.has(i) ? prev : new Set(prev).add(i)))
+  }, [])
+
   // Реальные DOM-узлы плиток и полос — источник истины для origin (см.
   // makeGetOrigin ниже). tileRefs держит саму map между рендерами (не влияет на
   // рендер сам по себе, поэтому обычный useRef, а не state).
@@ -307,6 +325,11 @@ function PhotoCollage() {
                 priority={i < 16}
                 sizes="(min-width: 1024px) 8vw, (min-width: 640px) 11vw, 12.5vw"
                 className="object-cover"
+                onLoad={() => markLoaded(i)}
+                style={{
+                  opacity: loadedTiles.has(i) ? 1 : 0,
+                  transition: `opacity ${TILE_FADE_MS}ms ease-out`,
+                }}
               />
             </div>
           )
@@ -369,10 +392,7 @@ function IntroSlide() {
         <h1 className="max-w-xl font-heading text-2xl leading-[1.1] font-semibold sm:text-5xl">
           Вьетнам без чужих
         </h1>
-        <p className="mt-3 max-w-md text-base leading-snug font-medium text-foreground sm:mt-4 sm:max-w-xl sm:text-xl">
-          Лучшие приватные туры по Вьетнаму.
-        </p>
-        <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground sm:max-w-xl sm:text-base">
+        <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-base">
           Проверенные маршруты, надёжный транспорт и гид, который отвечает за вашу безопасность на
           каждом шаге.
         </p>

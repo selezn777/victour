@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import { MousePointerClickIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
 // Три позиции в стопке: 0 — сверху (лицом), 1 — средняя, 2 — самая нижняя.
@@ -24,11 +25,6 @@ const STACK_TRANSFORM = [
 // они все выпадали было видно").
 const DROP_STAGGER_MS = 920
 const DROP_INITIAL_DELAY_MS = 360
-
-// Автопереключение вместо тапа — Виктор решил, что гости всё равно не будут
-// тыкать по фото, пусть стопка сама листает себя с тем же ритмом, как будто
-// кто-то по ней тапает.
-const AUTO_SHUFFLE_MS = 2450
 
 /**
  * Стопка фото "как будто уронили друг на друга" — при появлении фото падают
@@ -91,24 +87,21 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
     }, 180)
   }
 
-  // Всегда актуальная ссылка на shuffle для таймера ниже — обычный setInterval
-  // захватил бы устаревшее замыкание (и устаревший lifted) из момента запуска.
-  const shuffleRef = useRef(shuffle)
-  useEffect(() => {
-    shuffleRef.current = shuffle
-  })
-
-  useEffect(() => {
-    if (!entered.every(Boolean)) return
-    const interval = setInterval(() => shuffleRef.current(), AUTO_SHUFFLE_MS)
-    return () => clearInterval(interval)
-  }, [entered])
+  // Автопереключения больше нет (Виктор: "чтоб не переключалось потом, а
+  // можно было тыкнуть") — вместо него тихая статичная подсказка-иконка
+  // (тот же принцип, что у swipeHint в SlideDeck: не мигает и не торопит,
+  // просто даёт понять, что по фото можно нажать), появляется, когда вся
+  // стопка легла.
+  const [tapped, setTapped] = useState(false)
 
   return (
     <button
       ref={rootRef}
       type="button"
-      onClick={shuffle}
+      onClick={() => {
+        shuffle()
+        setTapped(true)
+      }}
       aria-label="Показать следующее фото"
       className="relative block h-full w-full"
     >
@@ -130,6 +123,14 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
           <Image src={src} alt={alt} fill className="object-cover" sizes="100vw" />
         </div>
       ))}
+      {!tapped && entered.every(Boolean) && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute right-2 bottom-2 z-30 flex size-7 items-center justify-center rounded-full bg-black/40 text-white opacity-70 backdrop-blur-sm"
+        >
+          <MousePointerClickIcon className="size-4" />
+        </div>
+      )}
     </button>
   )
 }
