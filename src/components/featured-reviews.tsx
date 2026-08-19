@@ -5,10 +5,8 @@ import { useRef, useState } from "react"
 import { ReviewCard } from "@/components/reviews/review-card"
 import { Reveal } from "@/components/motion/reveal"
 import { Glow } from "@/components/glow"
-import { ButtonComets } from "@/components/button-comets"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { useOnceVisible } from "@/lib/use-once-visible"
 import type { Review } from "@/lib/reviews-data"
 
 const SWIPE_THRESHOLD_PX = 40
@@ -17,7 +15,6 @@ export function FeaturedReviews({ reviews, guideName }: { reviews: Review[]; gui
   const featured = [...reviews].sort((a, b) => (b.text?.length ?? 0) - (a.text?.length ?? 0)).slice(0, 3)
   const [active, setActive] = useState(0)
   const touchStartX = useRef<number | null>(null)
-  const { ref: ctaRef, visible: ctaVisible } = useOnceVisible<HTMLAnchorElement>()
 
   if (featured.length === 0) return null
 
@@ -76,13 +73,10 @@ export function FeaturedReviews({ reviews, guideName }: { reviews: Review[]; gui
         ))}
       </div>
 
-      <div className="mt-16 flex flex-col items-center gap-6">
-        <div className="relative inline-flex">
-          <Link ref={ctaRef} href="/tours" className={cn(buttonVariants(), ctaVisible && "cta-blink-once")}>
-            Выбрать тур
-          </Link>
-          <ButtonComets />
-        </div>
+      <div className="mt-6 flex flex-col items-center gap-3">
+        <Link href="/tours" className={cn(buttonVariants({ size: "lg" }), "w-full sm:w-auto")}>
+          Выбрать тур
+        </Link>
         <Link href="/reviews" className="text-sm text-primary hover:underline">
           Все отзывы →
         </Link>

@@ -283,47 +283,25 @@
   animation: tour-caption-blink 0.9s ease-in-out 1;
 }
 
-/* Стрелки-кометы, летящие в финальную кнопку "Выбрать тур" со всех сторон
-   (см. ButtonComets в button-comets.tsx) — каждая плывёт к центру и
-   растворяется, по кругу читается как воронка, сходящаяся в кнопку.
-   --comet-opacity — целевая яркость своей стрелки (задана инлайн, у каждой
-   своя), а не сквозная на весь блок. */
-@keyframes comet-arrow-flow {
-  0% {
-    transform: translateY(-10px);
-    opacity: 0;
-  }
-  18%,
-  70% {
-    transform: translateY(0);
-    opacity: var(--comet-opacity, 1);
-  }
+/* Кнопка "Выбрать тур" на последнем слайде героя периодически коротко
+   "моргает" — 2 быстрых пульса подряд, потом долгая пауза, и по кругу
+   (Виктор, после того как стрелки-подсказки не прижились: "чтобы моргала,
+   приглашала нажать, 2 раза с каким-то интервалом"). */
+@keyframes cta-invite-pulse {
+  0%,
+  16%,
   100% {
-    transform: translateY(16px);
-    opacity: 0;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-primary) 55%, transparent);
+  }
+  4%,
+  12% {
+    transform: scale(1.035);
+    box-shadow: 0 0 0 10px color-mix(in oklch, var(--color-primary) 0%, transparent);
   }
 }
-.comet-arrow {
-  animation: comet-arrow-flow 2.6s ease-in-out infinite;
-}
-
-/* Кнопка один раз "моргает" колечком, когда финальный CTA попадает в зону
-   видимости (см. useOnceVisible + cta-blink-once в TourCtaButton/
-   FeaturedReviews) — конец воронки, акцент "жми сюда", а не бесконечный
-   цикл (Виктор: "моргает по 1 разу"). */
-@keyframes cta-blink-once {
-  0% {
-    box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-primary) 60%, transparent);
-  }
-  60% {
-    box-shadow: 0 0 0 16px color-mix(in oklch, var(--color-primary) 0%, transparent);
-  }
-  100% {
-    box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-primary) 0%, transparent);
-  }
-}
-.cta-blink-once {
-  animation: cta-blink-once 0.9s ease-out 1;
+.cta-invite-pulse {
+  animation: cta-invite-pulse 5s ease-in-out infinite;
 }
 
 .phone-input {
