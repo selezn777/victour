@@ -5,9 +5,10 @@ import { useRef, useState } from "react"
 import { ReviewCard } from "@/components/reviews/review-card"
 import { Reveal } from "@/components/motion/reveal"
 import { Glow } from "@/components/glow"
-import { ScrollHintArrows } from "@/components/scroll-hint-arrows"
+import { ButtonComets } from "@/components/button-comets"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useOnceVisible } from "@/lib/use-once-visible"
 import type { Review } from "@/lib/reviews-data"
 
 const SWIPE_THRESHOLD_PX = 40
@@ -16,6 +17,7 @@ export function FeaturedReviews({ reviews, guideName }: { reviews: Review[]; gui
   const featured = [...reviews].sort((a, b) => (b.text?.length ?? 0) - (a.text?.length ?? 0)).slice(0, 3)
   const [active, setActive] = useState(0)
   const touchStartX = useRef<number | null>(null)
+  const { ref: ctaRef, visible: ctaVisible } = useOnceVisible<HTMLAnchorElement>()
 
   if (featured.length === 0) return null
 
@@ -74,11 +76,13 @@ export function FeaturedReviews({ reviews, guideName }: { reviews: Review[]; gui
         ))}
       </div>
 
-      <div className="relative mt-10 flex flex-col items-center gap-3">
-        <ScrollHintArrows />
-        <Link href="/tours" className={cn(buttonVariants(), "w-full sm:w-auto")}>
-          Выбрать тур
-        </Link>
+      <div className="mt-10 flex flex-col items-center gap-3">
+        <div className="relative inline-flex">
+          <Link ref={ctaRef} href="/tours" className={cn(buttonVariants(), ctaVisible && "cta-blink-once")}>
+            Выбрать тур
+          </Link>
+          <ButtonComets />
+        </div>
         <Link href="/reviews" className="text-sm text-primary hover:underline">
           Все отзывы →
         </Link>

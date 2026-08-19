@@ -283,29 +283,47 @@
   animation: tour-caption-blink 0.9s ease-in-out 1;
 }
 
-/* Стрелки-подсказка над кнопкой на последнем слайде (QuoteSlide) — цепочка
-   из 5 "комет" (см. HINT_ARROWS в advantages-section.tsx), каждая плывёт
-   вниз к кнопке и растворяется, следующая появляется следом — читается как
-   непрерывный поток, ведущий взгляд к "Выбрать тур" (Виктор: "как будто
-   от отзывов ведут прямо сюда"). --hint-opacity — целевая яркость своей
-   стрелки (задана инлайн, у каждой своя), а не сквозная на весь блок. */
-@keyframes hint-arrow-flow {
+/* Стрелки-кометы, летящие в финальную кнопку "Выбрать тур" со всех сторон
+   (см. ButtonComets в button-comets.tsx) — каждая плывёт к центру и
+   растворяется, по кругу читается как воронка, сходящаяся в кнопку.
+   --comet-opacity — целевая яркость своей стрелки (задана инлайн, у каждой
+   своя), а не сквозная на весь блок. */
+@keyframes comet-arrow-flow {
   0% {
-    transform: translateY(-8px);
+    transform: translateY(-10px);
     opacity: 0;
   }
   18%,
   70% {
     transform: translateY(0);
-    opacity: var(--hint-opacity, 1);
+    opacity: var(--comet-opacity, 1);
   }
   100% {
-    transform: translateY(14px);
+    transform: translateY(16px);
     opacity: 0;
   }
 }
-.hint-arrow {
-  animation: hint-arrow-flow 2.6s ease-in-out infinite;
+.comet-arrow {
+  animation: comet-arrow-flow 2.6s ease-in-out infinite;
+}
+
+/* Кнопка один раз "моргает" колечком, когда финальный CTA попадает в зону
+   видимости (см. useOnceVisible + cta-blink-once в TourCtaButton/
+   FeaturedReviews) — конец воронки, акцент "жми сюда", а не бесконечный
+   цикл (Виктор: "моргает по 1 разу"). */
+@keyframes cta-blink-once {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-primary) 60%, transparent);
+  }
+  60% {
+    box-shadow: 0 0 0 16px color-mix(in oklch, var(--color-primary) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-primary) 0%, transparent);
+  }
+}
+.cta-blink-once {
+  animation: cta-blink-once 0.9s ease-out 1;
 }
 
 .phone-input {

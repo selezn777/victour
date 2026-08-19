@@ -5,19 +5,33 @@ import Link from "next/link"
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import { SlideDeck } from "@/components/slide-deck"
 import { PhotoStack } from "@/components/photo-stack"
-import { ScrollHintArrows } from "@/components/scroll-hint-arrows"
+import { ButtonComets } from "@/components/button-comets"
+import { useOnceVisible } from "@/lib/use-once-visible"
+import { cn } from "@/lib/utils"
 import type { Review } from "@/lib/reviews-data"
 
+// hint — только на последнем слайде (QuoteSlide): кнопка там не на всю
+// ширину, а по размеру текста, чтобы вокруг было место для комет со всех
+// сторон (см. ButtonComets) — на остальных слайдах кнопка как была, во всю
+// ширину.
 function TourCtaButton({ hint = false }: { hint?: boolean }) {
+  const { ref, visible } = useOnceVisible<HTMLAnchorElement>()
   return (
-    <div className="relative mt-6 w-full self-stretch">
-      {hint && <ScrollHintArrows />}
-      <Link
-        href="/tours"
-        className="flex w-full items-center justify-center rounded-2xl bg-primary px-8 py-5 text-lg font-semibold text-primary-foreground shadow-[0_10px_40px_-8px] shadow-primary/35 ring-1 ring-primary-foreground/10 transition-all hover:scale-[1.02] hover:bg-primary/90 hover:shadow-primary/50 active:scale-[0.98] sm:py-6 sm:text-xl"
-      >
-        Выбрать тур
-      </Link>
+    <div className={cn("mt-6 flex w-full self-stretch", hint ? "justify-center" : "")}>
+      <div className={cn("relative", hint ? "inline-flex" : "w-full")}>
+        <Link
+          ref={hint ? ref : undefined}
+          href="/tours"
+          className={cn(
+            "flex items-center justify-center rounded-2xl bg-primary px-8 py-5 text-lg font-semibold text-primary-foreground shadow-[0_10px_40px_-8px] shadow-primary/35 ring-1 ring-primary-foreground/10 transition-all hover:scale-[1.02] hover:bg-primary/90 hover:shadow-primary/50 active:scale-[0.98] sm:py-6 sm:text-xl",
+            hint ? "" : "w-full",
+            hint && visible && "cta-blink-once",
+          )}
+        >
+          Выбрать тур
+        </Link>
+        {hint && <ButtonComets />}
+      </div>
     </div>
   )
 }
