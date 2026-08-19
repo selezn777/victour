@@ -2,8 +2,6 @@ import Link from "next/link"
 import { ReviewCard } from "@/components/reviews/review-card"
 import { Reveal } from "@/components/motion/reveal"
 import { Glow } from "@/components/glow"
-import { buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 import type { Review } from "@/lib/reviews-data"
 
 export function FeaturedReviews({ reviews, guideName }: { reviews: Review[]; guideName: string | null }) {
@@ -31,9 +29,6 @@ export function FeaturedReviews({ reviews, guideName }: { reviews: Review[]; gui
       </div>
 
       <div className="mt-6 flex flex-col items-center gap-3">
-        <Link href="/tours" className={cn(buttonVariants({ size: "lg" }), "w-full sm:w-auto")}>
-          Выбрать тур
-        </Link>
         <Link href="/reviews" className="text-sm text-primary hover:underline">
           Все отзывы →
         </Link>
