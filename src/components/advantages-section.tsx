@@ -234,19 +234,40 @@ function useRevealCycle(bandIndex: number, getOrigin: (idx: number) => string) {
   return { phase, target, origin }
 }
 
-// Плитки грузятся параллельно, но раньше проступали в строгом порядке слева
-// направо/сверху вниз — читалось как "страница ещё грузится" (Виктор: "видно,
-// что страница грузится"). Плитка теперь непрозрачна, пока её файл реально не
-// пришёл (onLoad), и мягко проявляется — плитки с более быстрым соединением
-// (не обязательно те, что раньше в DOM) проступают раньше остальных, эффект
-// читается как "тут-там" заполнение коллажа, а не последовательная протирка.
+// Плитки грузятся строго по порядку слева направо/сверху вниз, если просто
+// положиться на onLoad каждой <Image> — браузер и так тянет их по DOM-порядку
+// (плюс priority у первых усугублял это), и коллаж "дочерчивался" по рядам, а
+// не собирался как пазл (Виктор дважды: "видно, что страница грузится",
+// "чтобы как будто из пазла собирали"). Реальную загрузку каждой картинки
+// (<Image onLoad>) больше не используем для показа — вместо этого сами гоним
+// перемешанный порядок через preloadImage с фиксированным шагом (см. эффект
+// ниже), так что визуальная последовательность появления плиток — рандом,
+// не зависящий от того, в каком порядке реально ответила сеть.
 const TILE_FADE_MS = 260
+const TILE_STAGGER_MS = 45
 
 function PhotoCollage() {
   const [loadedTiles, setLoadedTiles] = useState<Set<number>>(() => new Set())
   const markLoaded = useCallback((i: number) => {
     setLoadedTiles((prev) => (prev.has(i) ? prev : new Set(prev).add(i)))
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    const order = shuffledIndices(COLLAGE_PHOTO_COUNT)
+    ;(async () => {
+      for (const idx of order) {
+        if (cancelled) return
+        await preloadImage(COLLAGE_PHOTOS[idx])
+        if (cancelled) return
+        markLoaded(idx)
+        await new Promise((resolve) => setTimeout(resolve, TILE_STAGGER_MS))
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [markLoaded])
 
   // Реальные DOM-узлы плиток и полос — источник истины для origin (см.
   // makeGetOrigin ниже). tileRefs держит саму map между рендерами (не влияет на
@@ -314,10 +335,8 @@ function PhotoCollage() {
                 src={src}
                 alt=""
                 fill
-                priority={i < 16}
                 sizes="(min-width: 1024px) 8vw, (min-width: 640px) 11vw, 12.5vw"
                 className="object-cover"
-                onLoad={() => markLoaded(i)}
                 style={{
                   opacity: loadedTiles.has(i) ? 1 : 0,
                   transition: `opacity ${TILE_FADE_MS}ms ease-out`,
