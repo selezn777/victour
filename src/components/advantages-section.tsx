@@ -252,11 +252,32 @@ function useRevealCycle(bandIndex: number, getOrigin: (idx: number) => string) {
 const TILE_FADE_MS = 260
 const TILE_STAGGER_MS = 45
 
+// На медленной сети чёрный блок держится заметно даже с плейсхолдером —
+// Виктор: "пусть 1 фотка загрузится, откроется на всю [область], а
+// остальные пока подгружаются, потом она уходит назад в сетку". heroIndex —
+// одна случайная плитка, которую грузим отдельно, крупно (sizes 100vw, не
+// как маленький тайл) и с priority — как только она пришла, показываем на
+// весь блок; как только сетка сама набрала достаточно плиток (GRID_READY_
+// FRACTION), большое фото гасим (opacity), сетка проступает под ним.
+const GRID_READY_FRACTION = 0.7
+
 function PhotoCollage() {
   const [loadedTiles, setLoadedTiles] = useState<Set<number>>(() => new Set())
   const markLoaded = useCallback((i: number) => {
     setLoadedTiles((prev) => (prev.has(i) ? prev : new Set(prev).add(i)))
   }, [])
+  // heroIndex выбирается ТОЛЬКО на клиенте (useEffect, не useState-инициализатор) —
+  // Math.random() в инициализаторе state рвал бы гидратацию: сервер и клиент
+  // вызывают его по отдельности и почти всегда получают разные индексы, из-за
+  // чего React не мог сверить SSR-разметку с клиентской (реальный баг, поймал
+  // через "hydrated but some attributes... didn't match" в консоли).
+  const [heroIndex, setHeroIndex] = useState<number | null>(null)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- намеренно: значение обязано появиться ПОСЛЕ гидратации, иначе снова рассинхрон SSR/клиент
+    setHeroIndex(Math.floor(Math.random() * COLLAGE_PHOTO_COUNT))
+  }, [])
+  const [heroLoaded, setHeroLoaded] = useState(false)
+  const gridReady = loadedTiles.size >= COLLAGE_PHOTO_COUNT * GRID_READY_FRACTION
 
   useEffect(() => {
     let cancelled = false
@@ -322,6 +343,28 @@ function PhotoCollage() {
     // (% от высоты слайда) — на широком экране та же формула строк даёт сетку
     // выше, чем есть места под заголовок, overflow-hidden подчищает лишнее.
     <div className="relative w-full shrink-0 overflow-hidden sm:h-[38svh] lg:h-[32svh]">
+      {heroIndex !== null && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-10 transition-opacity duration-700 ease-out"
+          style={{ opacity: heroLoaded && !gridReady ? 1 : 0 }}
+        >
+          <Image
+            src={COLLAGE_PHOTOS[heroIndex]}
+            alt=""
+            fill
+            priority
+            // Фиксированный небольшой размер, а не "100vw" — это только
+            // временная заглушка на время загрузки сетки, ей не нужна
+            // чёткость на весь экран, а вот на медленной сети/большом DPR
+            // "100vw" иногда запрашивал огромный вариант (3840px) и сам же
+            // грузился дольше, чем вся остальная сетка.
+            sizes="640px"
+            className="object-cover"
+            onLoad={() => setHeroLoaded(true)}
+          />
+        </div>
+      )}
       <div className="grid w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
         {COLLAGE_PHOTOS.map((src, i) => {
           const isPriming = activeByTile.get(i)?.phase === "priming"
@@ -875,7 +918,15 @@ const SWIPE_THRESHOLD_PX = 40
 // только нижнюю (не единой парой), и сам переход — чуть мягче (длиннее и
 // меньше сдвиг), чем было. Каждая карточка — свой независимый "слот" со
 // своим индексом по общему пулу отзывов.
-function useQuoteSlot(quotes: Quote[], startIndex: number) {
+// Автопереключение — Виктор: "отзывы с достаточно ощутимо большим
+// интервалом переключаются рандомно" (не только по свайпу). Целевой индекс —
+// случайный из ОСТАЛЬНЫХ (не текущий), не просто "следующий по кругу" —
+// иначе выглядело бы как обычная карусель, а не "рандомно". staggerMs
+// сдвигает старт первого тика для нижнего слота, чтобы верхняя и нижняя
+// карточки не переключались синхронно одним и тем же кадром.
+const AUTO_ROTATE_MS = 6000
+
+function useQuoteSlot(quotes: Quote[], startIndex: number, staggerMs = 0) {
   const [index, setIndex] = useState(startIndex)
   const [direction, setDirection] = useState<1 | -1>(1)
   // setTimeout, а не requestAnimationFrame — см. коммит с фиксом выше: rAF в
@@ -894,6 +945,27 @@ function useQuoteSlot(quotes: Quote[], startIndex: number) {
     setEntering(true)
     setIndex((i) => (i + dir + quotes.length) % quotes.length)
   }
+
+  useEffect(() => {
+    if (quotes.length <= 1) return
+    let intervalId: ReturnType<typeof setInterval> | undefined
+    const startTimer = window.setTimeout(() => {
+      intervalId = setInterval(() => {
+        setDirection(1)
+        setEntering(true)
+        setIndex((i) => {
+          if (quotes.length <= 1) return i
+          let next = Math.floor(Math.random() * quotes.length)
+          while (next === i) next = Math.floor(Math.random() * quotes.length)
+          return next
+        })
+      }, AUTO_ROTATE_MS)
+    }, staggerMs)
+    return () => {
+      window.clearTimeout(startTimer)
+      if (intervalId) clearInterval(intervalId)
+    }
+  }, [quotes.length, staggerMs])
 
   const goTo = (i: number) => {
     setDirection(i > index ? 1 : -1)
@@ -956,7 +1028,7 @@ function QuoteSlotView({ slot, count }: { slot: ReturnType<typeof useQuoteSlot>;
 function QuotePairs({ quotes }: { quotes: Quote[] }) {
   const safeQuotes = quotes.length > 0 ? quotes : [{ quote: "", author: "" }]
   const top = useQuoteSlot(safeQuotes, 0)
-  const bottom = useQuoteSlot(safeQuotes, Math.min(1, safeQuotes.length - 1))
+  const bottom = useQuoteSlot(safeQuotes, Math.min(1, safeQuotes.length - 1), AUTO_ROTATE_MS / 2)
 
   if (quotes.length === 0) return null
 

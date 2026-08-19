@@ -301,7 +301,7 @@
   }
 }
 .cta-invite-pulse {
-  animation: cta-invite-pulse 5s ease-in-out infinite;
+  animation: cta-invite-pulse 3s ease-in-out infinite;
 }
 
 .phone-input {
