@@ -692,7 +692,7 @@ function ValuesSlide({
             ))}
           </div>
         </div>
-        <TourCtaButton />
+        <TourCtaButton hint />
       </div>
     </div>
   )
