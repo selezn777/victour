@@ -869,10 +869,13 @@ export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
           imageAlt="Салон премиального минивэна с кожаными креслами"
           imagePosition="30% 50%"
           stackImages={[
-            "/images/hero/premium-van-interior-2.jpg",
             "/images/hero/premium-van-exterior.jpg",
-            "/images/hero/premium-van-interior-3.jpg",
-            "/images/hero/premium-van-interior-4.jpg",
+            "/images/hero/premium-van-interior-5.jpg",
+            "/images/hero/premium-van-interior-6.jpg",
+            "/images/hero/premium-van-interior-7.jpg",
+            "/images/hero/premium-van-exterior-2.jpg",
+            "/images/hero/premium-van-interior-8.jpg",
+            "/images/hero/premium-van-exterior-3.jpg",
           ]}
         />,
         <ToursSlide key="tours" />,
