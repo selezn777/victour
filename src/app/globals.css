@@ -283,6 +283,31 @@
   animation: tour-caption-blink 0.9s ease-in-out 1;
 }
 
+/* Стрелки-подсказка над кнопкой на последнем слайде (QuoteSlide) — цепочка
+   из 5 "комет" (см. HINT_ARROWS в advantages-section.tsx), каждая плывёт
+   вниз к кнопке и растворяется, следующая появляется следом — читается как
+   непрерывный поток, ведущий взгляд к "Выбрать тур" (Виктор: "как будто
+   от отзывов ведут прямо сюда"). --hint-opacity — целевая яркость своей
+   стрелки (задана инлайн, у каждой своя), а не сквозная на весь блок. */
+@keyframes hint-arrow-flow {
+  0% {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  18%,
+  70% {
+    transform: translateY(0);
+    opacity: var(--hint-opacity, 1);
+  }
+  100% {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+}
+.hint-arrow {
+  animation: hint-arrow-flow 2.6s ease-in-out infinite;
+}
+
 .phone-input {
   height: 2.75rem;
   width: 100%;

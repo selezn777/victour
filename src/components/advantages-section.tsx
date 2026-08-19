@@ -2,7 +2,6 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronDownIcon } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { SlideDeck } from "@/components/slide-deck"
 import { PhotoStack } from "@/components/photo-stack"
@@ -12,20 +11,67 @@ import type { Review } from "@/lib/reviews-data"
 // нет), поэтому вместо общей подсказки "листай дальше" (см. swipeHint в
 // SlideDeck) именно здесь, над кнопкой, — свой указатель, прямо над кнопкой,
 // а не общий намёк снизу экрана (Виктор: "чтобы стрелочка показывала именно
-// на кнопку выбрать тур"). Без анимации и тише по цвету — тот же принцип,
-// что и у общей подсказки: намёк на направление, а не поторапливание.
+// на кнопку выбрать тур"). Раньше было 2 тихих неподвижных шеврона — Виктор
+// после первой версии попросил заметнее: не 1 стрелочка, а штук 5, у каждой
+// свой хвостик (как комета), и чтобы они прямо "вели" от отзывов к кнопке —
+// поэтому здесь осознанно нарушаем принцип "без анимации" у соседних
+// подсказок (swipeHint/точки коллажа): тут это не намёк на направление
+// свайпа, а конкретное "жми сюда" под самым низом воронки.
+const HINT_ARROWS = [
+  { top: -112, width: 16, opacity: 0.45, delay: 0 },
+  { top: -90, width: 18.5, opacity: 0.58, delay: 0.22 },
+  { top: -68, width: 21, opacity: 0.72, delay: 0.44 },
+  { top: -46, width: 23.5, opacity: 0.86, delay: 0.66 },
+  { top: -24, width: 26, opacity: 1, delay: 0.88 },
+]
+
+function ScrollHintArrows() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 top-0 flex justify-center text-primary"
+    >
+      <div className="relative h-28 w-8">
+        {HINT_ARROWS.map((arrow, i) => (
+          <svg
+            key={i}
+            viewBox="0 0 24 34"
+            className="hint-arrow absolute left-1/2 -translate-x-1/2"
+            style={{
+              top: arrow.top,
+              width: arrow.width,
+              height: (arrow.width * 34) / 24,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- CSS custom property
+              ["--hint-opacity" as any]: arrow.opacity,
+              animationDelay: `${arrow.delay}s`,
+            }}
+          >
+            <defs>
+              <linearGradient id={`hint-tail-${i}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="currentColor" stopOpacity="0" />
+                <stop offset="100%" stopColor="currentColor" stopOpacity="1" />
+              </linearGradient>
+            </defs>
+            <path d="M12 0 L12 19" stroke={`url(#hint-tail-${i})`} strokeWidth="2" strokeLinecap="round" fill="none" />
+            <path
+              d="M5 15 L12 23 L19 15"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+          </svg>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function TourCtaButton({ hint = false }: { hint?: boolean }) {
   return (
     <div className="relative mt-6 w-full self-stretch">
-      {hint && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-8 left-1/2 flex -translate-x-1/2 flex-col items-center -space-y-3 text-primary opacity-50"
-        >
-          <ChevronDownIcon className="size-5" />
-          <ChevronDownIcon className="size-5" />
-        </div>
-      )}
+      {hint && <ScrollHintArrows />}
       <Link
         href="/tours"
         className="flex w-full items-center justify-center rounded-2xl bg-primary px-8 py-5 text-lg font-semibold text-primary-foreground shadow-[0_10px_40px_-8px] shadow-primary/35 ring-1 ring-primary-foreground/10 transition-all hover:scale-[1.02] hover:bg-primary/90 hover:shadow-primary/50 active:scale-[0.98] sm:py-6 sm:text-xl"
@@ -874,11 +920,9 @@ function QuotePairs({ quotes }: { quotes: Quote[] }) {
 
 function QuoteSlide({
   title,
-  body,
   quotes,
 }: {
   title: string
-  body: string
   quotes: Quote[]
 }) {
   return (
@@ -887,9 +931,6 @@ function QuoteSlide({
         <h2 className="max-w-2xl font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">
           {title}
         </h2>
-        <p className="mt-2 max-w-2xl text-sm leading-snug text-muted-foreground sm:mt-3 sm:text-base sm:leading-relaxed">
-          {body}
-        </p>
 
         <QuotePairs quotes={quotes} />
 
@@ -959,7 +1000,6 @@ export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
         <QuoteSlide
           key="guide"
           title="Что говорят гости, которые уже были с нами"
-          body="Внимание к мелочам и забота о безопасности — вот что нам чаще всего пишут после поездки."
           quotes={heroQuotes.map(reviewToQuote)}
         />,
       ]}
