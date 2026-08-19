@@ -17,7 +17,7 @@ import type { Review } from "@/lib/reviews-data"
 function TourCtaButton({ hint = false }: { hint?: boolean }) {
   const { ref, visible } = useOnceVisible<HTMLAnchorElement>()
   return (
-    <div className={cn("flex w-full self-stretch", hint ? "mt-10 justify-center" : "mt-6")}>
+    <div className={cn("flex w-full self-stretch", hint ? "mt-14 justify-center" : "mt-6")}>
       <div className={cn("relative", hint ? "inline-flex" : "w-full")}>
         <Link
           ref={hint ? ref : undefined}
@@ -30,7 +30,7 @@ function TourCtaButton({ hint = false }: { hint?: boolean }) {
         >
           Выбрать тур
         </Link>
-        {hint && <ButtonComets />}
+        {hint && <ButtonComets size="lg" />}
       </div>
     </div>
   )
@@ -954,7 +954,7 @@ function QuoteSlide({
         )}
 
         <TourCtaButton hint />
-        <Link href="/reviews" className="mt-8 text-sm text-primary hover:underline">
+        <Link href="/reviews" className="mt-10 text-sm text-primary hover:underline">
           Все отзывы →
         </Link>
       </div>
