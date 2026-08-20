@@ -242,15 +242,20 @@ function useRevealCycle(bandIndex: number, getOrigin: (idx: number) => string) {
 // (<Image onLoad>) больше не используем для показа — вместо этого сами гоним
 // перемешанный порядок через preloadImage (см. эффект ниже).
 //
-// ВАЖНО: все preloadImage запускаются СРАЗУ, параллельно (не await в цикле
-// по одному) — первая версия этого эффекта ждала каждую картинку по очереди
-// и на реальной мобильной сети коллаж из-за этого не показывался очень
-// долго (Виктор: "открыл — долго ничего не грузится"), хотя раньше, когда
-// <Image> грузились каждая сама по себе, было быстрее. Задержка на каждую
-// плитку теперь чисто визуальная (для темпа появления) и включается ПОСЛЕ
-// того, как картинка реально пришла, а не блокирует остальные загрузки.
+// ВАЖНО: preloadImage запускаются пулом из COLLAGE_CONCURRENCY одновременных
+// загрузок (не await в цикле по одному — так было в первой версии, коллаж
+// из-за этого не показывался очень долго: Виктор "открыл — долго ничего не
+// грузится"; и не все 65 сразу без лимита — так было во второй версии, но на
+// медленной мобильной сети (49 КБ/с) 65 параллельных запросов делят между
+// собой один и тот же узкий канал, и ни один не доходит быстро — тот же
+// эффект, просто по другой причине: Виктор снова "фотки грузятся очень
+// долго"). Пул — как только одна картинка пришла, тут же стартует следующая,
+// но одновременно активно не больше COLLAGE_CONCURRENCY запросов. Задержка
+// на каждую плитку — чисто визуальная (для темпа появления), включается
+// ПОСЛЕ того, как картинка реально пришла.
 const TILE_FADE_MS = 260
 const TILE_STAGGER_MS = 45
+const COLLAGE_CONCURRENCY = 6
 
 // На медленной сети чёрный блок держится заметно даже с плейсхолдером —
 // Виктор: "пусть 1 фотка загрузится, откроется на всю [область], а
@@ -283,12 +288,21 @@ function PhotoCollage() {
     let cancelled = false
     const timers: ReturnType<typeof setTimeout>[] = []
     const order = shuffledIndices(COLLAGE_PHOTO_COUNT)
-    order.forEach((idx, i) => {
+    let next = 0
+    let done = 0
+    const runNext = () => {
+      if (cancelled || next >= order.length) return
+      const idx = order[next]
+      next += 1
       preloadImage(COLLAGE_PHOTOS[idx]).then(() => {
         if (cancelled) return
+        const i = done
+        done += 1
         timers.push(setTimeout(() => !cancelled && markLoaded(idx), i * TILE_STAGGER_MS))
+        runNext()
       })
-    })
+    }
+    for (let k = 0; k < COLLAGE_CONCURRENCY; k++) runNext()
     return () => {
       cancelled = true
       timers.forEach(clearTimeout)
