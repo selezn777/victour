@@ -160,12 +160,17 @@ function preloadImage(src: string) {
 // getBoundingClientRect устраняет этот класс багов в принципе — раскрытие
 // физически не может разъехаться с плиткой, потому что берёт координаты
 // напрямую из уже отрисованного макета.
-function useRevealCycle(bandIndex: number, getOrigin: (idx: number) => string) {
+function useRevealCycle(bandIndex: number, getOrigin: (idx: number) => string, ready: boolean) {
   const [phase, setPhase] = useState<Phase>("idle")
   const [target, setTarget] = useState(0)
   const [origin, setOrigin] = useState("50% 50%")
 
   useEffect(() => {
+    // Не стартуем раскрытие, пока мозаика сама ещё не прогрузилась целиком —
+    // Виктор: одна плитка раскрывалась крупно поверх сетки, пока остальные
+    // плитки ещё были плейсхолдерами, выглядело как два конкурирующих слоя.
+    // Эффект просто перезапустится сам, когда ready станет true (см. deps).
+    if (!ready) return
     let cancelled = false
     let order: number[] = []
     let step = 0
@@ -229,7 +234,7 @@ function useRevealCycle(bandIndex: number, getOrigin: (idx: number) => string) {
       cancelled = true
       timers.forEach(clearTimeout)
     }
-  }, [bandIndex, getOrigin])
+  }, [bandIndex, getOrigin, ready])
 
   return { phase, target, origin }
 }
@@ -257,32 +262,20 @@ const TILE_FADE_MS = 260
 const TILE_STAGGER_MS = 45
 const COLLAGE_CONCURRENCY = 6
 
-// На медленной сети чёрный блок держится заметно даже с плейсхолдером —
-// Виктор: "пусть 1 фотка загрузится, откроется на всю [область], а
-// остальные пока подгружаются, потом она уходит назад в сетку". heroIndex —
-// одна случайная плитка, которую грузим отдельно, крупно (sizes 100vw, не
-// как маленький тайл) и с priority — как только она пришла, показываем на
-// весь блок; как только сетка сама набрала достаточно плиток (GRID_READY_
-// FRACTION), большое фото гасим (opacity), сетка проступает под ним.
-const GRID_READY_FRACTION = 0.7
-
+// Раньше была ещё крупная "hero"-плитка на всю область поверх сетки, пока
+// сетка грузится (заглушка на время загрузки) — Виктор: одна фотка держится
+// крупно, а раскрытие (см. useRevealCycle ниже) уже открывает поверх нее
+// другую плитку, до того как основная мозаика вообще успела прогрузиться —
+// "не красиво". Убрано: пока сетка не набрала все плитки, показываем только
+// плейсхолдеры (bg-white/15 pulse), без отдельного крупного фото поверх.
+// gridReady — сигнал для useRevealCycle (см. ready ниже): раскрытие плиток
+// начинается только после того, как вся мозаика уже видна целиком, не раньше.
 function PhotoCollage() {
   const [loadedTiles, setLoadedTiles] = useState<Set<number>>(() => new Set())
   const markLoaded = useCallback((i: number) => {
     setLoadedTiles((prev) => (prev.has(i) ? prev : new Set(prev).add(i)))
   }, [])
-  // heroIndex выбирается ТОЛЬКО на клиенте (useEffect, не useState-инициализатор) —
-  // Math.random() в инициализаторе state рвал бы гидратацию: сервер и клиент
-  // вызывают его по отдельности и почти всегда получают разные индексы, из-за
-  // чего React не мог сверить SSR-разметку с клиентской (реальный баг, поймал
-  // через "hydrated but some attributes... didn't match" в консоли).
-  const [heroIndex, setHeroIndex] = useState<number | null>(null)
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- намеренно: значение обязано появиться ПОСЛЕ гидратации, иначе снова рассинхрон SSR/клиент
-    setHeroIndex(Math.floor(Math.random() * COLLAGE_PHOTO_COUNT))
-  }, [])
-  const [heroLoaded, setHeroLoaded] = useState(false)
-  const gridReady = loadedTiles.size >= COLLAGE_PHOTO_COUNT * GRID_READY_FRACTION
+  const gridReady = loadedTiles.size >= COLLAGE_PHOTO_COUNT
 
   useEffect(() => {
     let cancelled = false
@@ -345,9 +338,9 @@ function PhotoCollage() {
   // ждёт (bandIndex >= bandCountForWidth). Хуков всегда ровно 3 — иначе нарушится
   // React Rules of Hooks при смене ширины окна.
   const reveals = [
-    useRevealCycle(0, getOrigin0),
-    useRevealCycle(1, getOrigin1),
-    useRevealCycle(2, getOrigin2),
+    useRevealCycle(0, getOrigin0, gridReady),
+    useRevealCycle(1, getOrigin1, gridReady),
+    useRevealCycle(2, getOrigin2, gridReady),
   ]
   const activeByTile = new Map(reveals.filter((r) => r.phase !== "idle").map((r) => [r.target, r]))
 
@@ -357,28 +350,6 @@ function PhotoCollage() {
     // (% от высоты слайда) — на широком экране та же формула строк даёт сетку
     // выше, чем есть места под заголовок, overflow-hidden подчищает лишнее.
     <div className="relative w-full shrink-0 overflow-hidden sm:h-[38svh] lg:h-[32svh]">
-      {heroIndex !== null && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-10 transition-opacity duration-700 ease-out"
-          style={{ opacity: heroLoaded && !gridReady ? 1 : 0 }}
-        >
-          <Image
-            src={COLLAGE_PHOTOS[heroIndex]}
-            alt=""
-            fill
-            priority
-            // Фиксированный небольшой размер, а не "100vw" — это только
-            // временная заглушка на время загрузки сетки, ей не нужна
-            // чёткость на весь экран, а вот на медленной сети/большом DPR
-            // "100vw" иногда запрашивал огромный вариант (3840px) и сам же
-            // грузился дольше, чем вся остальная сетка.
-            sizes="640px"
-            className="object-cover"
-            onLoad={() => setHeroLoaded(true)}
-          />
-        </div>
-      )}
       <div className="grid w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
         {COLLAGE_PHOTOS.map((src, i) => {
           const isPriming = activeByTile.get(i)?.phase === "priming"
