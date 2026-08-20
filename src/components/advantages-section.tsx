@@ -160,10 +160,13 @@ function preloadImage(src: string) {
 // getBoundingClientRect устраняет этот класс багов в принципе — раскрытие
 // физически не может разъехаться с плиткой, потому что берёт координаты
 // напрямую из уже отрисованного макета.
-function useRevealCycle(bandIndex: number, getOrigin: (idx: number) => string, ready: boolean) {
+type Measurement = { origin: string; scaleX: number; scaleY: number }
+
+function useRevealCycle(bandIndex: number, measure: (idx: number) => Measurement, ready: boolean) {
   const [phase, setPhase] = useState<Phase>("idle")
   const [target, setTarget] = useState(0)
   const [origin, setOrigin] = useState("50% 50%")
+  const [closedScale, setClosedScale] = useState({ x: 0.15, y: 0.15 })
 
   useEffect(() => {
     // Не стартуем раскрытие, пока мозаика сама ещё не прогрузилась целиком —
@@ -211,8 +214,10 @@ function useRevealCycle(bandIndex: number, getOrigin: (idx: number) => string, r
       }
       const idx = order[step]
       step += 1
+      const m = measure(idx)
       setTarget(idx)
-      setOrigin(getOrigin(idx))
+      setOrigin(m.origin)
+      setClosedScale({ x: m.scaleX, y: m.scaleY })
       setPhase("priming")
       Promise.all([preloadImage(COLLAGE_PHOTOS[idx]), wait(PRIME_MS)]).then(() => {
         if (cancelled) return
@@ -234,9 +239,9 @@ function useRevealCycle(bandIndex: number, getOrigin: (idx: number) => string, r
       cancelled = true
       timers.forEach(clearTimeout)
     }
-  }, [bandIndex, getOrigin, ready])
+  }, [bandIndex, measure, ready])
 
-  return { phase, target, origin }
+  return { phase, target, origin, closedScale }
 }
 
 // Плитки грузятся строго по порядку слева направо/сверху вниз, если просто
@@ -318,29 +323,42 @@ function PhotoCollage() {
   // вызова, ей нечему устаревать — но её identity ОБЯЗАНА быть стабильной
   // между рендерами, иначе useEffect в useRevealCycle (у него getOrigin в
   // deps) перезапускался бы на каждый ре-рендер и сбрасывал весь цикл.
+  // Возвращает не только точку роста, но и closedScale — реальное отношение
+  // размера плитки к размеру полосы (по каждой оси отдельно, плитка квадратная,
+  // а полоса обычно нет). Раньше "закрытый" размер был захардкожен как
+  // scale(0.15) для любой полосы и разрешения — не совпадало с фактическим
+  // размером плитки, и раскрытие визуально стартовало не с её места и не с её
+  // формы (Виктор: "и открывается не из того же [места]"). scale(scaleX,
+  // scaleY) с этим же transformOrigin в закрытом виде даёт прямоугольник
+  // ТОЧНО размера и формы плитки, поверх неё — расти уже физически некуда,
+  // кроме как из её собственных границ.
   const measureOrigin = useCallback((bandIndex: number, idx: number) => {
     const tile = tileRefs.current.get(idx)
     const band = bandRefs[bandIndex].current
-    if (!tile || !band) return "50% 50%"
+    if (!tile || !band) return { origin: "50% 50%", scaleX: 0.15, scaleY: 0.15 }
     const tileRect = tile.getBoundingClientRect()
     const bandRect = band.getBoundingClientRect()
     const originX = ((tileRect.left + tileRect.width / 2 - bandRect.left) / bandRect.width) * 100
     const originY = ((tileRect.top + tileRect.height / 2 - bandRect.top) / bandRect.height) * 100
-    return `${originX}% ${originY}%`
+    return {
+      origin: `${originX}% ${originY}%`,
+      scaleX: tileRect.width / bandRect.width,
+      scaleY: tileRect.height / bandRect.height,
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bandRefs — массив useRef, стабилен между рендерами
   }, [])
-  const getOrigin0 = useCallback((idx: number) => measureOrigin(0, idx), [measureOrigin])
-  const getOrigin1 = useCallback((idx: number) => measureOrigin(1, idx), [measureOrigin])
-  const getOrigin2 = useCallback((idx: number) => measureOrigin(2, idx), [measureOrigin])
+  const measure0 = useCallback((idx: number) => measureOrigin(0, idx), [measureOrigin])
+  const measure1 = useCallback((idx: number) => measureOrigin(1, idx), [measureOrigin])
+  const measure2 = useCallback((idx: number) => measureOrigin(2, idx), [measureOrigin])
 
   // Три параллельных цикла (по числу полос на самом широком брейкпоинте — lg),
   // каждый на своём брейкпоинте либо активен (своя полоса колонок), либо просто
   // ждёт (bandIndex >= bandCountForWidth). Хуков всегда ровно 3 — иначе нарушится
   // React Rules of Hooks при смене ширины окна.
   const reveals = [
-    useRevealCycle(0, getOrigin0, gridReady),
-    useRevealCycle(1, getOrigin1, gridReady),
-    useRevealCycle(2, getOrigin2, gridReady),
+    useRevealCycle(0, measure0, gridReady),
+    useRevealCycle(1, measure1, gridReady),
+    useRevealCycle(2, measure2, gridReady),
   ]
   const activeByTile = new Map(reveals.filter((r) => r.phase !== "idle").map((r) => [r.target, r]))
 
@@ -384,6 +402,17 @@ function PhotoCollage() {
           неё растёт от той же точки, где моргнула плитка (см. origin), пока не
           займёт всю полосу целиком, и так же стягивается обратно.
 
+          closedScale (см. measureOrigin) — реальное отношение размера плитки к
+          размеру полосы по каждой оси, не константа. Раньше тут был захардкожен
+          scale(0.15) для любой полосы/ширины экрана, что почти никогда не
+          совпадало с истинным размером плитки — рост стартовал (и стягивание
+          заканчивалось) в прямоугольнике неправильного размера/формы, чуть в
+          стороне от настоящей плитки (Виктор: "открывается не из того же
+          [места], и закрывается не в то же самое место"). scale(scaleX, scaleY)
+          с тем же transformOrigin в закрытом состоянии даёт прямоугольник ТОЧНО
+          размера и формы плитки — расти/схлопываться уже физически некуда мимо
+          неё самой.
+
           Раньше плитка САМА тоже увеличивалась (scale до 2.6x на своём месте в
           сетке) ОДНОВРЕМЕННО с этой полосой — два независимых слоя с разными
           конечными размерами росли на одной и той же фотографии, и наложение
@@ -410,7 +439,7 @@ function PhotoCollage() {
               className="absolute inset-0"
               style={{
                 transformOrigin: reveal.origin,
-                transform: open ? "scale(1)" : "scale(0.15)",
+                transform: open ? "scale(1)" : `scale(${reveal.closedScale.x}, ${reveal.closedScale.y})`,
                 opacity: rendered ? 1 : 0,
                 transitionProperty: "transform",
                 transitionTimingFunction: "ease-out",
