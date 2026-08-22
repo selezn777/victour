@@ -60,7 +60,11 @@ export function TourPageClient({
             десктопе — теперь она встроена в общий поток на своём месте,
             одна колонка на всех размерах экрана. Фото-карусель раньше стояла
             наверху страницы — перенесена сюда, после "Что входит". */}
-        <div className="mx-auto flex max-w-3xl flex-col gap-10 px-4 py-10 sm:px-6 sm:py-14">
+        {/* pb с запасом под высоту TourStickyCta (fixed bottom) — без него
+            последний блок (FAQ) утыкается прямо в неё, когда долистываешь
+            до конца страницы (Виктор с iPhone: плашка "перекрывает текст"
+            у последнего вопроса-ответа). */}
+        <div className="mx-auto flex max-w-3xl flex-col gap-10 px-4 py-10 pb-28 sm:px-6 sm:py-14 sm:pb-28">
           <TourItinerary itinerary={tour.itinerary} isTwoDay={tour.isDalatTwoDay} />
           <TourIncludesExcludes includes={tour.includes} excludes={tour.excludes} />
           <TourPhotoGallery tour={tour} />

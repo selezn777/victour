@@ -461,7 +461,14 @@ function IntroSlide() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <PhotoCollage />
-      <div className="flex flex-1 flex-col items-center overflow-y-auto px-6 pt-5 pb-6 text-center sm:px-11 sm:pt-7">
+      {/* justify-[safe_center] (не просто justify-center) — на высоких экранах
+          центрирует текст+кнопку в оставшемся месте под коллажем (Виктор с
+          iPhone: верхние слайды торчали заголовком, пустота внизу вместо
+          адаптации по высоте). Обычный justify-center на НИЗКИХ/landscape
+          экранах наоборот обрезал бы верх контента, если он не влезает —
+          safe откатывается к выравниванию по началу и обычному скроллу
+          вместо обрезания, когда контент не помещается. */}
+      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-5 pb-6 text-center sm:px-11 sm:pt-7">
         <h1 className="max-w-xl font-heading text-2xl leading-[1.1] font-semibold sm:text-5xl">
           Вьетнам без чужих
         </h1>
@@ -517,7 +524,7 @@ function PhotoSlide({
           </div>
         )}
       </div>
-      <div className="flex flex-1 flex-col items-center overflow-y-auto px-6 pt-5 pb-6 text-center sm:px-11 sm:pt-7">
+      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-5 pb-6 text-center sm:px-11 sm:pt-7">
         <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {title}
         </h2>
@@ -596,7 +603,7 @@ function ValuesSlide({
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-6 text-center sm:px-11">
+      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 py-6 text-center sm:px-11">
         <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {title}
         </h2>
@@ -621,11 +628,17 @@ function ValuesSlide({
               rotate="auto" — тот на разворотах серпантина временами крутил
               её вверх колёсами (см. useVanOnRoad выше: там же зеркалирование
               вместо разворота "через спину"). Скорость — 22s, помедленнее
-              прежних 14s (Виктор после первой версии: "помедленнее"). */}
+              прежних 14s (Виктор после первой версии: "помедленнее").
+              preserveAspectRatio="xMidYMid slice" (не "none") — контейнер
+              высотой подстраивается под текст рядом, его пропорции не
+              совпадают с viewBox (100:260), а "none" растягивал/сжимал
+              дорогу и машинку неравномерно по X/Y на каждом устройстве
+              (Виктор с iPhone: "растягивается в ширину, некрасиво"). slice
+              сохраняет форму, чуть обрезая края вместо искажения. */}
           <svg
             aria-hidden
             viewBox="0 0 100 260"
-            preserveAspectRatio="none"
+            preserveAspectRatio="xMidYMid slice"
             className="pointer-events-none absolute inset-0 z-0 h-full w-full text-primary"
           >
             <path
@@ -867,7 +880,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
 function ToursSlide() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="flex flex-1 flex-col items-center overflow-y-auto px-6 pt-1 pb-6 text-center sm:px-11 sm:pt-2">
+      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-1 pb-6 text-center sm:px-11 sm:pt-2">
         <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           Ровно пять маршрутов — и ни одного лишнего
         </h2>
@@ -1063,7 +1076,7 @@ function QuoteSlide({
 }) {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="relative flex flex-1 flex-col items-center overflow-y-auto px-6 pt-3 pb-10 text-center sm:px-11 sm:pt-4 sm:pb-8">
+      <div className="relative flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-3 pb-10 text-center sm:px-11 sm:pt-4 sm:pb-8">
         <h2 className="max-w-2xl font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">
           {title}
         </h2>
