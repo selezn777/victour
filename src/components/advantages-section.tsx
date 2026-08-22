@@ -629,16 +629,22 @@ function ValuesSlide({
               её вверх колёсами (см. useVanOnRoad выше: там же зеркалирование
               вместо разворота "через спину"). Скорость — 22s, помедленнее
               прежних 14s (Виктор после первой версии: "помедленнее").
-              preserveAspectRatio="xMidYMid slice" (не "none") — контейнер
+              preserveAspectRatio="xMidYMid meet" (не "none") — контейнер
               высотой подстраивается под текст рядом, его пропорции не
               совпадают с viewBox (100:260), а "none" растягивал/сжимал
               дорогу и машинку неравномерно по X/Y на каждом устройстве
-              (Виктор с iPhone: "растягивается в ширину, некрасиво"). slice
-              сохраняет форму, чуть обрезая края вместо искажения. */}
+              (Виктор с iPhone: "растягивается в ширину, некрасиво"). Сначала
+              пробовал "slice" — сохраняет форму, но ОБРЕЗАЕТ края SVG по
+              контейнеру, а машинка ездит по ВСЕЙ высоте viewBox (y от 0 до
+              258) — верх/низ пути срезались, машинка подолгу укатывала в
+              обрезанную часть и казалось, что проехала один раз и встала
+              (Виктор: "проезжает только 1 раз"). "meet" вписывает viewBox
+              ЦЕЛИКОМ (с пустыми полями по бокам вместо обрезки) — путь и
+              машинка видны всегда, весь цикл. */}
           <svg
             aria-hidden
             viewBox="0 0 100 260"
-            preserveAspectRatio="xMidYMid slice"
+            preserveAspectRatio="xMidYMid meet"
             className="pointer-events-none absolute inset-0 z-0 h-full w-full text-primary"
           >
             <path
@@ -953,7 +959,25 @@ const SWIPE_THRESHOLD_PX = 40
 // карточки не переключались синхронно одним и тем же кадром.
 const AUTO_ROTATE_MS = 6000
 
-function useQuoteSlot(quotes: Quote[], startIndex: number, staggerMs = 0) {
+// siblingIndexRef — индекс СОСЕДНЕГО слота (верхнего для нижнего и наоборот).
+// Раньше оба слота выбирали случайный индекс НЕЗАВИСИМО, зная только свой
+// текущий индекс — иногда оба совпадали и показывали один и тот же отзыв
+// одновременно (Виктор: "2 блока, у них одинаковые отзывы — так не должно
+// быть"). pickRandom/pickAdjacent теперь исключают И свой текущий, И
+// индекс соседа. ownIndexRef — сюда слот сам пишет свой актуальный индекс
+// на каждый рендер, чтобы сосед мог его прочитать как chill siblingIndexRef.
+//
+// interactedRef — как только человек сам свайпнул или ткнул точку под
+// ЭТОЙ карточкой, автопереключение для неё останавливается насовсем
+// (Виктор: "устойчивые" — раз человек уже листает вручную, автомат не
+// должен вмешиваться). Второй слот (который не трогали) продолжает
+// переключаться сам как обычно.
+function useQuoteSlot(
+  quotes: Quote[],
+  startIndex: number,
+  opts: { staggerMs?: number; ownIndexRef?: RefObject<number>; siblingIndexRef?: RefObject<number> } = {},
+) {
+  const { staggerMs = 0, ownIndexRef, siblingIndexRef } = opts
   const [index, setIndex] = useState(startIndex)
   const [direction, setDirection] = useState<1 | -1>(1)
   // setTimeout, а не requestAnimationFrame — см. коммит с фиксом выше: rAF в
@@ -961,6 +985,13 @@ function useQuoteSlot(quotes: Quote[], startIndex: number, staggerMs = 0) {
   // застревает прозрачной навсегда.
   const [entering, setEntering] = useState(false)
   const touchStartX = useRef<number | null>(null)
+  const interactedRef = useRef(false)
+
+  // Пишем свой актуальный индекс в общий ref — сосед читает его как
+  // siblingIndexRef (в эффекте, не в теле рендера — react-hooks/refs).
+  useEffect(() => {
+    if (ownIndexRef) ownIndexRef.current = index
+  }, [index, ownIndexRef])
 
   useEffect(() => {
     const id = window.setTimeout(() => setEntering(false), 20)
@@ -968,22 +999,41 @@ function useQuoteSlot(quotes: Quote[], startIndex: number, staggerMs = 0) {
   }, [index])
 
   const advance = (dir: 1 | -1) => {
+    interactedRef.current = true
     setDirection(dir)
     setEntering(true)
-    setIndex((i) => (i + dir + quotes.length) % quotes.length)
+    setIndex((i) => {
+      let next = (i + dir + quotes.length) % quotes.length
+      const exclude = siblingIndexRef?.current
+      // Если следующий по кругу совпал с тем, что уже показывает сосед —
+      // проматываем ещё на шаг в ту же сторону (при 2 отзывах в пуле
+      // пропускать некуда, тогда оставляем как есть).
+      if (exclude !== undefined && quotes.length > 2 && next === exclude) {
+        next = (next + dir + quotes.length) % quotes.length
+      }
+      return next
+    })
   }
 
   useEffect(() => {
-    if (quotes.length <= 1) return
+    if (quotes.length <= 2) return
     let intervalId: ReturnType<typeof setInterval> | undefined
     const startTimer = window.setTimeout(() => {
       intervalId = setInterval(() => {
+        if (interactedRef.current) {
+          if (intervalId) clearInterval(intervalId)
+          return
+        }
         setDirection(1)
         setEntering(true)
         setIndex((i) => {
-          if (quotes.length <= 1) return i
           let next = Math.floor(Math.random() * quotes.length)
-          while (next === i) next = Math.floor(Math.random() * quotes.length)
+          const exclude = siblingIndexRef?.current
+          let guard = 0
+          while ((next === i || next === exclude) && guard < 20) {
+            next = Math.floor(Math.random() * quotes.length)
+            guard += 1
+          }
           return next
         })
       }, AUTO_ROTATE_MS)
@@ -992,9 +1042,10 @@ function useQuoteSlot(quotes: Quote[], startIndex: number, staggerMs = 0) {
       window.clearTimeout(startTimer)
       if (intervalId) clearInterval(intervalId)
     }
-  }, [quotes.length, staggerMs])
+  }, [quotes.length, staggerMs, siblingIndexRef])
 
   const goTo = (i: number) => {
+    interactedRef.current = true
     setDirection(i > index ? 1 : -1)
     setEntering(true)
     setIndex(i)
@@ -1054,8 +1105,14 @@ function QuoteSlotView({ slot, count }: { slot: ReturnType<typeof useQuoteSlot>;
 
 function QuotePairs({ quotes }: { quotes: Quote[] }) {
   const safeQuotes = quotes.length > 0 ? quotes : [{ quote: "", author: "" }]
-  const top = useQuoteSlot(safeQuotes, 0)
-  const bottom = useQuoteSlot(safeQuotes, Math.min(1, safeQuotes.length - 1), AUTO_ROTATE_MS / 2)
+  const topIndexRef = useRef(0)
+  const bottomIndexRef = useRef(Math.min(1, safeQuotes.length - 1))
+  const top = useQuoteSlot(safeQuotes, 0, { ownIndexRef: topIndexRef, siblingIndexRef: bottomIndexRef })
+  const bottom = useQuoteSlot(safeQuotes, Math.min(1, safeQuotes.length - 1), {
+    staggerMs: AUTO_ROTATE_MS / 2,
+    ownIndexRef: bottomIndexRef,
+    siblingIndexRef: topIndexRef,
+  })
 
   if (quotes.length === 0) return null
 
