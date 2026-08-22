@@ -177,6 +177,16 @@ function useRevealCycle(bandIndex: number, measure: (idx: number) => Measurement
   const [target, setTarget] = useState(0)
   const [origin, setOrigin] = useState("50% 50%")
   const [closedScale, setClosedScale] = useState({ x: 0.15, y: 0.15 })
+  // Вызывается из onLoad самого band-<Image> (см. PhotoCollage) — сигнал, что
+  // ИМЕННО тот файл, который реально покажется крупно (Next-оптимизированный
+  // вариант конкретной ширины/качества у band, а не сырой файл), уже отрисован
+  // браузером. См. комментарий у Promise.race ниже — раньше готовность
+  // проверялась через preloadImage сырого файла не через тот URL/размер,
+  // который в итоге запрашивает сам <Image> у band.
+  const bandLoadResolveRef = useRef<(() => void) | null>(null)
+  const notifyBandLoaded = useCallback(() => {
+    bandLoadResolveRef.current?.()
+  }, [])
 
   useEffect(() => {
     // Не стартуем раскрытие, пока мозаика сама ещё не прогрузилась целиком —
@@ -225,11 +235,28 @@ function useRevealCycle(bandIndex: number, measure: (idx: number) => Measurement
       const idx = order[step]
       step += 1
       const m = measure(idx)
+      // Слушатель ставим ДО setTarget — src у band-<Image> меняется этим же
+      // рендером, событие onLoad может прийти очень быстро (или из кэша
+      // браузера почти мгновенно), листенер должен быть готов заранее.
+      const bandLoaded = new Promise<void>((resolve) => {
+        bandLoadResolveRef.current = resolve
+      })
       setTarget(idx)
       setOrigin(m.origin)
       setClosedScale({ x: m.scaleX, y: m.scaleY })
       setPhase("priming")
-      Promise.all([preloadImage(COLLAGE_PHOTOS[idx]), wait(PRIME_MS)]).then(() => {
+      // Ждём РЕАЛЬНУЮ загрузку того файла, который покажет band (см. onLoad на
+      // band-<Image> в PhotoCollage) — раньше ждали preloadImage(сырой файл),
+      // а band рендерит через Next/Image, у которого совсем другой URL
+      // (/_next/image?url=...&w=...&q=...). На медленной сети сырой файл мог
+      // догрузиться, пока Next-вариант ещё не запросился/не отрисовался —
+      // раскрытие стартовало раньше реальной смены картинки: "моргнула одна
+      // плитка, открылась другая" (Виктор). onLoad — событие ИМЕННО того
+      // элемента, который вот-вот станет видимым. Promise.race с таймаутом —
+      // подстраховка: если тот же idx выпадет два цикла подряд (на границе
+      // перетасовки), src не меняется, onLoad повторно не придёт вообще.
+      const bandLoadedOrTimeout = Promise.race([bandLoaded, wait(3000)])
+      Promise.all([bandLoadedOrTimeout, wait(PRIME_MS)]).then(() => {
         if (cancelled) return
         setPhase("open")
         after(() => {
@@ -251,7 +278,7 @@ function useRevealCycle(bandIndex: number, measure: (idx: number) => Measurement
     }
   }, [bandIndex, measure, ready])
 
-  return { phase, target, origin, closedScale }
+  return { phase, target, origin, closedScale, notifyBandLoaded }
 }
 
 // Плитки грузятся строго по порядку слева направо/сверху вниз, если просто
@@ -457,7 +484,14 @@ function PhotoCollage() {
                 boxShadow: rendered ? "0 20px 45px -12px rgba(0,0,0,0.55)" : undefined,
               }}
             >
-              <Image src={COLLAGE_PHOTOS[reveal.target]} alt="" fill sizes={BAND_SIZES[b]} className="object-cover" />
+              <Image
+                src={COLLAGE_PHOTOS[reveal.target]}
+                alt=""
+                fill
+                sizes={BAND_SIZES[b]}
+                className="object-cover"
+                onLoad={reveal.notifyBandLoaded}
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
             </div>
           </div>
