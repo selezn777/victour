@@ -28,7 +28,7 @@ function TourCtaButton({ hint = false }: { hint?: boolean }) {
   )
 }
 
-const COLLAGE_PHOTO_COUNT = 68
+const COLLAGE_PHOTO_COUNT = 67
 const COLLAGE_PHOTOS = Array.from(
   { length: COLLAGE_PHOTO_COUNT },
   (_, i) => `/images/collage/collage-${String(i + 1).padStart(2, "0")}.jpg`,
@@ -41,7 +41,10 @@ const COLLAGE_PHOTOS = Array.from(
 const PRIME_MS = 900
 const HOLD_MS = 2800
 const GAP_MS = 780
-const TRANSITION_MS = 900
+// Виктор: "фотка отображается по времени нормально" (HOLD_MS ок), "но сам
+// процесс открытия чуть затянут" — именно transition (раскрытие/схлопывание),
+// ещё -10% (было 900).
+const TRANSITION_MS = 810
 // Пауза перед самым первым раскрытием в каждой полосе — уже ПОСЛЕ того, как
 // вся мозаика прогрузилась (см. ready в useRevealCycle), даём картинке
 // просто спокойно постоять секунду-другую, прежде чем начнётся моргание
@@ -471,11 +474,19 @@ function IntroSlide() {
           экранах наоборот обрезал бы верх контента, если он не влезает —
           safe откатывается к выравниванию по началу и обычному скроллу
           вместо обрезания, когда контент не помещается. */}
-      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-5 pb-6 text-center sm:px-11 sm:pt-7">
+      {/* pt-3/pb-4 (не pt-5/pb-6) и mt-2 у параграфа — текст на этом слайде
+          стал заметно длиннее (Виктор прислал развёрнутый копирайт), с
+          прежними отступами кнопка "Выбрать тур" уходила за пределы экрана
+          на типичном телефоне (Виктор: "кнопка вообще ушла с экрана").
+          Параграф text-left (не text-center) и leading-snug (не -relaxed) —
+          длинный текст по центру читается рвано построчно и занимает больше
+          вертикали; выключка влево компактнее и читается быстрее ("выровни
+          текст", "убери такие большие отступы"). */}
+      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-3 pb-4 text-center sm:px-11 sm:pt-7">
         <h1 className="max-w-xl font-heading text-2xl leading-[1.1] font-semibold sm:text-5xl">
           Приватный Вьетнам
         </h1>
-        <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-base">
+        <p className="mt-2 max-w-sm text-left text-sm leading-snug text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-base sm:leading-relaxed">
           Пять авторских маршрутов с идеально выверенным таймингом. Премиальные автомобили и
           вожатый, которому можно по-настоящему доверять. Полное отсутствие посторонних. Никаких
           лишних остановок в магазины. Меню только то, что вы хотите на самом деле. Безопасность мы
