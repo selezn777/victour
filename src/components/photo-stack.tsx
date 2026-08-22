@@ -23,7 +23,9 @@ const STACK_TRANSFORM = [
 // (Виктор: "эффект от падения я так и не увидел" — раньше было 280мс).
 // Ускорена уже дважды (1080→920), Виктор попросил ещё быстрее — 920→650.
 const DROP_STAGGER_MS = 650
-const DROP_INITIAL_DELAY_MS = 300
+// Пауза перед появлением ПЕРВОГО фото — Виктор: "открытие фото делаем чуть
+// быстрее, особенно первой" (300 -> 150).
+const DROP_INITIAL_DELAY_MS = 150
 
 // Ровно 3 автопереключения после того, как стопка легла — Виктор:
 // "переключатель прикольно смотрится, но потом не надо, чтобы они
@@ -136,7 +138,7 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
             zIndex: photos.length - positions[i],
             opacity: entered[i] ? 1 : 0,
             transitionProperty: "transform, opacity",
-            transitionDuration: lifted ? "180ms" : "675ms",
+            transitionDuration: lifted ? "180ms" : "580ms",
             transitionTimingFunction: lifted ? "ease-out" : "cubic-bezier(0.34, 1.56, 0.64, 1)",
             transform: entered[i]
               ? `${STACK_TRANSFORM[positions[i]]}${lifted ? " translateY(-26px) scale(1.02)" : ""}`
