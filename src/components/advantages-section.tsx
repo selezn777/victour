@@ -29,9 +29,18 @@ function TourCtaButton({ hint = false }: { hint?: boolean }) {
 }
 
 const COLLAGE_PHOTO_COUNT = 67
+// Бампнуть при любой замене/переименовании файлов в public/images/collage —
+// имена файлов НЕ меняются при замене содержимого (collage-05.jpg остаётся
+// collage-05.jpg, даже если внутри теперь другое фото после удаления одного
+// и сдвига остальных), а браузер/CDN кэшируют статику из /public по URL без
+// versioning. Без cache-bust'а на том же имени файла могла (по крайней мере
+// теоретически) показываться старая закэшированная картинка вместо новой
+// (Виктор: "все как надо кроме совпадения самих картинок" — не позиция,
+// не тайминг, а именно контент не совпадает с ожидаемым).
+const COLLAGE_CACHE_VERSION = 2
 const COLLAGE_PHOTOS = Array.from(
   { length: COLLAGE_PHOTO_COUNT },
-  (_, i) => `/images/collage/collage-${String(i + 1).padStart(2, "0")}.jpg`,
+  (_, i) => `/images/collage/collage-${String(i + 1).padStart(2, "0")}.jpg?v=${COLLAGE_CACHE_VERSION}`,
 )
 
 // priming — плитка в сетке "подмигивает", пока полноразмерное фото грузится в фоне
