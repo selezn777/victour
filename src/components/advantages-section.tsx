@@ -578,7 +578,7 @@ function PhotoSlide({
           </div>
         )}
       </div>
-      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-5 pb-6 text-center sm:px-11 sm:pt-7">
+      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-4 pb-5 text-center sm:px-11 sm:pt-7">
         <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {title}
         </h2>
@@ -587,7 +587,7 @@ function PhotoSlide({
             {accent}
           </p>
         )}
-        <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground sm:max-w-xl sm:text-base">
+        <p className="mt-2 max-w-sm text-left text-sm leading-snug text-muted-foreground sm:max-w-xl sm:text-base sm:leading-relaxed">
           {body}
         </p>
         <TourCtaButton />
@@ -1222,9 +1222,9 @@ export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
         <IntroSlide key="intro" />,
         <PhotoSlide
           key="transport"
-          title="Забудьте, каким должен быть трансфер в отпуске"
-          accent="Гости выходят из машины так, будто их подвезли до дома, а не трясли три часа."
-          body="Кожаные кресла с массажем, кондиционер, который реально спасает от жары, и за рулём — один и тот же проверенный водитель, которого лично знает Виктор, а не случайный человек с трассы."
+          title="Трансфер, после которого не нужно восстанавливаться"
+          accent="У нас только премиум сегмент"
+          body="Вы выходите из машины свежими, потому, что у нас премиальный автомобиль и кожаные кресла (с массажем), водитель, которого мы знаем, он едет точно и быстро, соблюдая правила. Климат делаем, чтобы вам было максимально комфортно, и все вещи всегда остаются в сохранности. Вы просто говорите, как вам удобно. Мы просто выполняем."
           imageSrc="/images/hero/premium-van-interior.jpg"
           imageAlt="Салон премиального минивэна с кожаными креслами"
           imagePosition="30% 50%"
