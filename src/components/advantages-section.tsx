@@ -473,11 +473,13 @@ function IntroSlide() {
           вместо обрезания, когда контент не помещается. */}
       <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-5 pb-6 text-center sm:px-11 sm:pt-7">
         <h1 className="max-w-xl font-heading text-2xl leading-[1.1] font-semibold sm:text-5xl">
-          Вьетнам без чужих
+          Приватный Вьетнам
         </h1>
         <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-base">
-          Проверенные маршруты, надёжный транспорт и гид, который отвечает за вашу безопасность на
-          каждом шаге.
+          Пять авторских маршрутов с идеально выверенным таймингом. Премиальные автомобили и
+          вожатый, которому можно по-настоящему доверять. Полное отсутствие посторонних. Никаких
+          лишних остановок в магазины. Меню только то, что вы хотите на самом деле. Безопасность мы
+          гарантируем. Потому что таких выездов мало, и каждый из них тщательно проверен.
         </p>
         <TourCtaButton />
       </div>
