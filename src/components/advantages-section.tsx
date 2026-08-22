@@ -525,15 +525,16 @@ function IntroSlide() {
           стал заметно длиннее (Виктор прислал развёрнутый копирайт), с
           прежними отступами кнопка "Выбрать тур" уходила за пределы экрана
           на типичном телефоне (Виктор: "кнопка вообще ушла с экрана").
-          Параграф text-left (не text-center) и leading-snug (не -relaxed) —
-          длинный текст по центру читается рвано построчно и занимает больше
-          вертикали; выключка влево компактнее и читается быстрее ("выровни
-          текст", "убери такие большие отступы"). */}
+          text-center (не text-left) — пробовали text-left для компактности,
+          но по факту это смотрелось рассинхроном с центрированным
+          заголовком/кнопкой (Виктор: "выглядит дёшево"), вернули обратно.
+          leading-snug (не -relaxed) остаётся — это про высоту строки, к
+          выравниванию не относится. */}
       <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-3 pb-4 text-center sm:px-11 sm:pt-7">
         <h1 className="max-w-xl font-heading text-2xl leading-[1.1] font-semibold sm:text-5xl">
           Приватный Вьетнам
         </h1>
-        <p className="mt-2 max-w-sm text-left text-sm leading-snug text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-base sm:leading-relaxed">
+        <p className="mt-2 max-w-sm text-sm leading-snug text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-base sm:leading-relaxed">
           Пять авторских маршрутов с идеально выверенным таймингом. Премиальные автомобили и
           вожатый, которому можно по-настоящему доверять. Полное отсутствие посторонних. Никаких
           лишних остановок в магазины. Меню только то, что вы хотите на самом деле. Безопасность мы
@@ -596,7 +597,7 @@ function PhotoSlide({
             {accent}
           </p>
         )}
-        <p className="mt-2 max-w-sm text-left text-sm leading-snug text-muted-foreground sm:max-w-xl sm:text-base sm:leading-relaxed">
+        <p className="mt-2 max-w-sm text-sm leading-snug text-muted-foreground sm:max-w-xl sm:text-base sm:leading-relaxed">
           {body}
         </p>
         <TourCtaButton />
