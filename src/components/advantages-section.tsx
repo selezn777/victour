@@ -70,26 +70,33 @@ function shuffledIndices(count: number) {
   return arr
 }
 
-// На мобиле (< sm) высота полосы — побочный эффект "строк × ширина плитки",
-// без верхней границы в CSS. Раньше было 8 строк (почти квадрат = ширина
-// экрана) — на маленьких телефонах (iPhone SE, 375×667) это съедало столько
-// места, что кнопка "Выбрать тур" уходила за экран без скролла (Виктор:
-// "уменьши коллаж для маленького экрана"). 6 строк вместо 8 — тот же приём,
-// что уже применён на sm/lg (меньше строк = ниже полоса), только числом
-// строк, а не CSS-высотой, чтобы не обрезать плитки по живому.
-// Начиная с sm экран становится шире, но не пропорционально выше — та же формула
-// давала на широких экранах сетку на сотни пикселей выше, чем оставалось места под
-// заголовок. Поэтому с sm и выше высота полосы дополнительно ограничена в CSS
-// (см. className на обёртке ниже) и строк выделено меньше, чтобы почти попадать
-// в размер без обрезки лишнего.
-const VISIBLE_AT_BASE = 8 * 6 // 8 кол. × 6 строк (было 8 строк)
-const VISIBLE_AT_SM = 9 * 4 // 9 кол. × 4 строки — с sm полоса дополнительно ограничена высотой
-const VISIBLE_AT_LG = 12 * 3 // 12 кол. × 3 строки — на lg плитка ощутимо шире, строк меньше
+// Плитки — квадраты (aspect-square), значит блок коллажа целиком выходит
+// квадратным, только если строк РОВНО столько же, сколько колонок (иначе
+// прямоугольник cols×rows плиток при равной стороне плитки). Раньше строки
+// подбирались отдельно от колонок под высотный бюджет (8 кол.×6 строк на
+// базе, 9×4 на sm, 12×3 на lg) — коллаж был явно шире, чем выше (Виктор:
+// "сам коллаж с фотографиями не квадратный... мне нужен квадратный именно").
+// Теперь строки == колонки на каждом брейкпоинте, а сам контейнер —
+// aspect-square (см. className на обёртке ниже), высота по-прежнему в svh
+// (тот же бюджет, что уже подобран под кнопку "Выбрать тур", не трогаем),
+// ширина автоматически = высоте. На узких портретных экранах это означает
+// коллаж чуть уже полной ширины слайда (по бокам появляются небольшие поля)
+// — это неизбежное следствие требования "именно квадрат" при высоте,
+// которой заведомо меньше ширины экрана на телефоне.
+const VISIBLE_AT_BASE = 6 * 6 // 6×6 — растёт от sm/lg (Виктор разрешил не показывать все 67, если не влезают в квадрат)
+const VISIBLE_AT_SM = 7 * 7 // 7×7
+const VISIBLE_AT_LG = 8 * 8 // 8×8 — из 67 фото показываем 64, 3 не влезают в квадрат
 
+// Раньше (прямоугольная сетка) большие брейкпоинты показывали МЕНЬШЕ плиток,
+// чем база (8×6=48 на базе против 12×3=36 на lg) — колонок больше, но строк
+// меньше под высотный бюджет. При cols===rows (квадрат) всё наоборот: чем
+// больше колонок, тем больше и строк — lg показывает БОЛЬШЕ плиток (64), чем
+// sm (49) и база (36), т.е. каждый следующий брейкпоинт — надмножество
+// предыдущего, а не подмножество.
 function tileVisibilityClass(i: number) {
-  if (i >= VISIBLE_AT_BASE) return "hidden"
-  if (i >= VISIBLE_AT_SM) return "sm:hidden"
-  if (i >= VISIBLE_AT_LG) return "lg:hidden"
+  if (i >= VISIBLE_AT_LG) return "hidden"
+  if (i >= VISIBLE_AT_SM) return "hidden lg:block"
+  if (i >= VISIBLE_AT_BASE) return "hidden sm:block"
   return ""
 }
 
@@ -100,9 +107,9 @@ function visibleCountForWidth(width: number) {
 }
 
 function gridColsForWidth(width: number) {
-  if (width >= 1024) return 12
-  if (width >= 640) return 9
-  return 8
+  if (width >= 1024) return 8
+  if (width >= 640) return 7
+  return 6
 }
 
 // Сколько раскрытий одновременно — по числу колонок в сетке на этом брейкпоинте
@@ -121,6 +128,23 @@ function bandColumnRange(bandIndex: number, bandCount: number, cols: number): [n
   return [start, end]
 }
 
+// Полоса раскрытия — теперь квадрат (aspect-square в BAND_LAYOUT, не
+// inset-y-0 на всю высоту), а не вертикальная во всю высоту контейнера
+// (Виктор: "чтобы, когда фотка открывалась, был квадрат"). Ширина полосы в
+// плитках (end-start) равна её высоте в плитках (плитки квадратные, сама
+// полоса тоже квадратная — значит высота в плитках совпадает с шириной),
+// отцентрована по вертикали (top-1/2 -translate-y-1/2 в BAND_LAYOUT) — тут
+// тот же диапазон строк, только по вертикали, чтобы currentPool ниже мог
+// выбирать плитки ТОЛЬКО из тех, что реально попадают в квадрат полосы
+// (иначе моргнувшая где-то в углу сетки плитка окажется физически ВНЕ
+// центрированного квадрата, и рост "оторвётся" от её настоящего места).
+function bandRowRange(bandIndex: number, bandCount: number, cols: number, rows: number): [number, number] {
+  const [start, end] = bandColumnRange(bandIndex, bandCount, cols)
+  const span = end - start
+  const rowStart = Math.floor((rows - span) / 2)
+  return [rowStart, rowStart + span]
+}
+
 // Позиция и ширина полосы i из N — те же трети/половины, что и в CSS-классах
 // BAND_LAYOUT ниже (держать в синхроне вручную, т.к. Tailwind-классы должны
 // быть статичными строками для сборки). z-20 обязателен: ни .grid, ни внешний
@@ -128,9 +152,9 @@ function bandColumnRange(bandIndex: number, bandCount: number, cols: number): [n
 // что z-10 у "приподнятой" плитки внутри сетки иначе всплывает выше полосы
 // раскрытия (сравнение идёт не по DOM-порядку, а по z-index — 10 > auto).
 const BAND_LAYOUT = [
-  "absolute inset-y-0 left-0 z-20 w-full overflow-hidden pointer-events-none sm:w-1/2 lg:w-1/3",
-  "absolute inset-y-0 z-20 hidden w-1/2 overflow-hidden pointer-events-none sm:left-1/2 sm:block lg:left-1/3 lg:w-1/3",
-  "absolute inset-y-0 z-20 hidden overflow-hidden pointer-events-none lg:left-2/3 lg:block lg:w-1/3",
+  "absolute top-1/2 left-0 z-20 aspect-square w-full -translate-y-1/2 overflow-hidden pointer-events-none sm:w-1/2 lg:w-1/3",
+  "absolute top-1/2 z-20 hidden aspect-square w-1/2 -translate-y-1/2 overflow-hidden pointer-events-none sm:left-1/2 sm:block lg:left-1/3 lg:w-1/3",
+  "absolute top-1/2 z-20 hidden aspect-square -translate-y-1/2 overflow-hidden pointer-events-none lg:left-2/3 lg:block lg:w-1/3",
 ]
 const BAND_SIZES = [
   "(min-width: 1024px) 34vw, (min-width: 640px) 50vw, 100vw",
@@ -221,11 +245,17 @@ function useRevealCycle(bandIndex: number, measure: (idx: number) => Measurement
       const rows = visibleCountForWidth(width) / cols
       const bandCount = bandCountForWidth(width)
       if (bandIndex >= bandCount) return null
-      const [start, end] = bandColumnRange(bandIndex, bandCount, cols)
+      const [colStart, colEnd] = bandColumnRange(bandIndex, bandCount, cols)
+      const [rowStart, rowEnd] = bandRowRange(bandIndex, bandCount, cols, rows)
       const visibleCount = cols * rows
+      // Фильтр и по колонке, и по строке — полоса раскрытия теперь квадрат,
+      // отцентрованный по вертикали (см. bandRowRange), а не вся высота
+      // сетки, так что раскрыться физически может только та плитка, что
+      // реально попадает в этот квадрат.
       const pool = Array.from({ length: visibleCount }, (_, i) => i).filter((i) => {
         const col = i % cols
-        return col >= start && col < end
+        const row = Math.floor(i / cols)
+        return col >= colStart && col < colEnd && row >= rowStart && row < rowEnd
       })
       return { pool }
     }
@@ -421,12 +451,19 @@ function PhotoCollage() {
   const activeByTile = new Map(reveals.filter((r) => r.phase !== "idle").map((r) => [r.target, r]))
 
   return (
-    // База (< sm) — без ограничения высоты, ряды сетки всегда полные (см.
-    // tileVisibilityClass). С sm и выше высота дополнительно ограничена явно
-    // (% от высоты слайда) — на широком экране та же формула строк даёт сетку
-    // выше, чем есть места под заголовок, overflow-hidden подчищает лишнее.
-    <div className="relative w-full shrink-0 overflow-hidden sm:h-[38svh] lg:h-[32svh]">
-      <div className="grid w-full grid-cols-8 sm:grid-cols-9 lg:grid-cols-12">
+    // aspect-square + явная высота (svh) на каждом брейкпоинте — ширина
+    // автоматически подстраивается под высоту, так что сам блок коллажа
+    // всегда квадрат (Виктор: "коллаж не квадратный... мне нужен именно
+    // квадратный"), а не на всю ширину слайда. self-center — родитель
+    // (IntroSlide) flex-column со стандартным align-items:stretch, без
+    // self-center он бы всё равно растянул этот div на всю ширину поверх
+    // aspect-ratio. Высотный бюджет в svh — тот же, что уже подобран под
+    // кнопку "Выбрать тур" (см. VISIBLE_AT_* выше), не увеличивали — значит
+    // на узких портретных экранах коллаж уже не на всю ширину слайда, по
+    // бокам появляются небольшие поля (неизбежное следствие "именно
+    // квадрат" при высоте заведомо меньше ширины экрана).
+    <div className="relative aspect-square h-[34svh] shrink-0 self-center overflow-hidden sm:h-[38svh] lg:h-[32svh]">
+      <div className="grid w-full grid-cols-6 sm:grid-cols-7 lg:grid-cols-8">
         {COLLAGE_PHOTOS.map((src, i) => {
           const isPriming = activeByTile.get(i)?.phase === "priming"
           return (
