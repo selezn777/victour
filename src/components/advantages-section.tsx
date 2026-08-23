@@ -767,11 +767,16 @@ function ValuesSlide({
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 py-6 text-center sm:px-11">
+      {/* px-4 (не px-6) — тот же приём "причесать текст", что уже на первых
+          трёх слайдах (Виктор: "и на четвёртом слайде тоже"). max-w-md ->
+          sm:max-w-lg — на широком экране колонка с дорогой/пунктами была
+          той же фиксированной ширины, что и на телефоне, хотя места вокруг
+          явно больше. */}
+      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-4 py-6 text-center sm:px-11">
         <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {title}
         </h2>
-        <div className="relative mt-6 w-full max-w-md">
+        <div className="relative mt-6 w-full max-w-md sm:max-w-lg">
           {/* Слайд без фото — вместо статичной картинки едет микроавтобус по
               вьющейся дороге (Виктор: "не кружочек, а машинка... микроавтобус,
               туристы едут куда-то"). Дорога больше не жмётся к колонке цифр
