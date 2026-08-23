@@ -280,7 +280,19 @@ function useRevealCycle(bandIndex: number, measure: (idx: number) => Measurement
       })
     }
 
-    after(runCycle, INITIAL_GAP_MS)
+    // Полосы стартуют со сдвигом по фазе (треть полного цикла на каждую) —
+    // без этого все bandIndex запускают свой самый первый runCycle через
+    // одинаковый INITIAL_GAP_MS, а дальше цикл целиком детерминирован (одни
+    // и те же PRIME_MS/HOLD_MS/TRANSITION_MS/GAP_MS у всех полос, bandLoaded
+    // почти всегда резолвится мгновенно из кэша) — три полосы навсегда
+    // остаются в одной фазе и открываются/закрываются синхронно. На lg это
+    // выглядело как "вся мозаика разом превращается в 3 одинаковых крупных
+    // фото" вместо независимого поочерёдного раскрытия то тут, то там
+    // (Виктор: "не сделать одинаковые... фотографии", "не видно, какие из
+    // них моргают" — на самом деле все три моргали и раскрывались синхронно).
+    const CYCLE_MS = PRIME_MS + HOLD_MS + TRANSITION_MS + GAP_MS
+    const phaseOffset = (bandIndex * CYCLE_MS) / 3
+    after(runCycle, INITIAL_GAP_MS + phaseOffset)
     return () => {
       cancelled = true
       timers.forEach(clearTimeout)
@@ -570,9 +582,24 @@ function PhotoSlide({
 }) {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="relative h-[36%] shrink-0 sm:h-[40%]">
+      {/* min(%, Nsvh) — на низких широких окнах (десктоп/ноутбук) % от
+          высоты слайда даёт зону фото ощутимо выше, чем остаётся места под
+          заголовок+текст+кнопку (тот же текст на высоком узком мобильном
+          экране умещался: там % и так был небольшим в пикселях). Без
+          верхнего предела в svh кнопка "Выбрать тур" уезжала за нижний край
+          окна на широких экранах (Виктор: "кнопки не влазят на широкой
+          вёрстки"). PhotoCollage на IntroSlide уже ограничен похожим
+          образом (см. sm:h-[38svh] lg:h-[32svh]) — тут та же идея. */}
+      <div className="relative h-[36%] shrink-0 sm:h-[min(40%,34svh)] lg:h-[min(40%,30svh)]">
         {stackImages && stackImages.length > 1 ? (
-          <div className="h-full w-full p-5 pb-8 sm:p-7 sm:pb-10">
+          // sm+: ширина стопки привязана к высоте (aspect-ratio), а не к
+          // всей ширине слайда — иначе на широком экране зона фото
+          // становится узкой полосой в несколько раз шире, чем высокой, и
+          // повёрнутые фото в PhotoStack (см. STACK_TRANSFORM) торчат
+          // острыми краями за пределы кадра/друг друга, оставляя пустые
+          // клинья по бокам вместо полноценного заполнения (Виктор: "чтобы
+          // заполнение было полноценно... не половинками").
+          <div className="mx-auto h-full w-full p-5 pb-8 sm:aspect-[6/5] sm:w-auto sm:p-7 sm:pb-10">
             <PhotoStack photos={stackImages} alt={imageAlt} />
           </div>
         ) : (
