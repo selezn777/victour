@@ -14,11 +14,17 @@ import type { Review } from "@/lib/reviews-data"
 // кнопку к обычному виду и обойтись только этим морганием.
 function TourCtaButton({ hint = false }: { hint?: boolean }) {
   return (
-    <div className="relative mt-3 w-full self-stretch sm:mt-6">
+    // Кнопка на всю ширину при уменьшенной (ради места под текст) высоте
+    // смотрелась слишком плоской длинной полосой (Виктор: "стала слишком
+    // узкая [по ощущению]... сделай не по всей ширине, чуть поуже"). Не
+    // w-full — inline-flex сам сжимается по контенту и центрируется через
+    // text-center родителя (у inline-level элементов margin:auto для
+    // центрирования не работает, в отличие от text-align).
+    <div className="relative mt-3 sm:mt-6">
       <Link
         href="/tours"
         className={cn(
-          "flex w-full items-center justify-center rounded-2xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-[0_10px_40px_-8px] shadow-primary/35 ring-1 ring-primary-foreground/10 transition-all hover:scale-[1.02] hover:bg-primary/90 hover:shadow-primary/50 active:scale-[0.98] sm:py-6 sm:text-xl",
+          "inline-flex min-w-[220px] items-center justify-center rounded-2xl bg-primary px-10 py-3.5 text-base font-semibold text-primary-foreground shadow-[0_10px_40px_-8px] shadow-primary/35 ring-1 ring-primary-foreground/10 transition-all hover:scale-[1.02] hover:bg-primary/90 hover:shadow-primary/50 active:scale-[0.98] sm:min-w-[260px] sm:px-14 sm:py-6 sm:text-xl",
           hint && "cta-invite-pulse",
         )}
       >
@@ -588,11 +594,19 @@ function IntroSlide() {
         <h1 className="max-w-xl font-heading text-2xl leading-[1.1] font-semibold sm:text-5xl">
           Приватный Вьетнам
         </h1>
+        {/* Подзаголовок вместо снятой из тела фразы "Безопасность мы
+            гарантируем" — тот же приём accent, что уже на слайдах
+            трансфера и маршрутов (Виктор: "на втором слайде под заголовок
+            хорошо смотрится и на третьем слайде"). Виктор про смысл:
+            "создаём безопасность максимально в поездке при
+            взаимодействии... тщательно продумываем каждый выезд". */}
+        <p className="mt-1.5 max-w-md text-sm leading-snug font-medium text-foreground sm:mt-3 sm:max-w-xl sm:text-xl">
+          Каждый выезд тщательно продуман
+        </p>
         <p className="mt-1.5 max-w-full text-xs leading-snug text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-base sm:leading-relaxed">
           Пять авторских маршрутов с идеально выверенным таймингом. Премиальные автомобили и
           вожатый, которому можно по-настоящему доверять. Полное отсутствие посторонних. Никаких
-          лишних остановок в магазины. Меню только то, что вы хотите на самом деле. Безопасность мы
-          гарантируем. Потому что таких выездов мало, и каждый из них тщательно проверен.
+          лишних остановок в магазины. Меню только то, что вы хотите на самом деле.
         </p>
         <TourCtaButton />
       </div>
@@ -983,7 +997,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
   return (
     <div
       ref={rootRef}
-      className="mt-2 flex w-full max-w-3xl items-start gap-1 sm:mt-4 sm:max-w-4xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl"
+      className="flex w-full max-w-3xl items-start gap-1 sm:max-w-4xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl"
     >
       {tours.map((tour, i) => (
         <div key={tour.slug} className={`flex min-w-0 flex-1 flex-col items-center ${STAGGER[i % STAGGER.length]}`}>
@@ -1025,11 +1039,14 @@ function ToursSlide() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-1 pb-6 text-center sm:px-11 sm:pt-2">
-        <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
+        {/* Фото наверх, заголовок под ними — тот же порядок, что на первом
+            и втором слайдах (Виктор: "надо всё-таки заголовок сделать под
+            фотографией, фотографии поднять наверх"). */}
+        <TourSelector tours={CATALOG_TOURS} />
+        <h2 className="mt-4 max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:mt-6 sm:text-4xl">
           Ровно пять маршрутов — и ни одного лишнего
         </h2>
-        <TourSelector tours={CATALOG_TOURS} />
-        <p className="mt-4 max-w-md text-base leading-snug font-medium text-foreground sm:max-w-xl sm:text-xl">
+        <p className="mt-1.5 max-w-md text-base leading-snug font-medium text-foreground sm:mt-3 sm:max-w-xl sm:text-xl">
           Отбор — а не каталог на любой вкус.
         </p>
         <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground sm:max-w-xl sm:text-base">
