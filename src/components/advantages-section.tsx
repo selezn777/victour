@@ -14,17 +14,23 @@ import type { Review } from "@/lib/reviews-data"
 // кнопку к обычному виду и обойтись только этим морганием.
 function TourCtaButton({ hint = false }: { hint?: boolean }) {
   return (
-    // Кнопка на всю ширину при уменьшенной (ради места под текст) высоте
-    // смотрелась слишком плоской длинной полосой (Виктор: "стала слишком
-    // узкая [по ощущению]... сделай не по всей ширине, чуть поуже"). Не
-    // w-full — inline-flex сам сжимается по контенту и центрируется через
-    // text-center родителя (у inline-level элементов margin:auto для
-    // центрирования не работает, в отличие от text-align).
-    <div className="relative mt-3 sm:mt-6">
+    // Полностью full-width смотрелась плоской полосой, а узкий inline-fit
+    // pill (прошлая правка) — наоборот мелко и невесомо (Виктор: "теперь
+    // слишком узкая... верни почти по всей ширине и сделай жирнее"). w-[88%]
+    // с max-w — компромисс: почти во всю ширину, но не край-в-край,
+    // font-bold — визуально жирнее без роста высоты. py/text-size на sm+ НЕ
+    // увеличивал (см. комментарий у IntroSlide про svh-бюджет без скролла) —
+    // ширина и жирность шрифта дают "больше" без цены по высоте. w-full на
+    // обёртке ОБЯЗАТЕЛЕН: родитель — flex-col с items-center (не stretch),
+    // без явной ширины у обёртки её собственная ширина зависит от контента
+    // (Link), а Link.width:88% — от ширины обёртки; проценты внутри
+    // auto-sized контейнера резолвятся в auto (по спеке CSS), кнопка
+    // схлопывалась до текста и переносилась на 2 строки.
+    <div className="relative mt-4 flex w-full justify-center sm:mt-6">
       <Link
         href="/tours"
         className={cn(
-          "inline-flex min-w-[220px] items-center justify-center rounded-2xl bg-primary px-10 py-3.5 text-base font-semibold text-primary-foreground shadow-[0_10px_40px_-8px] shadow-primary/35 ring-1 ring-primary-foreground/10 transition-all hover:scale-[1.02] hover:bg-primary/90 hover:shadow-primary/50 active:scale-[0.98] sm:min-w-[260px] sm:px-14 sm:py-6 sm:text-xl",
+          "flex w-[88%] max-w-sm items-center justify-center rounded-2xl bg-primary px-8 py-4 text-lg font-bold text-primary-foreground shadow-[0_10px_40px_-8px] shadow-primary/35 ring-1 ring-primary-foreground/10 transition-all hover:scale-[1.02] hover:bg-primary/90 hover:shadow-primary/50 active:scale-[0.98] sm:max-w-lg sm:py-6 sm:text-xl",
           hint && "cta-invite-pulse",
         )}
       >
@@ -584,13 +590,16 @@ function IntroSlide() {
           leading-snug (не -relaxed) остаётся — это про высоту строки, к
           выравниванию не относится. */}
       {/* На мобиле коллаж теперь full-width квадрат (см. PhotoCollage) —
-          заметно выше, чем был (полоса ограничивалась в svh, теперь высота =
-          ширине экрана). Место под текст+кнопку от этого сжалось: текстовый
-          блок здесь мельче/плотнее, чем на sm+ (pt-2/pb-3, text-xs вместо
-          text-sm, mt-1.5), плюс уже px-4 вместо px-6 и без max-w-sm на
-          параграфе — Виктор: "текст тоже можно на всю ширину, чтобы места
-          больше было" (шире строка -> меньше строк -> меньше высоты). */}
-      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-2 pb-2 text-center sm:px-11 sm:pt-7">
+          заметно выше, чем был. Текст здесь плотнее, чем на sm+, но не
+          вплотную к картинке (pt-3, не pt-2) и не мельче необходимого
+          (text-sm, не text-xs — Виктор: "текст читается плохо"). sm/lg —
+          НЕ увеличивал pt/шрифты сверх того, что уже было: там высота попрежнему
+          ограничена в svh под кнопку без скролла (mousewheel в Swiper уходит
+          на переключение слайда, а не на скролл вложенного блока — тот же
+          инвариант, что чинили в самом начале этого разговора). "Пошире"
+          (Виктор) сделан через кнопку (см. TourCtaButton — шире и жирнее,
+          без доп. высоты), а не через рост вертикальных отступов на sm/lg. */}
+      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-3 pb-2 text-center sm:px-11 sm:pt-7">
         <h1 className="max-w-xl font-heading text-2xl leading-[1.1] font-semibold sm:text-5xl">
           Приватный Вьетнам
         </h1>
@@ -603,7 +612,7 @@ function IntroSlide() {
         <p className="mt-1.5 max-w-md text-sm leading-snug font-medium text-foreground sm:mt-3 sm:max-w-xl sm:text-xl">
           Каждый выезд тщательно продуман
         </p>
-        <p className="mt-1.5 max-w-full text-xs leading-snug text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-base sm:leading-relaxed">
+        <p className="mt-1.5 max-w-full text-sm leading-snug text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-base sm:leading-relaxed">
           Пять авторских маршрутов с идеально выверенным таймингом. Премиальные автомобили и
           вожатый, которому можно по-настоящему доверять. Полное отсутствие посторонних. Никаких
           лишних остановок в магазины. Меню только то, что вы хотите на самом деле.
