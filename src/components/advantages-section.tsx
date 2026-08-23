@@ -14,11 +14,11 @@ import type { Review } from "@/lib/reviews-data"
 // кнопку к обычному виду и обойтись только этим морганием.
 function TourCtaButton({ hint = false }: { hint?: boolean }) {
   return (
-    <div className="relative mt-6 w-full self-stretch">
+    <div className="relative mt-3 w-full self-stretch sm:mt-6">
       <Link
         href="/tours"
         className={cn(
-          "flex w-full items-center justify-center rounded-2xl bg-primary px-8 py-5 text-lg font-semibold text-primary-foreground shadow-[0_10px_40px_-8px] shadow-primary/35 ring-1 ring-primary-foreground/10 transition-all hover:scale-[1.02] hover:bg-primary/90 hover:shadow-primary/50 active:scale-[0.98] sm:py-6 sm:text-xl",
+          "flex w-full items-center justify-center rounded-2xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-[0_10px_40px_-8px] shadow-primary/35 ring-1 ring-primary-foreground/10 transition-all hover:scale-[1.02] hover:bg-primary/90 hover:shadow-primary/50 active:scale-[0.98] sm:py-6 sm:text-xl",
           hint && "cta-invite-pulse",
         )}
       >
@@ -577,11 +577,18 @@ function IntroSlide() {
           заголовком/кнопкой (Виктор: "выглядит дёшево"), вернули обратно.
           leading-snug (не -relaxed) остаётся — это про высоту строки, к
           выравниванию не относится. */}
-      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-3 pb-4 text-center sm:px-11 sm:pt-7">
+      {/* На мобиле коллаж теперь full-width квадрат (см. PhotoCollage) —
+          заметно выше, чем был (полоса ограничивалась в svh, теперь высота =
+          ширине экрана). Место под текст+кнопку от этого сжалось: текстовый
+          блок здесь мельче/плотнее, чем на sm+ (pt-2/pb-3, text-xs вместо
+          text-sm, mt-1.5), плюс уже px-4 вместо px-6 и без max-w-sm на
+          параграфе — Виктор: "текст тоже можно на всю ширину, чтобы места
+          больше было" (шире строка -> меньше строк -> меньше высоты). */}
+      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-2 pb-2 text-center sm:px-11 sm:pt-7">
         <h1 className="max-w-xl font-heading text-2xl leading-[1.1] font-semibold sm:text-5xl">
           Приватный Вьетнам
         </h1>
-        <p className="mt-2 max-w-sm text-sm leading-snug text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-base sm:leading-relaxed">
+        <p className="mt-1.5 max-w-full text-xs leading-snug text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-base sm:leading-relaxed">
           Пять авторских маршрутов с идеально выверенным таймингом. Премиальные автомобили и
           вожатый, которому можно по-настоящему доверять. Полное отсутствие посторонних. Никаких
           лишних остановок в магазины. Меню только то, что вы хотите на самом деле. Безопасность мы
