@@ -685,7 +685,10 @@ function PhotoSlide({
           </div>
         )}
       </div>
-      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-4 pb-5 text-center sm:px-11 sm:pt-7">
+      {/* px-4 + max-w-full на теле (не px-6/max-w-sm) — тот же приём "текст
+          на всю ширину", что уже на IntroSlide (Виктор: "на втором и на
+          третьем слайде где текст причеши" — привёл в соответствие). */}
+      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-4 pb-5 text-center sm:px-11 sm:pt-7">
         <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {title}
         </h2>
@@ -694,7 +697,7 @@ function PhotoSlide({
             {accent}
           </p>
         )}
-        <p className="mt-2 max-w-sm text-sm leading-snug text-muted-foreground sm:max-w-xl sm:text-base sm:leading-relaxed">
+        <p className="mt-2 max-w-full text-sm leading-snug text-muted-foreground sm:max-w-xl sm:text-base sm:leading-relaxed">
           {body}
         </p>
         <TourCtaButton />
@@ -1047,7 +1050,10 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
 function ToursSlide() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-1 pb-6 text-center sm:px-11 sm:pt-2">
+      {/* px-4 + max-w-full на теле (не px-6/max-w-sm) — тот же приём "текст
+          на всю ширину", что уже на IntroSlide (Виктор: "на втором и на
+          третьем слайде где текст причеши" — привёл в соответствие). */}
+      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-1 pb-6 text-center sm:px-11 sm:pt-2">
         {/* Фото наверх, заголовок под ними — тот же порядок, что на первом
             и втором слайдах (Виктор: "надо всё-таки заголовок сделать под
             фотографией, фотографии поднять наверх"). */}
@@ -1058,7 +1064,7 @@ function ToursSlide() {
         <p className="mt-1.5 max-w-md text-base leading-snug font-medium text-foreground sm:mt-3 sm:max-w-xl sm:text-xl">
           Отбор — а не каталог на любой вкус.
         </p>
-        <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground sm:max-w-xl sm:text-base">
+        <p className="mt-2 max-w-full text-sm leading-relaxed text-muted-foreground sm:max-w-xl sm:text-base">
           Никаких однодневных марш-бросков и вечеров, когда гости бродят по незнакомому городу сами
           по себе — каждый маршрут обкатан лично.
         </p>
