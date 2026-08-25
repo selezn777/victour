@@ -2,6 +2,7 @@
 
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Mousewheel, Pagination, Keyboard } from "swiper/modules"
+import type { Swiper as SwiperType } from "swiper/types"
 import type { ReactNode } from "react"
 
 import "swiper/css"
@@ -44,6 +45,8 @@ export function SlideDeck({
   className = "h-[calc(100dvh-3.5rem)] w-full sm:h-[calc(100dvh-4rem)]",
   direction = "vertical",
   paginationPosition = "top-left",
+  onSwiper,
+  onSlideChange,
 }: {
   slides: ReactNode[]
   /** Переопределяет высоту/ширину — по умолчанию "вся высота вьюпорта минус
@@ -57,6 +60,12 @@ export function SlideDeck({
    * (Виктор попросил убрать "переплёт" на главной — он визуально сдвигал
    * контент влево, раз он был только слева, а не с обеих сторон). */
   paginationPosition?: "top-left" | "bottom-center" | "none"
+  /** Инстанс Swiper наружу — нужен для программных переходов (slideTo) со
+   * стороны страницы, например по клику на внешнюю кнопку вне деки. */
+  onSwiper?: (swiper: SwiperType) => void
+  /** Текущий индекс слайда наружу — например, чтобы показать доп. элементы
+   * управления в плашке вне деки только на конкретном слайде. */
+  onSlideChange?: (index: number) => void
 }) {
   return (
     <Swiper
@@ -65,6 +74,8 @@ export function SlideDeck({
       speed={420}
       mousewheel={{ releaseOnEdges: true, sensitivity: 1 }}
       keyboard={{ enabled: true }}
+      onSwiper={onSwiper}
+      onSlideChange={(swiper) => onSlideChange?.(swiper.activeIndex)}
       pagination={paginationPosition === "none" ? false : { clickable: true, el: ".slide-deck-pagination" }}
       // У горизонтальной деки Swiper по умолчанию ставит touch-action: pan-y
       // (пропускает вертикальный тач-жест браузеру) — вертикальный свайп по

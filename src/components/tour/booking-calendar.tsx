@@ -45,11 +45,16 @@ export function BookingCalendar({
   durationDays,
   selectedDate,
   onSelectDate,
+  large = false,
 }: {
   bookedDates: Set<string>
   durationDays: number
   selectedDate: string | null
   onSelectDate: (date: string) => void
+  /** Крупнее тач-таргеты (кнопки дат/пред.-след.) — на странице тура
+   * Виктор увидел стандартный размер на телефоне и попросил кнопки даты
+   * покрупнее, "удобнее". Остальные места (форма заявки) остаются как были. */
+  large?: boolean
 }) {
   const today = useMemo(() => {
     const d = new Date()
@@ -83,16 +88,16 @@ export function BookingCalendar({
   }
 
   return (
-    <div className="rounded-xl border border-border p-4">
+    <div className={cn("rounded-xl border border-border p-4", large && "sm:p-5")}>
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">
+        <span className={cn("text-sm font-medium", large && "sm:text-base")}>
           {MONTH_NAMES[cursor.getMonth()]} {cursor.getFullYear()}
         </span>
-        <div className="flex gap-1">
+        <div className="flex gap-1.5">
           <Button
             type="button"
             variant="outline"
-            size="sm"
+            size={large ? "default" : "sm"}
             disabled={isPastMonth}
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
           >
@@ -101,7 +106,7 @@ export function BookingCalendar({
           <Button
             type="button"
             variant="outline"
-            size="sm"
+            size={large ? "default" : "sm"}
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
           >
             След.
@@ -109,13 +114,13 @@ export function BookingCalendar({
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
+      <div className={cn("mt-3 grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground", large && "sm:text-sm")}>
         {WEEKDAYS.map((w) => (
           <div key={w}>{w}</div>
         ))}
       </div>
 
-      <div className="mt-1 grid grid-cols-7 gap-1">
+      <div className={cn("mt-1 grid grid-cols-7", large ? "gap-1.5" : "gap-1")}>
         {weeks.flatMap((week, wi) =>
           week.map((date, di) => {
             if (!date) return <div key={`${wi}-${di}`} />
@@ -129,7 +134,8 @@ export function BookingCalendar({
                 aria-pressed={selected}
                 onClick={() => onSelectDate(toIsoDate(date))}
                 className={cn(
-                  "flex h-9 items-center justify-center rounded-lg text-sm transition-colors",
+                  "flex items-center justify-center rounded-lg text-sm transition-colors",
+                  large ? "h-11 text-base sm:h-12" : "h-9",
                   disabled && "cursor-not-allowed text-muted-foreground/40 line-through",
                   !disabled && !selected && "hover:bg-muted",
                   selected && "bg-primary text-primary-foreground",
