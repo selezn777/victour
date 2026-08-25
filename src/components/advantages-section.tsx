@@ -580,42 +580,20 @@ function IntroSlide() {
           экранах наоборот обрезал бы верх контента, если он не влезает —
           safe откатывается к выравниванию по началу и обычному скроллу
           вместо обрезания, когда контент не помещается. */}
-      {/* pt-3/pb-4 (не pt-5/pb-6) и mt-2 у параграфа — текст на этом слайде
-          стал заметно длиннее (Виктор прислал развёрнутый копирайт), с
-          прежними отступами кнопка "Выбрать тур" уходила за пределы экрана
-          на типичном телефоне (Виктор: "кнопка вообще ушла с экрана").
-          text-center (не text-left) — пробовали text-left для компактности,
-          но по факту это смотрелось рассинхроном с центрированным
-          заголовком/кнопкой (Виктор: "выглядит дёшево"), вернули обратно.
-          leading-snug (не -relaxed) остаётся — это про высоту строки, к
-          выравниванию не относится. */}
-      {/* На мобиле коллаж теперь full-width квадрат (см. PhotoCollage) —
-          заметно выше, чем был. Текст здесь плотнее, чем на sm+, но не
-          вплотную к картинке (pt-3, не pt-2) и не мельче необходимого
-          (text-sm, не text-xs — Виктор: "текст читается плохо"). sm/lg —
-          НЕ увеличивал pt/шрифты сверх того, что уже было: там высота попрежнему
-          ограничена в svh под кнопку без скролла (mousewheel в Swiper уходит
-          на переключение слайда, а не на скролл вложенного блока — тот же
-          инвариант, что чинили в самом начале этого разговора). "Пошире"
-          (Виктор) сделан через кнопку (см. TourCtaButton — шире и жирнее,
-          без доп. высоты), а не через рост вертикальных отступов на sm/lg. */}
+      {/* Виктор: "заголовок Приватный Вьетнам убрать... текст попроще,
+          крупнее в пару раз, чтобы всё считывалось за раз". Убрал h1 и
+          старый 5-предложный абзац целиком — бывший accent-подзаголовок
+          стал единственным (крупным) заголовком, тело — одна короткая
+          строка вместо абзаца. Меньше текста и крупнее шрифт одновременно
+          решают и жалобу на объём, и жалобу на "не влезло" (высота вниз
+          от коллажа освобождается). text-center и leading-snug — как
+          были. */}
       <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-3 pb-2 text-center sm:px-11 sm:pt-7">
-        <h1 className="max-w-xl font-heading text-2xl leading-[1.1] font-semibold sm:text-5xl">
-          Приватный Вьетнам
-        </h1>
-        {/* Подзаголовок вместо снятой из тела фразы "Безопасность мы
-            гарантируем" — тот же приём accent, что уже на слайдах
-            трансфера и маршрутов (Виктор: "на втором слайде под заголовок
-            хорошо смотрится и на третьем слайде"). Виктор про смысл:
-            "создаём безопасность максимально в поездке при
-            взаимодействии... тщательно продумываем каждый выезд". */}
-        <p className="mt-1.5 max-w-md text-sm leading-snug font-medium text-foreground sm:mt-3 sm:max-w-xl sm:text-xl">
+        <h1 className="max-w-xl font-heading text-3xl leading-[1.1] font-semibold sm:text-5xl">
           Каждый выезд тщательно продуман
-        </p>
-        <p className="mt-1.5 max-w-full text-sm leading-snug text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-base sm:leading-relaxed">
-          Пять авторских маршрутов с идеально выверенным таймингом. Премиальные автомобили и
-          вожатый, которому можно по-настоящему доверять. Полное отсутствие посторонних. Никаких
-          лишних остановок в магазины. Меню только то, что вы хотите на самом деле.
+        </h1>
+        <p className="mt-2 max-w-md text-base leading-snug text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-xl">
+          Премиальные авто, гид, которому доверяют, и никого лишнего рядом.
         </p>
         <TourCtaButton />
       </div>
@@ -1015,11 +993,15 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
     >
       {tours.map((tour, i) => (
         <div key={tour.slug} className={`flex min-w-0 flex-1 flex-col items-center ${STAGGER[i % STAGGER.length]}`}>
+          {/* h-36 на мобиле (было h-56) — фотополоса вместе с заголовком,
+              accent-строкой и кнопкой не влезала в svh-бюджет слайда на
+              реальном телефоне (Виктор прислал скриншот: кнопка обрезана
+              снизу). sm/lg не трогал — там места достаточно. */}
           <Link
             href={`/tours/${tour.slug}`}
             onMouseEnter={() => setActive(i)}
             onMouseLeave={() => setActive(null)}
-            className={`relative h-56 w-full overflow-hidden rounded-[1px] bg-muted ring-1 ring-white/10 transition-shadow duration-500 ease-out sm:h-64 lg:h-72 ${
+            className={`relative h-36 w-full overflow-hidden rounded-[1px] bg-muted ring-1 ring-white/10 transition-shadow duration-500 ease-out sm:h-64 lg:h-72 ${
               i === active ? "shadow-[0_10px_28px_-6px_rgba(0,0,0,0.55)]" : ""
             }`}
           >
@@ -1060,17 +1042,14 @@ function ToursSlide() {
             и втором слайдах (Виктор: "надо всё-таки заголовок сделать под
             фотографией, фотографии поднять наверх"). */}
         <TourSelector tours={CATALOG_TOURS} />
-        <h2 className="mt-4 max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:mt-6 sm:text-4xl">
-          Всего четыре маршрута. И ни одного лишнего
+        <h2 className="mt-3 max-w-xl font-heading text-3xl leading-[1.1] font-semibold sm:mt-6 sm:text-4xl">
+          Всего четыре маршрута
         </h2>
-        <p className="mt-1.5 max-w-md text-base leading-snug font-medium text-foreground sm:mt-3 sm:max-w-xl sm:text-xl">
-          Мы не выбираем лучшее из сорока. У нас просто нет остального.
-        </p>
-        <p className="mt-2 max-w-full text-sm leading-relaxed text-muted-foreground sm:max-w-xl sm:text-base">
-          Многие туры здесь опасны или просто небрежны: однодневный рывок в Далат поздно вечером по
-          горному серпантину с уставшим водителем, дайвинг и рыбалка без всякой подготовки,
-          маршруты, которые никто не обновлял годами. Мы убрали всё это и оставили только то, что
-          проверено лично и безопасно от начала до конца.
+        {/* Убрал отдельный muted-абзац с подробным разбором (Далат/дайвинг/
+            рыбалка) — Виктор: слишком много текста, не влезало на реальном
+            телефоне. Причина осталась одной короткой строкой вместо абзаца. */}
+        <p className="mt-2 max-w-md text-lg leading-snug font-medium text-foreground sm:mt-4 sm:max-w-xl sm:text-xl">
+          Опасные и неидеальные маршруты мы просто не предлагаем.
         </p>
         <TourCtaButton />
       </div>
