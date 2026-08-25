@@ -1334,7 +1334,6 @@ export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
   return (
     <SlideDeck
       paginationPosition="none"
-      swipeHint
       slides={[
         <IntroSlide key="intro" />,
         <PhotoSlide

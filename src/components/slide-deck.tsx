@@ -1,9 +1,7 @@
 "use client"
 
-import { useState } from "react"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Mousewheel, Pagination, Keyboard } from "swiper/modules"
-import { ChevronDownIcon } from "lucide-react"
 import type { ReactNode } from "react"
 
 import "swiper/css"
@@ -38,7 +36,6 @@ export function SlideDeck({
   className = "h-[calc(100svh-3.5rem)] w-full sm:h-[calc(100svh-4rem)]",
   direction = "vertical",
   paginationPosition = "top-left",
-  swipeHint = false,
 }: {
   slides: ReactNode[]
   /** Переопределяет высоту/ширину — по умолчанию "вся высота вьюпорта минус
@@ -52,15 +49,7 @@ export function SlideDeck({
    * (Виктор попросил убрать "переплёт" на главной — он визуально сдвигал
    * контент влево, раз он был только слева, а не с обеих сторон). */
   paginationPosition?: "top-left" | "bottom-center" | "none"
-  /** Моргающая стрелка внизу, приглашающая свайпнуть дальше — пропадает на
-   * последнем слайде (там уже некуда, вместо неё — своя подсказка над
-   * кнопкой "Выбрать тур", см. TourCtaButton). Без пагинации-переплёта
-   * слева (paginationPosition="none") было совсем неочевидно, что слайды
-   * вообще листаются — Виктор попросил явный намёк взамен. */
-  swipeHint?: boolean
 }) {
-  const [isLastSlide, setIsLastSlide] = useState(slides.length <= 1)
-
   return (
     <Swiper
       modules={[Mousewheel, Pagination, Keyboard]}
@@ -69,8 +58,6 @@ export function SlideDeck({
       mousewheel={{ releaseOnEdges: true, sensitivity: 1 }}
       keyboard={{ enabled: true }}
       pagination={paginationPosition === "none" ? false : { clickable: true, el: ".slide-deck-pagination" }}
-      onSwiper={(swiper) => setIsLastSlide(swiper.isEnd)}
-      onSlideChange={(swiper) => setIsLastSlide(swiper.isEnd)}
       // У горизонтальной деки Swiper по умолчанию ставит touch-action: pan-y
       // (пропускает вертикальный тач-жест браузеру) — вертикальный свайп по
       // /tours не листал слайды, а скроллил страницу и схлопывал адресную
@@ -86,18 +73,6 @@ export function SlideDeck({
       {paginationPosition !== "none" && (
         <div className={PAGINATION_WRAPPER_CLASS[paginationPosition]}>
           <div className={`slide-deck-pagination pointer-events-auto ${PAGINATION_DOTS_CLASS[paginationPosition]}`} />
-        </div>
-      )}
-      {swipeHint && !isLastSlide && (
-        // Виктор про первую версию (одна крупная моргающая стрелка): "не
-        // должно мешать читать текст, не должно торопить — человек должен
-        // иметь право погрузиться, просто видеть тренд, что можно
-        // перелистнуть". Убрана анимация (bounce ощущался как "торопит"),
-        // сдвоенный шеврон вместо одного — читается как статичный намёк на
-        // направление, а не активный призыв к действию, тише по цвету.
-        <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex flex-col items-center -space-y-3 opacity-35 sm:bottom-4">
-          <ChevronDownIcon aria-hidden className="size-4" />
-          <ChevronDownIcon aria-hidden className="size-4" />
         </div>
       )}
     </Swiper>
