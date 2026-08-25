@@ -651,20 +651,17 @@ function PhotoSlide({
           верхнего предела в svh кнопка "Выбрать тур" уезжала за нижний край
           окна на широких экранах (Виктор: "кнопки не влазят на широкой
           вёрстки"). PhotoCollage на IntroSlide уже ограничен похожим
-          образом (см. sm:h-[38svh] lg:h-[32svh]) — тут та же идея. */}
-      <div className="relative h-[36%] shrink-0 sm:h-[min(40%,34svh)] lg:h-[min(40%,30svh)]">
+          образом (см. sm:h-[38svh] lg:h-[32svh]) — тут та же идея. Бюджет
+          увеличен (было 36%/40%/40%) — Виктор попросил фото снова
+          квадратные, но заметно крупнее прежнего квадратного варианта;
+          текст под фото сейчас короткий, места хватает. */}
+      <div className="relative h-[48%] shrink-0 sm:h-[min(50%,40svh)] lg:h-[min(46%,36svh)]">
         {stackImages && stackImages.length > 1 ? (
-          // Виктор попросил вернуть альбомную (не квадратную) раму именно
-          // для этого слайда — фото крупнее, не "квадратики". Источники
-          // сами по себе 1:1, но каждая карточка внутри PhotoStack
-          // рендерится через object-cover на всю рамку (см. photo-stack.tsx)
-          // — квадрат просто обрезается по бокам под более широкий кадр,
-          // без леттербоксинга. aspect-[3/2] — между 16:9 (Виктор назвал
-          // как ориентир) и квадратом, чуть безопаснее по краям при
-          // повороте карточек (см. STACK_TRANSFORM) — более узкий 16:9 при
-          // той же высоте даёт более длинную диагональ у повёрнутого кадра,
-          // риск вылезти за padding-рамку выше.
-          <div className="mx-auto aspect-[3/2] h-full w-auto p-5 pb-8 sm:p-7 sm:pb-10">
+          // Виктор сначала просил альбомную раму (не квадратную), потом
+          // передумал — снова квадрат, но крупнее. Источники сами по себе
+          // 1:1 (см. комментарий в истории задач), object-cover на всю
+          // рамку в PhotoStack тут просто не обрезает лишнего.
+          <div className="mx-auto aspect-square h-full w-auto p-3 pb-6 sm:p-5 sm:pb-8">
             <PhotoStack photos={stackImages} alt={imageAlt} />
           </div>
         ) : (
@@ -708,6 +705,10 @@ function PhotoSlide({
 // Длительность одного круга машинки по дороге — синхронна с animateMotion,
 // который тут раньше был (см. useVanOnRoad).
 const VAN_DURATION_MS = 22000
+// Виктор: "машинку на заднем фоне тоже можно увеличить" — домножается на
+// scale в transform ниже (сама форма машинки в JSX остаётся в тех же
+// координатах, масштаб только визуальный).
+const VAN_SCALE = 1.5
 
 // SMIL rotate="auto" крутил машинку СТРОГО по касательной — на разворотах
 // серпантина касательная временами смотрела влево (dx<0), и разворот на
@@ -741,7 +742,10 @@ function useVanOnRoad(roadRef: RefObject<SVGPathElement | null>, vanRef: RefObje
       const dy = p1.y - p0.y
       const mirrored = dx < 0
       const angle = (Math.atan2(dy, Math.abs(dx) || 0.0001) * 180) / Math.PI
-      van.setAttribute("transform", `translate(${p0.x} ${p0.y}) scale(${mirrored ? -1 : 1},1) rotate(${angle})`)
+      van.setAttribute(
+        "transform",
+        `translate(${p0.x} ${p0.y}) scale(${mirrored ? -VAN_SCALE : VAN_SCALE},${VAN_SCALE}) rotate(${angle})`,
+      )
       raf = requestAnimationFrame(frame)
     }
     raf = requestAnimationFrame(frame)
@@ -878,12 +882,12 @@ function ValuesSlide({
           <div className="relative z-10 space-y-5 text-left">
             {points.map((point, i) => (
               <div key={point.title} className="flex items-start gap-3">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 font-heading text-sm font-semibold text-primary">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 font-heading text-base font-semibold text-primary">
                   {i + 1}
                 </span>
                 <div>
-                  <h3 className="font-heading text-base font-semibold sm:text-lg">{point.title}</h3>
-                  <p className="mt-0.5 text-sm text-muted-foreground sm:text-base">{point.body}</p>
+                  <h3 className="font-heading text-lg font-semibold sm:text-xl">{point.title}</h3>
+                  <p className="mt-0.5 text-base text-muted-foreground sm:text-lg">{point.body}</p>
                 </div>
               </div>
             ))}

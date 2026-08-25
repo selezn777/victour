@@ -1,7 +1,6 @@
 "use client"
 
 import Image from "next/image"
-import { MousePointerClickIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
 // Три позиции в стопке: 0 — сверху (лицом), 1 — средняя, 2 — самая нижняя.
@@ -113,10 +112,10 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
     return () => clearInterval(interval)
   }, [entered])
 
-  // Тихая статичная подсказка-иконка (тот же принцип, что у swipeHint в
-  // SlideDeck: не мигает и не торопит) — на случай, если гость не застанет
-  // автопереключения или захочет полистать дальше сам. Пропадает после
-  // первого собственного тапа.
+  // Тихая статичная текстовая подсказка (не мигает и не торопит) — на
+  // случай, если гость не застанет автопереключения или захочет полистать
+  // дальше сам. Виктор: символ-иконку убрать, вместо неё слово "тыкни".
+  // Пропадает после первого собственного тапа.
   const [tapped, setTapped] = useState(false)
 
   return (
@@ -151,9 +150,9 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
       {!tapped && entered.every(Boolean) && (
         <div
           aria-hidden
-          className="pointer-events-none absolute right-2 bottom-2 z-30 flex size-7 items-center justify-center rounded-full bg-black/40 text-white opacity-70 backdrop-blur-sm"
+          className="pointer-events-none absolute right-2 bottom-2 z-30 rounded-full bg-black/40 px-2.5 py-1 text-xs text-white opacity-70 backdrop-blur-sm"
         >
-          <MousePointerClickIcon className="size-4" />
+          тыкни
         </div>
       )}
     </button>
