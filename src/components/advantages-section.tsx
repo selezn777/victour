@@ -1015,15 +1015,16 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
     >
       {tours.map((tour, i) => (
         <div key={tour.slug} className={`flex min-w-0 flex-1 flex-col items-center ${STAGGER[i % STAGGER.length]}`}>
-          {/* h-36 на мобиле (было h-56) — фотополоса вместе с заголовком,
-              accent-строкой и кнопкой не влезала в svh-бюджет слайда на
-              реальном телефоне (Виктор прислал скриншот: кнопка обрезана
-              снизу). sm/lg не трогал — там места достаточно. */}
+          {/* h-36 на мобиле было уменьшено, когда под фотополосой ещё был
+              длинный абзац (кнопка обрезалась снизу) — с тех пор текст
+              сильно сократили (см. историю задач), а Виктор пожаловался на
+              обратное: много пустого места внизу слайда, попросил
+              фотографии крупнее. Вернул на уровень sm/lg (h-64). */}
           <Link
             href={`/tours/${tour.slug}`}
             onMouseEnter={() => setActive(i)}
             onMouseLeave={() => setActive(null)}
-            className={`relative h-36 w-full overflow-hidden rounded-[1px] bg-muted ring-1 ring-white/10 transition-shadow duration-500 ease-out sm:h-64 lg:h-72 ${
+            className={`relative h-64 w-full overflow-hidden rounded-[1px] bg-muted ring-1 ring-white/10 transition-shadow duration-500 ease-out lg:h-72 ${
               i === active ? "shadow-[0_10px_28px_-6px_rgba(0,0,0,0.55)]" : ""
             }`}
           >
@@ -1064,13 +1065,13 @@ function ToursSlide() {
             и втором слайдах (Виктор: "надо всё-таки заголовок сделать под
             фотографией, фотографии поднять наверх"). */}
         <TourSelector tours={CATALOG_TOURS} />
-        <h2 className="mt-3 max-w-xl font-heading text-3xl leading-[1.1] font-semibold sm:mt-6 sm:text-4xl">
+        <h2 className="mt-6 max-w-xl font-heading text-3xl leading-[1.1] font-semibold sm:mt-8 sm:text-4xl">
           Всего четыре маршрута
         </h2>
         {/* Убрал отдельный muted-абзац с подробным разбором (Далат/дайвинг/
             рыбалка) — Виктор: слишком много текста, не влезало на реальном
             телефоне. Причина осталась одной короткой строкой вместо абзаца. */}
-        <p className="mt-2 max-w-md text-lg leading-snug font-medium text-foreground sm:mt-4 sm:max-w-xl sm:text-xl">
+        <p className="mt-3 max-w-md text-lg leading-snug font-medium text-foreground sm:mt-5 sm:max-w-xl sm:text-xl">
           Опасные и неидеальные маршруты мы просто не предлагаем.
         </p>
         <TourCtaButton />
@@ -1364,7 +1365,7 @@ export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
           points={[
             {
               title: "Только вы - и больше никого",
-              body: "Никого не ждём и ни под кого не подстраиваемся. Маршрут - только ваш, от встречи в отеле до вечера.",
+              body: "Никого не ждём и ни под кого не подстраиваемся.",
             },
             {
               title: "Без туристических ловушек",
