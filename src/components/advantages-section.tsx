@@ -93,9 +93,13 @@ function shuffledIndices(count: number) {
 // ширина слайда, высота производная (квадрат на всю ширину — Виктор: "на
 // телефонах квадрат должен быть по всей ширине"); с sm и выше наоборот —
 // высота в svh (бюджет под кнопку), ширина производная.
-const VISIBLE_AT_BASE = 6 * 6 // 6×6 — растёт от sm/lg (Виктор разрешил не показывать все 67, если не влезают в квадрат)
-const VISIBLE_AT_SM = 7 * 7 // 7×7
-const VISIBLE_AT_LG = 8 * 8 // 8×8 — из 67 фото показываем 64, 3 не влезают в квадрат
+// Было 6×6/7×7/8×8 по брейкпоинтам — Виктор увидел на мобиле 6×6 и
+// попросил 8×8 везде ("фоток стало мало"). Теперь одна плотность на всех
+// брейкпоинтах — из 67 фото показываем 64, 3 всегда скрыты (не влезают
+// в квадрат 8×8).
+const VISIBLE_AT_BASE = 8 * 8
+const VISIBLE_AT_SM = 8 * 8
+const VISIBLE_AT_LG = 8 * 8
 
 // Раньше (прямоугольная сетка) большие брейкпоинты показывали МЕНЬШЕ плиток,
 // чем база (8×6=48 на базе против 12×3=36 на lg) — колонок больше, но строк
@@ -118,8 +122,8 @@ function visibleCountForWidth(width: number) {
 
 function gridColsForWidth(width: number) {
   if (width >= 1024) return 8
-  if (width >= 640) return 7
-  return 6
+  if (width >= 640) return 8
+  return 8
 }
 
 // Сколько раскрытий одновременно — по числу колонок в сетке на этом брейкпоинте
@@ -362,8 +366,12 @@ function useRevealCycle(bandIndex: number, measure: (idx: number) => Measurement
 // на каждую плитку — чисто визуальная (для темпа появления), включается
 // ПОСЛЕ того, как картинка реально пришла.
 const TILE_FADE_MS = 260
-const TILE_STAGGER_MS = 45
-const COLLAGE_CONCURRENCY = 6
+const TILE_STAGGER_MS = 30
+// 6 -> 8 — Виктор попросил быстрее. Не поднимал сильно выше: раньше уже
+// было "без лимита" (65 параллельных) и на медленной мобильной сети все
+// делили один и тот же узкий канал, ни один не доходил быстро (см.
+// комментарий выше) — с 64 фото вместо 67 общий трафик и так меньше.
+const COLLAGE_CONCURRENCY = 8
 
 // Раньше была ещё крупная "hero"-плитка на всю область поверх сетки, пока
 // сетка грузится (заглушка на время загрузки) — Виктор: одна фотка держится
@@ -378,12 +386,17 @@ function PhotoCollage() {
   const markLoaded = useCallback((i: number) => {
     setLoadedTiles((prev) => (prev.has(i) ? prev : new Set(prev).add(i)))
   }, [])
-  const gridReady = loadedTiles.size >= COLLAGE_PHOTO_COUNT
+  // VISIBLE_AT_LG (не COLLAGE_PHOTO_COUNT) — теперь одна плотность на всех
+  // брейкпоинтах (8×8=64 из 67), а preloadImage ниже грузит именно эти 64:
+  // сравнивать готовность с полными 67 значило бы никогда не стать true.
+  const gridReady = loadedTiles.size >= VISIBLE_AT_LG
 
   useEffect(() => {
     let cancelled = false
     const timers: ReturnType<typeof setTimeout>[] = []
-    const order = shuffledIndices(COLLAGE_PHOTO_COUNT)
+    // Грузим только те 64, что реально показываются (см. VISIBLE_AT_LG) —
+    // 3 всегда скрытых фото раньше тоже качались впустую.
+    const order = shuffledIndices(VISIBLE_AT_LG)
     let next = 0
     let done = 0
     const runNext = () => {
@@ -473,7 +486,7 @@ function PhotoCollage() {
     // равно растянул бы на всю ширину) — на широких коротких окнах именно
     // высота была тесным местом (кнопка уезжала за экран), не ширина.
     <div className="relative aspect-square w-full shrink-0 overflow-hidden sm:h-[38svh] sm:w-auto sm:self-center lg:h-[32svh]">
-      <div className="grid w-full grid-cols-6 sm:grid-cols-7 lg:grid-cols-8">
+      <div className="grid w-full grid-cols-8">
         {COLLAGE_PHOTOS.map((src, i) => {
           const isPriming = activeByTile.get(i)?.phase === "priming"
           return (
@@ -1327,7 +1340,7 @@ export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
         <PhotoSlide
           key="transport"
           title="Трансфер, после которого не нужно восстанавливаться"
-          body="Вы выходите из машины свежими, потому, что у нас премиальный автомобиль и кожаные кресла (с массажем), водитель, которого мы знаем, он едет точно и быстро, соблюдая правила. Климат делаем, чтобы вам было максимально комфортно, и все вещи всегда остаются в сохранности. Вы просто говорите, как вам удобно. Мы просто выполняем."
+          body="Ни тесноты, ни духоты, ни случайного водителя. Кожаные кресла с массажем, климат-контроль и водитель, которого мы знаем лично - просто скажите, куда."
           imageSrc="/images/hero/premium-van-interior.jpg"
           imageAlt="Салон премиального минивэна с кожаными креслами"
           imagePosition="30% 50%"
