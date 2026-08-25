@@ -12,7 +12,7 @@ import type { Review } from "@/lib/reviews-data"
 // мягко "моргает" (2 коротких пульса, потом пауза), приглашая нажать —
 // после того как стрелки-подсказки не прижились, Виктор попросил вернуть
 // кнопку к обычному виду и обойтись только этим морганием.
-function TourCtaButton({ hint = false }: { hint?: boolean }) {
+function TourCtaButton({ hint = false, spacious = false }: { hint?: boolean; spacious?: boolean }) {
   return (
     // Полностью full-width смотрелась плоской полосой, а узкий inline-fit
     // pill (прошлая правка) — наоборот мелко и невесомо (Виктор: "теперь
@@ -26,7 +26,7 @@ function TourCtaButton({ hint = false }: { hint?: boolean }) {
     // (Link), а Link.width:88% — от ширины обёртки; проценты внутри
     // auto-sized контейнера резолвятся в auto (по спеке CSS), кнопка
     // схлопывалась до текста и переносилась на 2 строки.
-    <div className="relative mt-4 flex w-full justify-center sm:mt-6">
+    <div className={cn("relative flex w-full justify-center", spacious ? "mt-8 sm:mt-10" : "mt-4 sm:mt-6")}>
       <Link
         href="/tours"
         className={cn(
@@ -1068,13 +1068,15 @@ function ToursSlide() {
         <h2 className="mt-6 max-w-xl font-heading text-3xl leading-[1.1] font-semibold sm:mt-8 sm:text-4xl">
           Всего четыре маршрута
         </h2>
-        {/* Убрал отдельный muted-абзац с подробным разбором (Далат/дайвинг/
-            рыбалка) — Виктор: слишком много текста, не влезало на реальном
-            телефоне. Причина осталась одной короткой строкой вместо абзаца. */}
+        {/* "Опасные и неидеальные маршруты мы просто не предлагаем" читалось
+            слишком по-канцелярски, сама идея (личная проверка каждого
+            маршрута) терялась — Виктор: "идея пропала в подписи". Вернул
+            акцент на личную проверку, тот же мотив, что уже в аннотациях
+            туров ("обкатан лично"). */}
         <p className="mt-3 max-w-md text-lg leading-snug font-medium text-foreground sm:mt-5 sm:max-w-xl sm:text-xl">
-          Опасные и неидеальные маршруты мы просто не предлагаем.
+          Каждый маршрут проверен лично. Остальное просто не предлагаем.
         </p>
-        <TourCtaButton />
+        <TourCtaButton spacious />
       </div>
     </div>
   )

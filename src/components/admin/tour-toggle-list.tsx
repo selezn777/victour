@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { revalidateTours } from "@/app/admin/tours/actions"
 
 export type AdminTourRow = {
   id: string
@@ -18,6 +19,10 @@ export function TourToggleList({ tours }: { tours: AdminTourRow[] }) {
     setPending(id)
     const supabase = createClient()
     await supabase.from("tours").update({ is_active: next }).eq("id", id)
+    // Пишем в Supabase напрямую с клиента, но публичные страницы читают
+    // тур через кэшируемый серверный getHomepageData() — без явной
+    // ревалидации скрытый тур продолжал бы висеть на сайте до деплоя.
+    await revalidateTours()
     setPending(null)
     router.refresh()
   }
