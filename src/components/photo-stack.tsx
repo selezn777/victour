@@ -18,13 +18,30 @@ const STACK_TRANSFORM = [
   "translate(-10px, 34px) rotate(4deg) scale(0.74)",
 ]
 
+// Откуда каждая карточка "падает", ПО ПОЗИЦИИ (как STACK_TRANSFORM) — раньше
+// был один и тот же старт для всех (translate(0,-60%) rotate(0) scale(0.96)),
+// плоское уменьшение без поворота не читалось как "из рук на стол" (Виктор).
+// Теперь старт заметно выше и с поворотом, который на лету раскручивается в
+// финальный rotate/scale STACK_TRANSFORM той же позиции — сама карточка
+// вращается, оседая на стол, а не просто увеличивается на месте.
+const STACK_DROP_FROM = [
+  "translate(-14px, -150px) rotate(-18deg) scale(0.92)",
+  "translate(52px, -170px) rotate(15deg) scale(0.87)",
+  "translate(-58px, -160px) rotate(-22deg) scale(0.82)",
+  "translate(22px, -180px) rotate(17deg) scale(0.78)",
+  "translate(-48px, -165px) rotate(-20deg) scale(0.74)",
+  "translate(62px, -175px) rotate(19deg) scale(0.7)",
+  "translate(-32px, -155px) rotate(-16deg) scale(0.66)",
+]
+
 // Задержка между "падениями" фото при появлении — должна быть заметной
 // (Виктор: "эффект от падения я так и не увидел" — раньше было 280мс).
-// Ускорена уже трижды (1080→920→650), Виктор снова попросил быстрее — 650→450.
-const DROP_STAGGER_MS = 450
+// Ускорена уже четырежды (1080→920→650→450), Виктор снова попросил
+// быстрее — 450→300.
+const DROP_STAGGER_MS = 300
 // Пауза перед появлением ПЕРВОГО фото — Виктор: "открытие фото делаем чуть
-// быстрее, особенно первой" (300 -> 150 -> 80).
-const DROP_INITIAL_DELAY_MS = 80
+// быстрее, особенно первой" (300 -> 150 -> 80 -> 50).
+const DROP_INITIAL_DELAY_MS = 50
 
 /**
  * Стопка фото "как будто уронили друг на друга" — при появлении фото падают
@@ -116,16 +133,18 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
             transitionTimingFunction: lifted ? "ease-out" : "cubic-bezier(0.34, 1.56, 0.64, 1)",
             transform: entered[i]
               ? `${STACK_TRANSFORM[positions[i]]}${lifted ? " translateY(-26px) scale(1.02)" : ""}`
-              : "translate(0, -60%) rotate(0deg) scale(0.96)",
+              : STACK_DROP_FROM[positions[i]],
           }}
         >
           <Image src={src} alt={alt} fill className="object-cover" sizes="100vw" />
         </div>
       ))}
       {!tapped && entered.every(Boolean) && (
+        // Виктор: "делаем поярче" — primary вместо чёрной полупрозрачной
+        // плашки, без затемнения (opacity-70 у самой плашки, не у фона).
         <div
           aria-hidden
-          className="pointer-events-none absolute right-2 bottom-2 z-30 rounded-full bg-black/40 px-2.5 py-1 text-xs text-white opacity-70 backdrop-blur-sm"
+          className="pointer-events-none absolute right-2 bottom-2 z-30 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow-lg"
         >
           тыкни
         </div>
