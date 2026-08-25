@@ -12,7 +12,15 @@ import type { Review } from "@/lib/reviews-data"
 // мягко "моргает" (2 коротких пульса, потом пауза), приглашая нажать —
 // после того как стрелки-подсказки не прижились, Виктор попросил вернуть
 // кнопку к обычному виду и обойтись только этим морганием.
-function TourCtaButton({ hint = false, spacious = false }: { hint?: boolean; spacious?: boolean }) {
+function TourCtaButton({
+  hint = false,
+  spacious = false,
+  large = false,
+}: {
+  hint?: boolean
+  spacious?: boolean
+  large?: boolean
+}) {
   return (
     // Полностью full-width смотрелась плоской полосой, а узкий inline-fit
     // pill (прошлая правка) — наоборот мелко и невесомо (Виктор: "теперь
@@ -31,6 +39,7 @@ function TourCtaButton({ hint = false, spacious = false }: { hint?: boolean; spa
         href="/tours"
         className={cn(
           "flex w-[88%] max-w-sm items-center justify-center rounded-2xl bg-primary px-8 py-4 text-lg font-bold text-primary-foreground shadow-[0_10px_40px_-8px] shadow-primary/35 ring-1 ring-primary-foreground/10 transition-all hover:scale-[1.02] hover:bg-primary/90 hover:shadow-primary/50 active:scale-[0.98] sm:max-w-lg sm:py-6 sm:text-xl",
+          large && "max-w-md py-5 text-xl sm:max-w-xl sm:py-7 sm:text-2xl",
           hint && "cta-invite-pulse",
         )}
       >
@@ -1122,15 +1131,15 @@ function reviewToQuote(r: Review): Quote {
 // переключении. С sm и шире — обычная CSS grid (там высота не проблема).
 function QuoteCard({ quote, author }: { quote: string; author: string }) {
   return (
-    <blockquote className="relative flex h-full flex-col rounded-2xl border border-border bg-card p-4 text-left shadow-lg sm:p-5">
-      <span aria-hidden className="font-heading text-3xl leading-none text-primary/30 sm:text-4xl">
+    <blockquote className="relative flex h-full flex-col rounded-2xl border border-border bg-card p-5 text-left shadow-lg sm:p-6">
+      <span aria-hidden className="font-heading text-4xl leading-none text-primary/30 sm:text-5xl">
         “
       </span>
-      <p className="-mt-1 line-clamp-5 text-xs text-foreground/90 italic sm:-mt-2 sm:line-clamp-6 sm:text-sm">
+      <p className="-mt-1 line-clamp-5 text-sm text-foreground/90 italic sm:-mt-2 sm:line-clamp-6 sm:text-base">
         {quote}
       </p>
-      <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground sm:mt-3 sm:gap-2 sm:text-xs">
-        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs sm:size-6 sm:text-sm">
+      <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground sm:mt-3 sm:gap-2 sm:text-sm">
+        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm sm:size-7 sm:text-base">
           🙂
         </span>
         <span className="line-clamp-1">{author}</span>
@@ -1312,7 +1321,7 @@ function QuotePairs({ quotes }: { quotes: Quote[] }) {
   if (quotes.length === 0) return null
 
   return (
-    <div className="mt-5 flex w-full max-w-xs flex-col gap-4 sm:hidden">
+    <div className="mt-5 flex w-full max-w-sm flex-col gap-4 sm:hidden">
       <QuoteSlotView slot={top} count={safeQuotes.length} />
       <QuoteSlotView slot={bottom} count={safeQuotes.length} />
     </div>
@@ -1345,10 +1354,7 @@ function QuoteSlide({
           </div>
         )}
 
-        <TourCtaButton hint />
-        <Link href="/reviews" className="mt-3 text-sm text-primary hover:underline">
-          Все отзывы →
-        </Link>
+        <TourCtaButton hint large />
       </div>
     </div>
   )
