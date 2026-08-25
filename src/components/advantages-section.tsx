@@ -692,7 +692,7 @@ function PhotoSlide({
             {accent}
           </p>
         )}
-        <p className="mt-2 max-w-full text-sm leading-snug text-muted-foreground sm:max-w-xl sm:text-base sm:leading-relaxed">
+        <p className="mt-2 max-w-full text-base leading-snug text-muted-foreground sm:max-w-xl sm:text-xl sm:leading-relaxed">
           {body}
         </p>
         <TourCtaButton />
@@ -1340,7 +1340,7 @@ export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
         <PhotoSlide
           key="transport"
           title="Трансфер, после которого не нужно восстанавливаться"
-          body="Ни тесноты, ни духоты, ни случайного водителя. Кожаные кресла с массажем, климат-контроль и водитель, которого мы знаем лично - просто скажите, куда."
+          body="Ни тесноты, ни духоты, ни нервотрёпки за рулём. Кожаные кресла с массажем, климат-контроль и просто аккуратный, спокойный водитель."
           imageSrc="/images/hero/premium-van-interior.jpg"
           imageAlt="Салон премиального минивэна с кожаными креслами"
           imagePosition="30% 50%"
