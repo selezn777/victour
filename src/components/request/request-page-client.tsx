@@ -538,17 +538,21 @@ export function RequestPageClient({
                 <span className="text-sm font-medium">Доплаты (не входят в пакетную скидку)</span>
                 <div className="mt-2 flex flex-col gap-2">
                   {surcharges.map((s) => (
-                    <label key={s.code} className="flex items-center justify-between gap-3 text-sm">
-                      <span className="flex items-center gap-2">
+                    // min-w-0 на левой части + shrink-0 на цене — без этого
+                    // длинное название доплаты не переносилось, а толкало
+                    // всю строку вправо за край экрана (Виктор с телефона:
+                    // "всё смещено вправо, приходится вытягивать").
+                    <label key={s.code} className="flex items-start justify-between gap-3 text-sm">
+                      <span className="flex min-w-0 items-start gap-2">
                         <input
                           type="checkbox"
                           checked={selectedSurcharges.has(s.code)}
                           onChange={() => toggleSurcharge(s.code)}
-                          className="size-4 rounded border-input"
+                          className="mt-0.5 size-4 shrink-0 rounded border-input"
                         />
-                        {s.name}
+                        <span>{s.name}</span>
                       </span>
-                      <span className="text-muted-foreground">{formatVnd(s.amountVnd)}</span>
+                      <span className="shrink-0 text-right text-muted-foreground">{formatVnd(s.amountVnd)}</span>
                     </label>
                   ))}
                 </div>
@@ -584,16 +588,22 @@ export function RequestPageClient({
                   </div>
                 </div>
               </div>
-              <div className="mt-3 flex items-center justify-between rounded-lg bg-primary/10 px-3 py-2.5">
-                <span className="text-sm font-medium">Предоплата для брони</span>
-                <div className="text-right">
-                  <div className="font-heading text-lg font-semibold text-primary">
-                    {formatRubFromUsd(prepaymentUsd, settings.usdRubRate, settings.rubMarkupPct)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">≈ {formatUsd(prepaymentUsd)}</div>
-                </div>
+            </section>
+
+            {/* Отдельным пунктом, не строкой внутри "Итого" (Виктор: "надо
+                это отдельным пунктом вынести") - и цифра в $, не в рублях
+                (была РУБ основной суммой, $ мелким довеском - переставил
+                местами: "предоплата всего $80" звучит внушительно именно
+                в долларах, конвертация в рубли теперь просто справка). */}
+            <section className="mt-6 rounded-2xl border border-primary/30 bg-primary/10 p-5 text-center shadow-sm">
+              <span className="text-sm font-medium text-muted-foreground">Предоплата для брони</span>
+              <div className="mt-1 font-heading text-3xl font-bold text-primary">
+                Всего {formatUsd(prepaymentUsd)}
               </div>
-              <p className="mt-1.5 text-xs text-muted-foreground">
+              <div className="mt-1 text-xs text-muted-foreground">
+                ≈ {formatRubFromUsd(prepaymentUsd, settings.usdRubRate, settings.rubMarkupPct)}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
                 Никаких крупных предоплат — остальное наличными при встрече.
               </p>
             </section>
