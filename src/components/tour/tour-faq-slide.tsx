@@ -83,6 +83,18 @@ export function TourFaqSlide({
           </div>
         )}
       </div>
+
+      {/* Явная ссылка вниз к отзывам — отзывы больше не отдельный слайд, а
+          обычный блок под колодой (Виктор: "отзывы ниже блока"), и без
+          явной подсказки гость может не понять, что после FAQ есть ещё
+          контент (Виктор один раз уже не долистал: "отзывы потерялись"). */}
+      <button
+        type="button"
+        onClick={() => document.getElementById("tour-reviews")?.scrollIntoView({ behavior: "smooth" })}
+        className="mt-3 shrink-0 text-center text-sm text-primary hover:underline"
+      >
+        Отзывы об этом туре →
+      </button>
     </div>
   )
 }

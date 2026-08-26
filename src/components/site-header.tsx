@@ -11,6 +11,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { AccountMenuRow } from "@/components/account-menu"
+import { CartDrawer } from "@/components/cart-drawer"
 import { formatRubFromUsd, formatVndFromUsd } from "@/lib/format"
 import type { PrimaryGuide, SiteSettings } from "@/lib/site-data"
 
@@ -24,7 +25,9 @@ export function SiteHeader({
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="mx-auto grid h-16 max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-4 sm:h-20 sm:px-6">
-        <span aria-hidden />
+        <div className="justify-self-start">
+          <CartDrawer />
+        </div>
 
         <Link
           href="/"

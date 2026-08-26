@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Geist_Mono, Unbounded } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
-import { PackageBar } from "@/components/package-bar";
 import { CookieConsent } from "@/components/cookie-consent";
 import "./globals.css";
 
@@ -49,7 +48,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark">
           {children}
-          <PackageBar />
         </ThemeProvider>
         <CookieConsent gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
       </body>

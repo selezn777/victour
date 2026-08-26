@@ -88,7 +88,7 @@ export function BookingCalendar({
   }
 
   return (
-    <div className={cn("rounded-xl border border-border p-4", large && "sm:p-5")}>
+    <div className={cn("rounded-xl border border-border p-3", large && "sm:p-5")}>
       <div className="flex items-center justify-between">
         <span className={cn("text-sm font-medium", large && "sm:text-base")}>
           {MONTH_NAMES[cursor.getMonth()]} {cursor.getFullYear()}
@@ -97,7 +97,7 @@ export function BookingCalendar({
           <Button
             type="button"
             variant="outline"
-            size={large ? "default" : "sm"}
+            size="sm"
             disabled={isPastMonth}
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
           >
@@ -106,7 +106,7 @@ export function BookingCalendar({
           <Button
             type="button"
             variant="outline"
-            size={large ? "default" : "sm"}
+            size="sm"
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
           >
             След.
@@ -114,13 +114,13 @@ export function BookingCalendar({
         </div>
       </div>
 
-      <div className={cn("mt-3 grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground", large && "sm:text-sm")}>
+      <div className={cn("mt-2 grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground", large && "sm:text-sm")}>
         {WEEKDAYS.map((w) => (
           <div key={w}>{w}</div>
         ))}
       </div>
 
-      <div className={cn("mt-1 grid grid-cols-7", large ? "gap-1.5" : "gap-1")}>
+      <div className={cn("mt-1 grid grid-cols-7 gap-1", large && "sm:gap-1.5")}>
         {weeks.flatMap((week, wi) =>
           week.map((date, di) => {
             if (!date) return <div key={`${wi}-${di}`} />
@@ -135,7 +135,7 @@ export function BookingCalendar({
                 onClick={() => onSelectDate(toIsoDate(date))}
                 className={cn(
                   "flex items-center justify-center rounded-lg text-sm transition-colors",
-                  large ? "h-11 text-base sm:h-12" : "h-9",
+                  large ? "h-10 sm:h-12 sm:text-base" : "h-9",
                   disabled && "cursor-not-allowed text-muted-foreground/40 line-through",
                   !disabled && !selected && "hover:bg-muted",
                   selected && "bg-primary text-primary-foreground",
@@ -149,7 +149,7 @@ export function BookingCalendar({
       </div>
 
       {durationDays === 2 && (
-        <p className="mt-3 text-xs text-muted-foreground">
+        <p className="mt-2 text-xs text-muted-foreground">
           Тур на два дня — вторая дата бронируется автоматически следующим днём.
         </p>
       )}

@@ -40,10 +40,9 @@ export function TourPageClient({
   // человека, тарифы отсортированы по возрастанию guestCount): гость,
   // который просто листает страницу, должен сначала видеть младшую
   // цену, а не по умолчанию за двоих. Своё реальное число гостей он
-  // выставит уже в нижней плашке/на слайде брони.
+  // выставит уже на слайде брони.
   const cheapestTier = tour.pricingTiers[tour.pricingTiers.length - 1]
   const [guestCount, setGuestCount] = useState(cheapestTier?.guestCount ?? 2)
-  const [activeSlide, setActiveSlide] = useState(0)
   const primaryGuide = guides[0] ?? null
   const priceAdultUsd =
     tour.pricingTiers.find((t) => t.guestCount === guestCount)?.priceAdultUsd ?? 0
@@ -59,11 +58,13 @@ export function TourPageClient({
         onToggleFavorite={() => toggle(tour.slug)}
       />
 
+      {/* paginationPosition="none" — тот же "переплёт"-индикатор слева,
+          который Виктор уже попросил убрать на главной, здесь тоже мешал. */}
       <SlideDeck
+        paginationPosition="none"
         onSwiper={(swiper) => {
           swiperRef.current = swiper
         }}
-        onSlideChange={setActiveSlide}
         slides={[
           <TourPhotoSlide key="photo" tour={tour} />,
           <TourItinerarySlide key="itinerary" itinerary={tour.itinerary} isTwoDay={tour.isDalatTwoDay} />,
@@ -72,7 +73,8 @@ export function TourPageClient({
             key="booking"
             tour={tour}
             guides={guides}
-            selectedGuestCount={guestCount}
+            guestCount={guestCount}
+            onGuestCountChange={setGuestCount}
           />,
           <TourFaqSlide
             key="faq"
@@ -88,13 +90,10 @@ export function TourPageClient({
         priceAdultUsd={priceAdultUsd}
         ctaLabel="Подробнее"
         onCtaClick={() => swiperRef.current?.slideTo(BOOKING_SLIDE_INDEX)}
-        showGuestStepper={activeSlide === BOOKING_SLIDE_INDEX}
-        guestCount={guestCount}
-        onGuestCountChange={(updater) => setGuestCount(updater)}
       />
 
       <main className="flex-1">
-        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+        <div id="tour-reviews" className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
           <ReviewsSection
             title="Отзывы об этом туре"
             reviews={reviews}
