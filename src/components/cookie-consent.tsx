@@ -27,7 +27,13 @@ export function CookieConsent({ gaId }: { gaId: string | undefined }) {
       {gaId && consent === "accepted" && <GoogleAnalytics gaId={gaId} />}
 
       {ready && consent === null && (
-        <div className="fixed inset-x-3 bottom-3 z-50 sm:inset-x-auto sm:right-4 sm:bottom-4 sm:left-auto sm:max-w-xs">
+        // bottom-20 (не bottom-3) — на странице тура тут же снизу висит
+        // сквозная плашка цены/CTA (TourBottomBar, ~64-70px) с тем же
+        // расположением на всю ширину на мобиле; баннер с z-50 перекрывал
+        // и глушил клики по ней, пока согласие не выбрано (нашёл через
+        // Puppeteer против прода: клик по "Подробнее" не срабатывал именно
+        // из-за этого перекрытия, без баннера — работал).
+        <div className="fixed inset-x-3 bottom-20 z-50 sm:inset-x-auto sm:right-4 sm:bottom-20 sm:left-auto sm:max-w-xs">
           <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card/95 p-4 shadow-lg backdrop-blur supports-backdrop-filter:bg-card/85">
             <p className="text-xs leading-relaxed text-muted-foreground">
               Используем cookie для аналитики посещений.{" "}
