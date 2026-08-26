@@ -146,11 +146,14 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
         </div>
       ))}
       {!tapped && entered.every(Boolean) && (
-        // Виктор: "делаем поярче" — primary вместо чёрной полупрозрачной
-        // плашки, без затемнения (opacity-70 у самой плашки, не у фона).
+        // Виктор: "делаем поярче" (px-2.5/text-xs) не хватило — "почти не
+        // видно, надо побольше и ещё побольше" — заметно крупнее плашка и
+        // текст, плюс тот же мягкий пульс, что уже прижился на кнопке
+        // "Выбрать тур" (cta-invite-pulse) — приглашает тапнуть, а не
+        // просто маячит статично. Пропадает после первого тапа (см. tapped).
         <div
           aria-hidden
-          className="pointer-events-none absolute right-2 bottom-2 z-30 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow-lg"
+          className="cta-invite-pulse pointer-events-none absolute right-3 bottom-3 z-30 rounded-full bg-primary px-5 py-2.5 text-base font-bold text-primary-foreground shadow-lg sm:px-6 sm:py-3 sm:text-lg"
         >
           тыкни
         </div>
