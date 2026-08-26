@@ -3,7 +3,7 @@
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Mousewheel, Pagination, Keyboard } from "swiper/modules"
 import type { Swiper as SwiperType } from "swiper/types"
-import type { ReactNode } from "react"
+import { useEffect, useRef, type ReactNode } from "react"
 
 import "swiper/css"
 import "swiper/css/pagination"
@@ -67,6 +67,29 @@ export function SlideDeck({
    * управления в плашке вне деки только на конкретном слайде. */
   onSlideChange?: (index: number) => void
 }) {
+  const swiperRef = useRef<SwiperType | null>(null)
+
+  // Виктор с телефона: "чуть-чуть пролистываю, и он смещается наверх" — на
+  // каждом слайде, не только на крайних. Причина не в самом свайпе, а в
+  // адресной строке мобильного браузера: ЛЮБОЙ тач-жест на странице (даже
+  // короткий, не долистанный до смены слайда) может схлопнуть тулбар, из-за
+  // чего 100dvh у самой деки честно вырастает (см. комментарий у className
+  // ниже), а вот Swiper меряет и кеширует высоту слайдов В МОМЕНТ
+  // инициализации и сам не обязательно узнаёт об этом резком росте — между
+  // "выросшим" контейнером и "старым" размером слайдов внутри него
+  // появляется голый чёрный зазор фона страницы. Явный update() по
+  // изменению visualViewport (не просто window resize — именно он ловит
+  // схлопывание тулбара на iOS/Android) forces Swiper пересчитать размеры
+  // сразу, а не полагаться на встроенный ResizeObserver, который в этом
+  // случае не всегда успевал среагировать без видимого мигания зазора.
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const onResize = () => swiperRef.current?.update()
+    vv.addEventListener("resize", onResize)
+    return () => vv.removeEventListener("resize", onResize)
+  }, [])
+
   return (
     <Swiper
       modules={[Mousewheel, Pagination, Keyboard]}
@@ -74,7 +97,10 @@ export function SlideDeck({
       speed={420}
       mousewheel={{ releaseOnEdges: true, sensitivity: 1 }}
       keyboard={{ enabled: true }}
-      onSwiper={onSwiper}
+      onSwiper={(swiper) => {
+        swiperRef.current = swiper
+        onSwiper?.(swiper)
+      }}
       onSlideChange={(swiper) => onSlideChange?.(swiper.activeIndex)}
       pagination={paginationPosition === "none" ? false : { clickable: true, el: ".slide-deck-pagination" }}
       // У горизонтальной деки Swiper по умолчанию ставит touch-action: pan-y
