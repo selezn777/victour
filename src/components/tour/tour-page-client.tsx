@@ -20,7 +20,6 @@ import type { FaqItem } from "@/lib/faq-data"
 // Отзывы теперь тоже слайд колоды (раньше были отдельным блоком под ней —
 // Виктор передумал: "пусть будет не кнопка, а прям ещё один слайд").
 const BOOKING_SLIDE_INDEX = 3
-const REVIEWS_SLIDE_INDEX = 5
 
 export function TourPageClient({
   tour,
@@ -84,7 +83,8 @@ export function TourPageClient({
             tours={tours}
             lockedTourId={tour.id}
             emptyMessage="Вопросов пока нет — задайте свой."
-            onGoToReviews={() => swiperRef.current?.slideTo(REVIEWS_SLIDE_INDEX)}
+            onRequestPrevSlide={() => swiperRef.current?.slidePrev()}
+            onRequestNextSlide={() => swiperRef.current?.slideNext()}
           />,
           <TourReviewsSlide
             key="reviews"

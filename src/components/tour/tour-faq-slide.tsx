@@ -13,22 +13,60 @@ import { cn } from "@/lib/utils"
 // свой стейт (не нативный <details>), чтобы гарантировать это поведение
 // и анимировать раскрытие через grid-template-rows (0fr -> 1fr, плавно,
 // в отличие от нативного details/summary без transition).
+const SWIPE_THRESHOLD = 40
+
 export function TourFaqSlide({
   items,
   tours,
   lockedTourId,
   emptyMessage,
-  onGoToReviews,
+  onRequestPrevSlide,
+  onRequestNextSlide,
 }: {
   items: FaqItem[]
   tours: TourOption[]
   lockedTourId?: string
   emptyMessage: string
-  onGoToReviews: () => void
+  onRequestPrevSlide: () => void
+  onRequestNextSlide: () => void
 }) {
   const [openId, setOpenId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const pointerRef = useRef<{ y: number; atTop: boolean; atBottom: boolean } | null>(null)
+
+  // Виктор: "ничего не получилось" — swiper-no-swiping (прошлая правка)
+  // блокировал тач ВООБЩЕ везде внутри списка, а не только когда список
+  // реально скроллится — из-за этого обычный свайп вперёд (FAQ → следующий
+  // слайд с отзывами), начавшийся пальцем прямо на списке вопросов (почти
+  // весь экран), тоже переставал работать: не долистать было НИКУДА, ни
+  // вперёд, ни назад. Тот же приём, что уже на слайде отзывов
+  // (tour-reviews-slide.tsx) — swiper-no-swiping остаётся (список сам
+  // скроллится нативно, без конкуренции с Swiper), но на ГРАНИЦАХ (уже
+  // наверху и тянут дальше вниз, либо уже внизу и тянут дальше вверх) мы
+  // сами вызываем slidePrev/slideNext — ровно как просил: "листаем без
+  // привязки по точке" внутри списка, а на упоре в границу механика слайдов
+  // включается обратно сама.
+  const onPointerDown = (e: React.PointerEvent) => {
+    const el = scrollRef.current
+    if (!el) return
+    pointerRef.current = {
+      y: e.clientY,
+      atTop: el.scrollTop <= 0,
+      atBottom: el.scrollTop + el.clientHeight >= el.scrollHeight - 1,
+    }
+  }
+  const onPointerUp = (e: React.PointerEvent) => {
+    const start = pointerRef.current
+    pointerRef.current = null
+    const el = scrollRef.current
+    if (!start || !el) return
+    const dy = e.clientY - start.y
+    if (start.atTop && el.scrollTop <= 0 && dy > SWIPE_THRESHOLD) onRequestPrevSlide()
+    else if (start.atBottom && el.scrollTop + el.clientHeight >= el.scrollHeight - 1 && dy < -SWIPE_THRESHOLD)
+      onRequestNextSlide()
+  }
 
   // Виктор: "нижние роллы раскрываются некорректно" — вопрос ближе к концу
   // списка раскрывался, но раскрытый ответ уходил под нижнюю плашку с ценой
@@ -59,19 +97,17 @@ export function TourFaqSlide({
         </div>
       )}
 
-      {/* swiper-no-swiping — Виктор: открыл последний вопрос, список
-          корректно проскроллило вниз (см. scrollItemIntoView выше), но
-          вернуться свайпом назад к первому вопросу не смог. Причина — сам
-          слайд лежит внутри ВЕРТИКАЛЬНОЙ колоды (SlideDeck): и родительский
-          Swiper (смена слайдов), и этот internal overflow-y-auto (скролл
-          списка) реагируют на один и тот же вертикальный тач-жест, Swiper
-          перехватывал его первым. swiper-no-swiping — штатный класс Swiper
-          (noSwipingClass, включён по умолчанию): для тачей, начавшихся
-          внутри элемента с этим классом, Swiper вовсе не пытается листать
-          слайд, жест целиком достаётся нативному скроллу списка. Клики по
-          вопросам (раскрыть/свернуть) не задеты — это только про свайп/драг.
-          no-scrollbar — тот же запрос: "линия пролистывания сбоку не нужна". */}
-      <div className="swiper-no-swiping no-scrollbar mt-4 min-h-0 flex-1 overflow-y-auto sm:mx-auto sm:w-full sm:max-w-xl">
+      {/* swiper-no-swiping — список скроллится нативно, без конкуренции с
+          родительским Swiper (см. комментарий у onPointerDown/onPointerUp
+          выше про переключение слайда на границах). Клики по вопросам
+          (раскрыть/свернуть) не задеты — это только про свайп/драг.
+          no-scrollbar — "линия пролистывания сбоку не нужна". */}
+      <div
+        ref={scrollRef}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        className="swiper-no-swiping no-scrollbar mt-4 min-h-0 flex-1 overflow-y-auto sm:mx-auto sm:w-full sm:max-w-xl"
+      >
         {items.length === 0 ? (
           <p className="text-sm text-muted-foreground">{emptyMessage}</p>
         ) : (
@@ -121,19 +157,6 @@ export function TourFaqSlide({
           </div>
         )}
       </div>
-
-      {/* Явная подсказка на следующий слайд (отзывы) — без неё гость может
-          не понять, что после FAQ есть ещё контент (Виктор один раз уже не
-          долистал: "отзывы потерялись"). Отзывы сами стали слайдом колоды
-          (см. tour-reviews-slide.tsx), поэтому переход — slideTo, не скролл
-          страницы. */}
-      <button
-        type="button"
-        onClick={onGoToReviews}
-        className="mt-3 shrink-0 text-center text-sm text-primary hover:underline"
-      >
-        Отзывы об этом туре →
-      </button>
     </div>
   )
 }
