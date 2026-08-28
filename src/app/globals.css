@@ -309,6 +309,17 @@
   animation: cta-invite-pulse 0.9s ease-in-out infinite;
 }
 
+/* Виктор: "эта линия пролистывания сбоку не нужна" — нативный скроллбар на
+   внутренних overflow-y-auto списках (FAQ, маршрут и т.п.) внутри слайдов.
+   Сам скролл остаётся (не overflow: hidden), просто без видимой полосы. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 .phone-input {
   height: 2.75rem;
   width: 100%;

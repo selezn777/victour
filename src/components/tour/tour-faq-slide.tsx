@@ -57,7 +57,19 @@ export function TourFaqSlide({
         </div>
       )}
 
-      <div className="mt-4 min-h-0 flex-1 overflow-y-auto sm:mx-auto sm:w-full sm:max-w-xl">
+      {/* swiper-no-swiping — Виктор: открыл последний вопрос, список
+          корректно проскроллило вниз (см. scrollItemIntoView выше), но
+          вернуться свайпом назад к первому вопросу не смог. Причина — сам
+          слайд лежит внутри ВЕРТИКАЛЬНОЙ колоды (SlideDeck): и родительский
+          Swiper (смена слайдов), и этот internal overflow-y-auto (скролл
+          списка) реагируют на один и тот же вертикальный тач-жест, Swiper
+          перехватывал его первым. swiper-no-swiping — штатный класс Swiper
+          (noSwipingClass, включён по умолчанию): для тачей, начавшихся
+          внутри элемента с этим классом, Swiper вовсе не пытается листать
+          слайд, жест целиком достаётся нативному скроллу списка. Клики по
+          вопросам (раскрыть/свернуть) не задеты — это только про свайп/драг.
+          no-scrollbar — тот же запрос: "линия пролистывания сбоку не нужна". */}
+      <div className="swiper-no-swiping no-scrollbar mt-4 min-h-0 flex-1 overflow-y-auto sm:mx-auto sm:w-full sm:max-w-xl">
         {items.length === 0 ? (
           <p className="text-sm text-muted-foreground">{emptyMessage}</p>
         ) : (
