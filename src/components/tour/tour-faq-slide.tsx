@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { FaqQuestionForm } from "@/components/faq/faq-question-form"
 import type { FaqItem } from "@/lib/faq-data"
@@ -26,6 +26,19 @@ export function TourFaqSlide({
 }) {
   const [openId, setOpenId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+
+  // Виктор: "нижние роллы раскрываются некорректно" — вопрос ближе к концу
+  // списка раскрывался, но раскрытый ответ уходил под нижнюю плашку с ценой
+  // (fixed), а сам скролл-контейнер (overflow-y-auto) сам не подскраливал.
+  // Два вызова: сразу (даёт видимость сразу) и повторно после transition
+  // (300ms, см. duration-300 у grid-template-rows) — сама раскрывающаяся
+  // высота ещё растёт всё это время, целевая позиция уточняется в конце.
+  const scrollItemIntoView = (id: string) => {
+    const scroll = () => itemRefs.current.get(id)?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+    scroll()
+    setTimeout(scroll, 320)
+  }
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-6 pb-24 sm:px-11 sm:pt-9">
@@ -52,11 +65,22 @@ export function TourFaqSlide({
             {items.map((item) => {
               const open = openId === item.id
               return (
-                <div key={item.id} className="rounded-xl border border-border bg-card shadow-sm">
+                <div
+                  key={item.id}
+                  ref={(el) => {
+                    if (el) itemRefs.current.set(item.id, el)
+                    else itemRefs.current.delete(item.id)
+                  }}
+                  className="rounded-xl border border-border bg-card shadow-sm"
+                >
                   <button
                     type="button"
                     aria-expanded={open}
-                    onClick={() => setOpenId(open ? null : item.id)}
+                    onClick={() => {
+                      const next = open ? null : item.id
+                      setOpenId(next)
+                      if (next) scrollItemIntoView(next)
+                    }}
                     className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left text-sm font-medium sm:text-base"
                   >
                     <span>{item.question}</span>
