@@ -18,11 +18,13 @@ export function TourFaqSlide({
   tours,
   lockedTourId,
   emptyMessage,
+  onGoToReviews,
 }: {
   items: FaqItem[]
   tours: TourOption[]
   lockedTourId?: string
   emptyMessage: string
+  onGoToReviews: () => void
 }) {
   const [openId, setOpenId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -120,13 +122,14 @@ export function TourFaqSlide({
         )}
       </div>
 
-      {/* Явная ссылка вниз к отзывам — отзывы больше не отдельный слайд, а
-          обычный блок под колодой (Виктор: "отзывы ниже блока"), и без
-          явной подсказки гость может не понять, что после FAQ есть ещё
-          контент (Виктор один раз уже не долистал: "отзывы потерялись"). */}
+      {/* Явная подсказка на следующий слайд (отзывы) — без неё гость может
+          не понять, что после FAQ есть ещё контент (Виктор один раз уже не
+          долистал: "отзывы потерялись"). Отзывы сами стали слайдом колоды
+          (см. tour-reviews-slide.tsx), поэтому переход — slideTo, не скролл
+          страницы. */}
       <button
         type="button"
-        onClick={() => document.getElementById("tour-reviews")?.scrollIntoView({ behavior: "smooth" })}
+        onClick={onGoToReviews}
         className="mt-3 shrink-0 text-center text-sm text-primary hover:underline"
       >
         Отзывы об этом туре →

@@ -9,16 +9,18 @@ import { TourItinerarySlide } from "@/components/tour/tour-itinerary-slide"
 import { TourIncludesSlide } from "@/components/tour/tour-includes-slide"
 import { TourBookingSlide } from "@/components/tour/tour-booking-slide"
 import { TourFaqSlide } from "@/components/tour/tour-faq-slide"
+import { TourReviewsSlide } from "@/components/tour/tour-reviews-slide"
 import { TourBottomBar } from "@/components/tour/tour-bottom-bar"
-import { ReviewsSection } from "@/components/reviews/reviews-section"
 import { useFavorites } from "@/hooks/use-favorites"
 import type { SiteSettings, TourDetail, TourGuide } from "@/lib/site-data"
 import type { Review, TourOption } from "@/lib/reviews-data"
 import type { FaqItem } from "@/lib/faq-data"
 
-// Слайды по порядку: фото → маршрут → что входит → бронь → FAQ. Отзывы —
-// НЕ слайд, обычный блок под колодой (Виктор: "отзывы ниже блока").
+// Слайды по порядку: фото → маршрут → что входит → бронь → FAQ → отзывы.
+// Отзывы теперь тоже слайд колоды (раньше были отдельным блоком под ней —
+// Виктор передумал: "пусть будет не кнопка, а прям ещё один слайд").
 const BOOKING_SLIDE_INDEX = 3
+const REVIEWS_SLIDE_INDEX = 5
 
 export function TourPageClient({
   tour,
@@ -82,6 +84,17 @@ export function TourPageClient({
             tours={tours}
             lockedTourId={tour.id}
             emptyMessage="Вопросов пока нет — задайте свой."
+            onGoToReviews={() => swiperRef.current?.slideTo(REVIEWS_SLIDE_INDEX)}
+          />,
+          <TourReviewsSlide
+            key="reviews"
+            reviews={reviews}
+            tours={[]}
+            guideId={primaryGuide?.id ?? null}
+            guideName={primaryGuide?.name ?? null}
+            lockedTourId={tour.id}
+            emptyMessage="Пока нет отзывов об этом туре — станьте первым."
+            onRequestPrevSlide={() => swiperRef.current?.slidePrev()}
           />,
         ]}
       />
@@ -91,21 +104,6 @@ export function TourPageClient({
         ctaLabel="Подробнее"
         onCtaClick={() => swiperRef.current?.slideTo(BOOKING_SLIDE_INDEX)}
       />
-
-      <main className="flex-1">
-        <div id="tour-reviews" className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
-          <ReviewsSection
-            title="Отзывы об этом туре"
-            reviews={reviews}
-            tours={[]}
-            guideId={primaryGuide?.id ?? null}
-            guideName={primaryGuide?.name ?? null}
-            lockedTourId={tour.id}
-            hideTarget="tour"
-            emptyMessage="Пока нет отзывов об этом туре — станьте первым."
-          />
-        </div>
-      </main>
     </>
   )
 }
