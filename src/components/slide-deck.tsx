@@ -90,13 +90,55 @@ export function SlideDeck({
     return () => vv.removeEventListener("resize", onResize)
   }, [])
 
+  // Виктор: на горизонтальной деке (каталог туров) вертикальный свайп
+  // пальцем "не всем сразу очевидно как листать" — жест вбок находят не
+  // сразу, а вниз/вверх (привычка со страниц) ничего не делает: touch-pan-x
+  // на контейнере (см. className ниже) специально блокирует нативный
+  // вертикальный скролл страницы тут, а сам Swiper на горизонтальной оси
+  // вертикальный драг игнорирует. onTouchStart/onTouchEnd — родные пропсы
+  // Swiper (не самодельные DOM-листенеры на swiper.el, которые пришлось бы
+  // вручную переустанавливать, когда swiperRef.current появляется — рефы не
+  // тригерят реэффекты). Вертикальный свайп с преобладающей Y-компонентой
+  // конвертируем в slideNext/slidePrev — вниз пальцем (жест "промотать
+  // дальше") = next, вверх = prev, так же интуитивно, как и вбок.
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
+  const SWIPE_THRESHOLD = 40
+  const getPoint = (event: MouseEvent | TouchEvent | PointerEvent, end: boolean) => {
+    if ("changedTouches" in event) return end ? event.changedTouches[0] : event.touches[0]
+    return event
+  }
+  const onDeckTouchStart = (_swiper: SwiperType, event: MouseEvent | TouchEvent | PointerEvent) => {
+    if (direction !== "horizontal") return
+    const p = getPoint(event, false)
+    if (p) touchStartRef.current = { x: p.clientX, y: p.clientY }
+  }
+  const onDeckTouchEnd = (swiper: SwiperType, event: MouseEvent | TouchEvent | PointerEvent) => {
+    if (direction !== "horizontal") return
+    const start = touchStartRef.current
+    touchStartRef.current = null
+    const p = getPoint(event, true)
+    if (!start || !p) return
+    const dx = p.clientX - start.x
+    const dy = p.clientY - start.y
+    if (Math.abs(dy) < SWIPE_THRESHOLD || Math.abs(dy) <= Math.abs(dx)) return
+    if (dy < 0) swiper.slideNext()
+    else swiper.slidePrev()
+  }
+
   return (
     <Swiper
       modules={[Mousewheel, Pagination, Keyboard]}
       direction={direction}
       speed={420}
-      mousewheel={{ releaseOnEdges: true, sensitivity: 1 }}
+      // forceToAxis — на горизонтальной деке трекпад/колесо мыши крутят
+      // ТОЛЬКО вертикальную дельту (deltaY): без этого флага Swiper на
+      // горизонтальной оси её игнорирует и прокрутка колесом просто ничего
+      // не делает (тот же "не всем очевидно как листать", что и с тач-свайпом
+      // — см. touchstart/touchend обработчик выше).
+      mousewheel={{ releaseOnEdges: true, sensitivity: 1, forceToAxis: direction === "horizontal" }}
       keyboard={{ enabled: true }}
+      onTouchStart={onDeckTouchStart}
+      onTouchEnd={onDeckTouchEnd}
       onSwiper={(swiper) => {
         swiperRef.current = swiper
         onSwiper?.(swiper)
