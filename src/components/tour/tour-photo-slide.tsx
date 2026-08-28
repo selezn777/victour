@@ -23,7 +23,12 @@ export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       {photos.length > 0 ? (
-        <div className="relative h-[52%] shrink-0 sm:h-[min(52%,42svh)] lg:h-[min(48%,38svh)]">
+        // Виктор: "фотки на первом слайде огромные, почти на весь экран,
+        // внизу описание такое же как сейчас, чтобы не было свободного
+        // места" — бюджет фото сильно увеличен (было 52%/42svh/38svh); тут,
+        // в отличие от PhotoSlide на главной (advantages-section.tsx), нет
+        // TourCtaButton под текстом, поджимать место под кнопку не нужно.
+        <div className="relative h-[64%] shrink-0 sm:h-[min(60%,50svh)] lg:h-[min(56%,46svh)]">
           <Swiper
             modules={[Pagination]}
             pagination={{ clickable: true, el: ".tour-photo-slide-pagination" }}
