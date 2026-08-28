@@ -1,4 +1,24 @@
 import type { ItineraryItem } from "@/lib/site-data"
+import { splitHighlights } from "@/lib/itinerary-highlights"
+
+// Триггерные слова (капибары, дракон, золотая башня и т.д.) — ярким акцентным
+// цветом прямо в тексте (Виктор: "тригерные туристические слова где ярким
+// выделить"), список см. lib/itinerary-highlights.
+function HighlightedText({ text }: { text: string }) {
+  return (
+    <>
+      {splitHighlights(text).map((part, i) =>
+        part.highlighted ? (
+          <span key={i} className="font-semibold text-primary">
+            {part.text}
+          </span>
+        ) : (
+          <span key={i}>{part.text}</span>
+        ),
+      )}
+    </>
+  )
+}
 
 // Слайд "Маршрут" в колоде тура. Для двухдневных туров (Далат) — экран
 // делится пополам по вертикали: день 1 слева, день 2 справа, каждая
@@ -47,13 +67,18 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
         .filter((i) => i.day === day)
         .map((item, index) => (
           <li key={item.title} className="flex gap-2.5 text-left sm:gap-3">
-            <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+            {/* Виктор: "цифры надо сделать ярким цветом" — было bg-muted/text-muted-foreground (серое). */}
+            <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
               {index + 1}
             </span>
             <div>
-              <p className="text-sm font-medium sm:text-base">{item.title}</p>
+              <p className="text-sm font-medium sm:text-base">
+                <HighlightedText text={item.title} />
+              </p>
               {item.description && (
-                <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">{item.description}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+                  <HighlightedText text={item.description} />
+                </p>
               )}
             </div>
           </li>
