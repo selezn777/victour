@@ -16,10 +16,10 @@ import type { SiteSettings, TourDetail, TourGuide } from "@/lib/site-data"
 import type { Review, TourOption } from "@/lib/reviews-data"
 import type { FaqItem } from "@/lib/faq-data"
 
-// Слайды по порядку: фото → маршрут → что входит → бронь → FAQ → отзывы.
-// Отзывы теперь тоже слайд колоды (раньше были отдельным блоком под ней —
-// Виктор передумал: "пусть будет не кнопка, а прям ещё один слайд").
-const BOOKING_SLIDE_INDEX = 3
+// Слайды по порядку: фото → маршрут (день 1[, день 2]) → что входит →
+// бронь → FAQ → отзывы. Отзывы теперь тоже слайд колоды (раньше были
+// отдельным блоком под ней — Виктор передумал: "пусть будет не кнопка, а
+// прям ещё один слайд").
 
 export function TourPageClient({
   tour,
@@ -50,6 +50,26 @@ export function TourPageClient({
 
   const swiperRef = useRef<SwiperType | null>(null)
 
+  // Двухдневные туры (Далат) — маршрут отдельными слайдами по дню, а не
+  // колонками side-by-side на одном слайде (Виктор со скриншотом: "в
+  // двухдневном Далате не влез маршрут... делаем сначала день один потом
+  // день два отдельными слайдами" — half-width колонка обрезала длинные
+  // пункты). Индекс слайда брони считаем от фактического числа слайдов
+  // маршрута, а не константой — у двухдневных туров он на 1 больше.
+  const itinerarySlides = tour.isDalatTwoDay
+    ? Array.from(new Set(tour.itinerary.map((i) => i.day)))
+        .sort((a, b) => a - b)
+        .map((day) => (
+          <TourItinerarySlide
+            key={`itinerary-${day}`}
+            itinerary={tour.itinerary}
+            day={day}
+            dayLabel={`День ${day}`}
+          />
+        ))
+    : [<TourItinerarySlide key="itinerary" itinerary={tour.itinerary} day={tour.itinerary[0]?.day ?? 1} />]
+  const bookingSlideIndex = 1 + itinerarySlides.length + 1
+
   return (
     <>
       <TourHeader
@@ -68,7 +88,7 @@ export function TourPageClient({
         }}
         slides={[
           <TourPhotoSlide key="photo" tour={tour} />,
-          <TourItinerarySlide key="itinerary" itinerary={tour.itinerary} isTwoDay={tour.isDalatTwoDay} />,
+          ...itinerarySlides,
           <TourIncludesSlide key="includes" includes={tour.includes} excludes={tour.excludes} />,
           <TourBookingSlide
             key="booking"
@@ -102,7 +122,7 @@ export function TourPageClient({
       <TourBottomBar
         priceAdultUsd={priceAdultUsd}
         ctaLabel="Подробнее"
-        onCtaClick={() => swiperRef.current?.slideTo(BOOKING_SLIDE_INDEX)}
+        onCtaClick={() => swiperRef.current?.slideTo(bookingSlideIndex)}
       />
     </>
   )

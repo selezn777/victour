@@ -20,20 +20,25 @@ function HighlightedText({ text }: { text: string }) {
   )
 }
 
-// Слайд "Маршрут" в колоде тура. Для двухдневных туров (Далат) — экран
-// делится пополам по вертикали: день 1 слева, день 2 справа, каждая
-// колонка скроллится независимо, если пунктов больше, чем влезает по
-// высоте (Виктор: "делим экран пополам", "если не помещается — как-то
-// разбиваем"). Для однодневных — один список на весь слайд.
+// Слайд "Маршрут" в колоде тура — один день на слайд. Раньше двухдневные
+// туры (Далат) делили ОДИН слайд пополам по вертикали (день 1 слева, день
+// 2 справа, grid-cols-2) — на телефоне половина ширины экрана оказалась
+// слишком узкой: длинные пункты ("Старый железнодорожный вокзал Далата")
+// обрезались (Виктор со скриншотом: "не влез маршрут"). Решение Виктора —
+// не ужимать колонки, а сделать день 1 и день 2 отдельными слайдами
+// колоды, каждый на всю ширину (см. tour-page-client.tsx, который теперь
+// рендерит по одному TourItinerarySlide на день).
 export function TourItinerarySlide({
   itinerary,
-  isTwoDay,
+  day,
+  dayLabel,
 }: {
   itinerary: ItineraryItem[]
-  isTwoDay: boolean
+  day: number
+  /** Заголовок вида "День 1" — показывается только у многодневных туров,
+   * где маршрут разбит на несколько слайдов. */
+  dayLabel?: string
 }) {
-  const days = Array.from(new Set(itinerary.map((i) => i.day))).sort((a, b) => a - b)
-
   return (
     // pb-24 (не pb-5) — Виктор: "Маршрут чуть-чуть не влазит, его баннер с
     // ценой снизу перекрывает". Слайд сам не знает про fixed TourBottomBar
@@ -43,25 +48,12 @@ export function TourItinerarySlide({
     // tour-faq-slide.tsx) — сюда взят по аналогии, а не подобран заново.
     <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-6 pb-24 sm:px-11 sm:pt-9">
       <h2 className="text-center font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
-        Маршрут
+        Маршрут{dayLabel && <span className="text-primary"> — {dayLabel}</span>}
       </h2>
 
-      {isTwoDay ? (
-        <div className="mt-5 grid min-h-0 flex-1 grid-cols-2 divide-x divide-border">
-          {days.map((day) => (
-            <div key={day} className="flex min-h-0 flex-col overflow-y-auto px-2 first:pl-0 last:pr-0 sm:px-4">
-              <h3 className="sticky top-0 mb-3 bg-background pb-2 text-center text-xs font-medium text-primary uppercase sm:text-sm">
-                День {day}
-              </h3>
-              <DayList itinerary={itinerary} day={day} />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="mt-5 min-h-0 flex-1 overflow-y-auto sm:mx-auto sm:max-w-xl sm:px-4">
-          <DayList itinerary={itinerary} day={days[0]} />
-        </div>
-      )}
+      <div className="mt-5 min-h-0 flex-1 overflow-y-auto sm:mx-auto sm:max-w-xl sm:px-4">
+        <DayList itinerary={itinerary} day={day} />
+      </div>
     </div>
   )
 }
