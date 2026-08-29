@@ -932,10 +932,12 @@ function ValuesSlide({
 // концепцию (не "отбор из многих", а намеренно узкий список).
 const CATALOG_TOURS = [
   {
-    slug: "hon-tam",
-    title: "Хон Там",
-    imageSrc: "/images/tours/hon-tam.jpg",
-    annotation: "Ближайший остров без долгих переходов по открытой воде - спокойно даже с детьми.",
+    slug: "fanrang-avtorskiy",
+    title: "Авторский Фанранг",
+    // Фото временное (Виктор: "возьми любые фото, какая разница... потом
+    // заменим") — переснять на реальные кадры тура, когда будут.
+    imageSrc: "/images/tours/fanrang-avtorskiy.jpg",
+    annotation: "Драконий лабиринт, виноградники и вкус южного Вьетнама за один день без спешки.",
   },
   {
     slug: "mayak-dai-lan",
