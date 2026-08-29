@@ -75,8 +75,6 @@ export function TourBookingSlide({
 
   const guide = guides.find((g) => g.id === guideId) ?? null
 
-  const minGuests = tour.pricingTiers[0]?.guestCount ?? 2
-  const maxGuests = tour.pricingTiers[tour.pricingTiers.length - 1]?.guestCount ?? 9
   const priceAdultUsd =
     tour.pricingTiers.find((t) => t.guestCount === guestCount)?.priceAdultUsd ?? 0
   const groupTotalUsd = priceAdultUsd * guestCount
@@ -179,36 +177,35 @@ export function TourBookingSlide({
           </div>
         )}
 
-        {/* Степпер гостей — отдельный "пилюльный" стиль (rounded-full,
-            заливка muted), намеренно не такая же карточка-рамка, как у
-            календаря выше (Виктор: "не нужно одинаково делать с
-            календарём... сделать так, чтобы можно было чувствовать
-            разницу"). Перенесён ниже гида/календаря, а не в верхнюю плашку
-            (Виктор: "неудобно переключать, можно ниже сделать эту кнопку"). */}
-        <div className="mt-3 flex items-center justify-center gap-3 rounded-full bg-muted px-3 py-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            className="rounded-full bg-background"
-            disabled={guestCount <= minGuests}
-            onClick={() => onGuestCountChange((c) => Math.max(minGuests, c - 1))}
-            aria-label="Меньше гостей"
-          >
-            −
-          </Button>
-          <span className="text-sm font-medium">{guestCount} гостей</span>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            className="rounded-full bg-background"
-            disabled={guestCount >= maxGuests}
-            onClick={() => onGuestCountChange((c) => Math.min(maxGuests, c + 1))}
-            aria-label="Больше гостей"
-          >
-            +
-          </Button>
+        {/* Гости — чипы по числу гостей, а не +/- степпер (Виктор дважды:
+            сначала "неудобно переключать", потом, уже после стиля пилюли,
+            "всё ещё неудобно, придумай другой" — сам механизм
+            "потыкать много раз +/-", чтобы дойти от 2 до 9, оставался
+            утомительным независимо от формы кнопок). Один тап сразу
+            выставляет нужное число — чипов ровно столько, сколько
+            тарифных ступеней у тура (обычно 2..9), без построения диапазона
+            вручную. Горизонтальный скролл на случай, если тарифов много и
+            не влезают в ширину экрана. */}
+        <div className="mt-3">
+          <span className="px-1 text-sm font-medium text-muted-foreground">Гостей</span>
+          <div className="mt-1.5 flex gap-2 overflow-x-auto pb-1">
+            {tour.pricingTiers.map((tier) => (
+              <button
+                key={tier.guestCount}
+                type="button"
+                aria-pressed={tier.guestCount === guestCount}
+                onClick={() => onGuestCountChange(() => tier.guestCount)}
+                className={cn(
+                  "flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold transition-colors",
+                  tier.guestCount === guestCount
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground hover:bg-muted/70",
+                )}
+              >
+                {tier.guestCount}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Цена: за человека — крупно и в акцентном цвете (это то, что
