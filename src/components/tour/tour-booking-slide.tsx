@@ -5,6 +5,7 @@ import { useMemo, useState } from "react"
 import { sendGAEvent } from "@next/third-parties/google"
 import { Button } from "@/components/ui/button"
 import { BookingCalendar } from "@/components/tour/booking-calendar"
+import { GuideProfileSheet } from "@/components/tour/guide-profile-sheet"
 import { formatUsd } from "@/lib/format"
 import { datesUsedByOtherItems, usePackage } from "@/hooks/use-package"
 import type { TourDetail, TourGuide } from "@/lib/site-data"
@@ -19,15 +20,20 @@ function isoDatePlusOne(iso: string): string {
   return `${y}-${m}-${day}`
 }
 
-// Слайд брони в колоде тура. Гости и календарь — рядом друг с другом, в
-// одном месте (Виктор забраковал прошлый вариант, где степпер гостей жил
-// отдельно в нижней плашке: "неудобно выбрать количество людей и даты" —
-// вернул их в один узел). Заголовок и кнопка сознательно не "Забронировать"
-// (звучит как финальное действие) — Виктор попросил формулировку помягче,
-// чтобы не отпугивать тех, кому перед покупкой нужен живой разговор с
-// менеджером. Отступы затянуты плотнее, чем на других слайдах — Виктор
-// увидел, что весь блок (гид+календарь+гости+кнопка) не помещался на
-// экране телефона.
+function isGuideFreeOnDate(guide: TourGuide, date: string, durationDays: number): boolean {
+  if (guide.bookedDates.includes(date)) return false
+  if (durationDays === 2 && guide.bookedDates.includes(isoDatePlusOne(date))) return false
+  return true
+}
+
+// Слайд брони в колоде тура. Порядок узлов теперь ДАТА -> ГИД -> ГОСТИ
+// (Виктор: "неудобно, что гид Виктор сразу — надо сначала дать выбрать
+// дату и после выбора даты дать выбрать тургида, который свободен на эту
+// дату"). Раньше гид выбирался первым (или был жёстко зафиксирован), а
+// календарь блокировал только даты, занятые у ТЕКУЩЕГО выбранного гида —
+// теперь календарь блокирует дату, только если заняты ВСЕ гиды (см.
+// commonBookedDates), а конкретный гид выбирается уже после даты, из тех,
+// кто на неё свободен.
 export function TourBookingSlide({
   tour,
   guides,
@@ -44,17 +50,30 @@ export function TourBookingSlide({
   onSubmitted?: () => void
 }) {
   const { items, addItem } = usePackage()
-  const [guideId, setGuideId] = useState(guides[0]?.id ?? null)
+  const [guideId, setGuideId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [addedToPackage, setAddedToPackage] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [profileGuide, setProfileGuide] = useState<{ id: string; name: string } | null>(null)
+  const [profileSheetOpen, setProfileSheetOpen] = useState(false)
+
+  const commonBookedDates = useMemo(() => {
+    const otherItemDates = datesUsedByOtherItems(items, tour.slug)
+    if (guides.length === 0) return otherItemDates
+    const dates = new Set<string>()
+    for (const d of guides[0].bookedDates) {
+      if (guides.every((g) => g.bookedDates.includes(d))) dates.add(d)
+    }
+    for (const d of otherItemDates) dates.add(d)
+    return dates
+  }, [guides, items, tour.slug])
+
+  const availableGuides = useMemo(() => {
+    if (!selectedDate) return []
+    return guides.filter((g) => isGuideFreeOnDate(g, selectedDate, tour.durationDays))
+  }, [guides, selectedDate, tour.durationDays])
 
   const guide = guides.find((g) => g.id === guideId) ?? null
-  const bookedDates = useMemo(() => {
-    const dates = new Set(guide?.bookedDates ?? [])
-    for (const d of datesUsedByOtherItems(items, tour.slug)) dates.add(d)
-    return dates
-  }, [guide, items, tour.slug])
 
   const minGuests = tour.pricingTiers[0]?.guestCount ?? 2
   const maxGuests = tour.pricingTiers[tour.pricingTiers.length - 1]?.guestCount ?? 9
@@ -66,6 +85,15 @@ export function TourBookingSlide({
     setSelectedDate(date)
     setAddedToPackage(false)
     setError(null)
+    // Пересчитываем свободных гидов сразу для НОВОЙ даты (не через
+    // availableGuides/useMemo — на момент этого вызова selectedDate в
+    // состоянии ещё старый), чтобы снять/выставить guideId синхронно с
+    // выбором даты, без отдельного useEffect.
+    const freeOnDate = guides.filter((g) => isGuideFreeOnDate(g, date, tour.durationDays))
+    setGuideId((prev) => {
+      if (prev && freeOnDate.some((g) => g.id === prev)) return prev
+      return freeOnDate.length === 1 ? freeOnDate[0].id : null
+    })
   }
 
   function handleSubmit() {
@@ -103,84 +131,98 @@ export function TourBookingSlide({
           Дата и бронь
         </h2>
 
-        {guides.length > 1 ? (
-          <div className="mt-3">
-            <div className="flex flex-wrap justify-center gap-2">
-              {guides.map((g) => (
-                <button
-                  key={g.id}
-                  type="button"
-                  aria-pressed={g.id === guideId}
-                  onClick={() => {
-                    setGuideId(g.id)
-                    setSelectedDate(null)
-                    setAddedToPackage(false)
-                    setError(null)
-                  }}
-                  className={cn(
-                    "rounded-full border px-3 py-1 text-sm transition-colors",
-                    g.id === guideId
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border hover:bg-muted",
-                  )}
-                >
-                  {g.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          guide && (
-            <p className="mt-1.5 text-center text-sm text-muted-foreground">Личный гид — {guide.name}</p>
-          )
-        )}
-
-        {/* Гости и цена — рядом друг с другом, не отдельным элементом
-            где-то ещё, чтобы менять число гостей и сразу видеть итог, не
-            отрываясь от календаря ниже. */}
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-border px-4 py-2.5">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium">Гостей</span>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon-sm"
-                disabled={guestCount <= minGuests}
-                onClick={() => onGuestCountChange((c) => Math.max(minGuests, c - 1))}
-                aria-label="Меньше гостей"
-              >
-                −
-              </Button>
-              <span className="w-5 text-center text-sm font-medium">{guestCount}</span>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon-sm"
-                disabled={guestCount >= maxGuests}
-                onClick={() => onGuestCountChange((c) => Math.min(maxGuests, c + 1))}
-                aria-label="Больше гостей"
-              >
-                +
-              </Button>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="font-heading text-base font-semibold text-primary">
-              {formatUsd(groupTotalUsd)}
-            </div>
-            <div className="text-[11px] text-muted-foreground">{formatUsd(priceAdultUsd)} за человека</div>
-          </div>
-        </div>
-
         <div className="mt-3">
           <BookingCalendar
-            bookedDates={bookedDates}
+            bookedDates={commonBookedDates}
             durationDays={tour.durationDays}
             selectedDate={selectedDate}
             onSelectDate={handleSelectDate}
             large
           />
+        </div>
+
+        {/* Гид — только после выбора даты, и только те, кто на неё
+            свободен (Виктор: "не комфортно, что гид сразу"). Карточка гида
+            намеренно НЕ похожа на рамку календаря/степпера — заливка
+            primary/5, а не border, чтобы секции визуально не сливались. */}
+        {selectedDate && (
+          <div className="mt-3 space-y-2">
+            <span className="text-sm font-medium text-muted-foreground">Гид на эту дату</span>
+            {availableGuides.map((g) => (
+              <div
+                key={g.id}
+                className={cn(
+                  "flex items-center justify-between gap-3 rounded-xl bg-primary/5 px-4 py-2.5 transition-colors",
+                  g.id === guideId && "ring-1 ring-primary",
+                )}
+              >
+                <button
+                  type="button"
+                  aria-pressed={g.id === guideId}
+                  onClick={() => setGuideId(g.id)}
+                  className="min-w-0 flex-1 text-left text-sm font-medium"
+                >
+                  {g.name}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileGuide({ id: g.id, name: g.name })
+                    setProfileSheetOpen(true)
+                  }}
+                  className="shrink-0 text-xs text-primary underline underline-offset-2"
+                >
+                  Подробнее
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Степпер гостей — отдельный "пилюльный" стиль (rounded-full,
+            заливка muted), намеренно не такая же карточка-рамка, как у
+            календаря выше (Виктор: "не нужно одинаково делать с
+            календарём... сделать так, чтобы можно было чувствовать
+            разницу"). Перенесён ниже гида/календаря, а не в верхнюю плашку
+            (Виктор: "неудобно переключать, можно ниже сделать эту кнопку"). */}
+        <div className="mt-3 flex items-center justify-center gap-3 rounded-full bg-muted px-3 py-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            className="rounded-full bg-background"
+            disabled={guestCount <= minGuests}
+            onClick={() => onGuestCountChange((c) => Math.max(minGuests, c - 1))}
+            aria-label="Меньше гостей"
+          >
+            −
+          </Button>
+          <span className="text-sm font-medium">{guestCount} гостей</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            className="rounded-full bg-background"
+            disabled={guestCount >= maxGuests}
+            onClick={() => onGuestCountChange((c) => Math.min(maxGuests, c + 1))}
+            aria-label="Больше гостей"
+          >
+            +
+          </Button>
+        </div>
+
+        {/* Цена: за человека — крупно и в акцентном цвете (это то, что
+            гость сравнивает между турами), итог за группу — мельче и
+            приглушённо (Виктор: "общая сумма должна быть меньше, чем сумма
+            за человека" — раньше было наоборот, итог был крупным зелёным). */}
+        <div className="mt-3 flex items-baseline justify-between px-1">
+          <div>
+            <span className="font-heading text-2xl font-semibold text-primary">
+              {formatUsd(priceAdultUsd)}
+            </span>
+            <span className="ml-1 text-sm text-muted-foreground">за человека</span>
+          </div>
+          <div className="text-xs text-muted-foreground">Итого за {guestCount}: {formatUsd(groupTotalUsd)}</div>
         </div>
 
         <Button
@@ -208,6 +250,16 @@ export function TourBookingSlide({
           </p>
         )}
       </div>
+
+      {profileGuide && (
+        <GuideProfileSheet
+          key={profileGuide.id}
+          guideId={profileGuide.id}
+          guideName={profileGuide.name}
+          open={profileSheetOpen}
+          onOpenChange={setProfileSheetOpen}
+        />
+      )}
     </div>
   )
 }
