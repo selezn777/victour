@@ -38,6 +38,9 @@ export type ItineraryItem = {
   day: number
   title: string
   description: string
+  /** Фото конкретной локации для попапа "подробнее" на слайде маршрута
+   * (см. LocationDetailSheet) — опционально, пусто, пока фото не добавлены. */
+  photos: string[]
 }
 
 export type TicketOption = {
@@ -113,7 +116,12 @@ export async function getTourPageData(slug: string): Promise<{
   const title = row.title as { ru: string }
   const shortDescription = row.short_description as { ru: string }
   const durationLabel = row.duration_label as { ru: string }
-  const itinerary = row.itinerary as { day: number; title: { ru: string }; description: { ru: string } }[]
+  const itinerary = row.itinerary as {
+    day: number
+    title: { ru: string }
+    description: { ru: string }
+    photos?: string[]
+  }[]
   const includes = row.includes as { ru: string }[]
   const excludes = row.excludes as { ru: string }[]
   const ticketOptions = row.ticket_options as {
@@ -139,7 +147,7 @@ export async function getTourPageData(slug: string): Promise<{
     heroImageUrl: row.hero_image_url,
     galleryUrls: row.gallery_urls ?? [],
     itinerary: itinerary
-      .map((i) => ({ day: i.day, title: i.title.ru, description: i.description.ru }))
+      .map((i) => ({ day: i.day, title: i.title.ru, description: i.description.ru, photos: i.photos ?? [] }))
       .sort((a, b) => a.day - b.day),
     includes: includes.map((i) => i.ru),
     excludes: excludes.map((i) => i.ru),
