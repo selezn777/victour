@@ -41,6 +41,10 @@ export type ItineraryItem = {
   /** Фото конкретной локации для попапа "подробнее" на слайде маршрута
    * (см. LocationDetailSheet) — опционально, пусто, пока фото не добавлены. */
   photos: string[]
+  /** Slug полноценной статьи в /blog про эту локацию (история, туристический
+   * рассказ) — опционально, есть только у локаций с достаточным количеством
+   * фото. Когда задан, LocationDetailSheet показывает ссылку "Читать статью". */
+  articleSlug: string | null
 }
 
 export type TicketOption = {
@@ -121,6 +125,7 @@ export async function getTourPageData(slug: string): Promise<{
     title: { ru: string }
     description: { ru: string }
     photos?: string[]
+    article_slug?: string | null
   }[]
   const includes = row.includes as { ru: string }[]
   const excludes = row.excludes as { ru: string }[]
@@ -147,7 +152,13 @@ export async function getTourPageData(slug: string): Promise<{
     heroImageUrl: row.hero_image_url,
     galleryUrls: row.gallery_urls ?? [],
     itinerary: itinerary
-      .map((i) => ({ day: i.day, title: i.title.ru, description: i.description.ru, photos: i.photos ?? [] }))
+      .map((i) => ({
+        day: i.day,
+        title: i.title.ru,
+        description: i.description.ru,
+        photos: i.photos ?? [],
+        articleSlug: i.article_slug ?? null,
+      }))
       .sort((a, b) => a.day - b.day),
     includes: includes.map((i) => i.ru),
     excludes: excludes.map((i) => i.ru),

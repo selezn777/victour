@@ -1,6 +1,7 @@
 export const ARTICLE_DESTINATIONS: Record<string, string> = {
   "kam-ranh": "Камрань",
   vinpearl: "Винперл",
+  nyachang: "Нячанг",
   other: "Другое",
 }
 

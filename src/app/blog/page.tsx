@@ -6,7 +6,7 @@ import { destinationLabel } from "@/lib/article-destinations"
 
 export const metadata: Metadata = {
   title: "Блог — ВикТур",
-  description: "Гайды по Камрани, Винперлу и другим направлениям во Вьетнаме.",
+  description: "Гайды по местам Вьетнама: Нячанг, Камрань, Винперл и другие направления.",
 }
 
 export default async function BlogPage() {
@@ -20,7 +20,7 @@ export default async function BlogPage() {
 
       <h1 className="mt-4 font-heading text-2xl font-semibold sm:text-3xl">Блог</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Гайды по Камрани, Винперлу и другим местам — как классно провести время во Вьетнаме.
+        Гайды по местам, которые вы увидите в наших турах — история и практическая инфа.
       </p>
 
       {articles.length === 0 ? (

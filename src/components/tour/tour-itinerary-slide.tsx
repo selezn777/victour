@@ -114,6 +114,7 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
           title={openItem.title}
           description={openItem.description}
           photos={openItem.photos}
+          articleSlug={openItem.articleSlug}
           open={openIndex != null}
           onOpenChange={(open) => setOpenIndex(open ? openIndex : null)}
         />

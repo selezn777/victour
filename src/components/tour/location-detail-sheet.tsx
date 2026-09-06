@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import Image from "next/image"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Pagination } from "swiper/modules"
@@ -19,12 +20,16 @@ export function LocationDetailSheet({
   title,
   description,
   photos,
+  articleSlug,
   open,
   onOpenChange,
 }: {
   title: string
   description: string
   photos: string[]
+  /** Когда задан — под описанием появляется ссылка на полную статью
+   * (история + туристический рассказ) про эту локацию, см. /blog/[slug]. */
+  articleSlug?: string | null
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
@@ -62,7 +67,18 @@ export function LocationDetailSheet({
           {description && (
             <p className="mt-2 text-sm text-muted-foreground sm:text-base">{description}</p>
           )}
-          <Button type="button" className="mt-5 w-full" onClick={() => onOpenChange(false)}>
+          {articleSlug && (
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-4 w-full"
+              nativeButton={false}
+              render={<Link href={`/blog/${articleSlug}`} />}
+            >
+              Читать статью об этом месте
+            </Button>
+          )}
+          <Button type="button" className="mt-2 w-full" onClick={() => onOpenChange(false)}>
             Вернуться к маршруту
           </Button>
         </div>
