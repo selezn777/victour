@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState, type ReactNode, type TouchEvent as ReactTouchEvent } from "react"
 import { ImageIcon } from "lucide-react"
 import type { ItineraryItem } from "@/lib/site-data"
 import { splitHighlights } from "@/lib/itinerary-highlights"
@@ -56,13 +56,51 @@ export function TourItinerarySlide({
         Маршрут{dayLabel && <span className="text-primary"> — {dayLabel}</span>}
       </h2>
 
-      {/* Виктор: домотал список до конца — и жест "утекал" в свайп деки на
-          следующий слайд. swiper-no-swiping — штатный класс Swiper, при
-          touchstart внутри него Swiper вообще не перехватывает жест, скролл
-          списка остаётся чисто нативным до самого конца. */}
-      <div className="swiper-no-swiping mt-5 min-h-0 flex-1 overflow-y-auto sm:mx-auto sm:max-w-xl sm:px-4">
+      <ItineraryScrollArea>
         <DayList itinerary={itinerary} day={day} />
-      </div>
+      </ItineraryScrollArea>
+    </div>
+  )
+}
+
+// Виктор: сначала домотал список до конца — жест "утекал" в свайп деки
+// на следующий слайд (перескакивало сразу же). Полное swiper-no-swiping
+// это чинило, но заодно убирало вообще любой способ свайпом уйти со
+// слайда — "не понятно, как листать дальше" (список занимает почти весь
+// экран, свайпнуть больше не с чего). Правильное поведение: пока внутри
+// списка есть куда скроллить в сторону жеста — гасим жест здесь (гасим
+// именно нативное распространение touchmove, чтобы Swiper выше по DOM
+// его не увидел и не начал считать это свайпом слайда); как только
+// упёрлись в край и палец продолжает тянуть в ту же сторону — событие не
+// глушим, оно доходит до Swiper и обычным образом двигает слайд.
+function ItineraryScrollArea({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const startY = useRef(0)
+
+  function onTouchStart(e: ReactTouchEvent) {
+    startY.current = e.touches[0].clientY
+  }
+
+  function onTouchMove(e: ReactTouchEvent) {
+    const el = ref.current
+    if (!el) return
+    const draggingContentDown = e.touches[0].clientY - startY.current > 0 // палец вниз = открываем более ранний контент
+    const atTop = el.scrollTop <= 0
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
+    const releaseToSwiper = (atTop && draggingContentDown) || (atBottom && !draggingContentDown)
+    if (!releaseToSwiper) {
+      e.stopPropagation()
+    }
+  }
+
+  return (
+    <div
+      ref={ref}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      className="mt-5 min-h-0 flex-1 overflow-y-auto overscroll-contain sm:mx-auto sm:max-w-xl sm:px-4"
+    >
+      {children}
     </div>
   )
 }

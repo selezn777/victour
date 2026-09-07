@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { sendGAEvent } from "@next/third-parties/google"
 import { Button } from "@/components/ui/button"
 import { BookingCalendar } from "@/components/tour/booking-calendar"
@@ -78,6 +78,16 @@ export function TourBookingSlide({
   const priceAdultUsd =
     tour.pricingTiers.find((t) => t.guestCount === guestCount)?.priceAdultUsd ?? 0
   const groupTotalUsd = priceAdultUsd * guestCount
+
+  // Дефолт guestCount — САМАЯ ДЕШЁВАЯ ЗА ЧЕЛОВЕКА ступень (обычно
+  // максимальная группа, см. cheapestTier в tour-page-client.tsx), она же
+  // обычно за пределами видимой области ряда чипов при первой отрисовке.
+  const guestScrollRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const container = guestScrollRef.current
+    const active = container?.querySelector<HTMLElement>(`[data-guest-chip="${guestCount}"]`)
+    active?.scrollIntoView({ block: "nearest", inline: "center" })
+  }, [guestCount])
 
   function handleSelectDate(date: string) {
     setSelectedDate(date)
@@ -188,23 +198,39 @@ export function TourBookingSlide({
             не влезают в ширину экрана. */}
         <div className="mt-3">
           <span className="px-1 text-sm font-medium text-muted-foreground">Гостей</span>
-          <div className="mt-1.5 flex gap-2 overflow-x-auto pb-1">
-            {tour.pricingTiers.map((tier) => (
-              <button
-                key={tier.guestCount}
-                type="button"
-                aria-pressed={tier.guestCount === guestCount}
-                onClick={() => onGuestCountChange(() => tier.guestCount)}
-                className={cn(
-                  "flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold transition-colors",
-                  tier.guestCount === guestCount
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-foreground hover:bg-muted/70",
-                )}
-              >
-                {tier.guestCount}
-              </button>
-            ))}
+          {/* Виктор: по умолчанию выбрана самая дешёвая ЗА ЧЕЛОВЕКА ступень
+              (обычно макс. группа, см. cheapestTier в tour-page-client.tsx) —
+              она оказывалась за пределами видимой области ряда, и казалось,
+              что чипы "не помещаются"/сломаны, а не просто скроллятся.
+              relative+fade-маска справа — визуальная подсказка, что ряд
+              скроллится, плюс автоскролл выбранного чипа в видимую область. */}
+          <div className="relative mt-1.5">
+            <div
+              ref={guestScrollRef}
+              className="flex gap-2 overflow-x-auto pr-6 pb-1"
+            >
+              {tour.pricingTiers.map((tier) => (
+                <button
+                  key={tier.guestCount}
+                  type="button"
+                  data-guest-chip={tier.guestCount}
+                  aria-pressed={tier.guestCount === guestCount}
+                  onClick={() => onGuestCountChange(() => tier.guestCount)}
+                  className={cn(
+                    "flex size-10 shrink-0 items-center justify-center rounded-full text-base font-semibold transition-colors sm:size-11",
+                    tier.guestCount === guestCount
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-foreground hover:bg-muted/70",
+                  )}
+                >
+                  {tier.guestCount}
+                </button>
+              ))}
+            </div>
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-background to-transparent"
+            />
           </div>
         </div>
 
