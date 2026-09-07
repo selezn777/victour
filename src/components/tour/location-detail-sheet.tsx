@@ -6,7 +6,7 @@ import { Swiper, SwiperSlide } from "swiper/react"
 import { Pagination } from "swiper/modules"
 import { XIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog"
 
 import "swiper/css"
 import "swiper/css/pagination"
@@ -17,6 +17,14 @@ import "swiper/css/pagination"
 // поверх текущего слайда колоды вместо перехода на отдельный урл — деку
 // со стейтом брони это бы сбросило), но контент — фото-карусель в стиле
 // первого слайда тура (TourPhotoSlide), а не аватар+био.
+//
+// Виктор: изначально был bottom-sheet (прижат к низу), потом добавил
+// свою кастомную кнопку-крестик поверх фото (плашка bg-black/25) — он
+// явно попросил и то и другое убрать: "по центру, сука, по центру" и
+// "огромный плюсик... хочу чтобы он был такой же как общий дизайн".
+// Dialog/DialogContent (не Sheet) — по-настоящему центрированный попап
+// (fixed top-1/2 left-1/2 translate), со штатной кнопкой закрытия из
+// общего UI-кита, а не самодельной.
 export function LocationDetailSheet({
   title,
   description,
@@ -35,15 +43,29 @@ export function LocationDetailSheet({
   onOpenChange: (open: boolean) => void
 }) {
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="bottom"
-        className="inset-x-0 bottom-0 mx-auto mb-3 max-h-[88vh] w-[calc(100%-1.5rem)] gap-0 overflow-hidden rounded-2xl p-0 sm:mb-6 sm:w-full sm:max-w-md"
-        // Виктор: крестик почти не видно на светлых фото — своя плашка
-        // вместо дефолтной прозрачной кнопки из Sheet.
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        // flex flex-col — DialogContent по умолчанию grid (рассчитан на
+        // заголовок/описание/футер), у нашей вёрстки (фото сверху + текст)
+        // без явного flex контент схлопывался: текст переносился по
+        // одной букве, а фото не получало размеров и не рендерилось.
+        className="flex max-h-[88vh] w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-md"
         showCloseButton={false}
       >
-        <div className="relative h-[48vh] w-full shrink-0 bg-muted sm:h-[52vh]">
+        {/* Тот же штатный крестик, что и в DialogContent по умолчанию —
+            только с z-10: у Swiper (карусель фото ниже) в его собственном
+            CSS зашит z-index:1 на обёртке, дефолтный крестик без своего
+            z-index (z-index:auto) оказывался под ним и был кликабелен, но
+            невидим. */}
+        <DialogClose
+          data-slot="dialog-close"
+          render={<Button variant="ghost" size="icon-sm" className="absolute top-2 right-2 z-10" />}
+        >
+          <XIcon />
+          <span className="sr-only">Закрыть</span>
+        </DialogClose>
+
+        <div className="relative h-[42vh] w-full shrink-0 bg-muted sm:h-[46vh]">
           <Swiper
             modules={[Pagination]}
             pagination={{ clickable: true, el: ".location-detail-pagination" }}
@@ -67,16 +89,6 @@ export function LocationDetailSheet({
               <div className="location-detail-pagination pointer-events-auto flex items-center gap-1.5" />
             </div>
           )}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Закрыть"
-            onClick={() => onOpenChange(false)}
-            className="absolute top-3 right-3 z-10 rounded-full bg-black/25 text-white backdrop-blur-md hover:bg-black/40 hover:text-white"
-          >
-            <XIcon />
-          </Button>
         </div>
 
         <div className="flex flex-1 flex-col overflow-y-auto px-4 pt-4 pb-5 text-center sm:px-8">
@@ -99,7 +111,7 @@ export function LocationDetailSheet({
             Вернуться к маршруту
           </Button>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   )
 }

@@ -1,8 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useMemo, useState } from "react"
 import { sendGAEvent } from "@next/third-parties/google"
+import { MinusIcon, PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BookingCalendar } from "@/components/tour/booking-calendar"
 import { GuideProfileSheet } from "@/components/tour/guide-profile-sheet"
@@ -79,27 +80,10 @@ export function TourBookingSlide({
     tour.pricingTiers.find((t) => t.guestCount === guestCount)?.priceAdultUsd ?? 0
   const groupTotalUsd = priceAdultUsd * guestCount
 
-  // Дефолт guestCount — САМАЯ ДЕШЁВАЯ ЗА ЧЕЛОВЕКА ступень (обычно
-  // максимальная группа, см. cheapestTier в tour-page-client.tsx), она же
-  // обычно за пределами видимой области ряда чипов при первой отрисовке.
-  //
-  // ВАЖНО: слайд брони смонтирован в DOM всегда (Swiper не отмонтирует
-  // неактивные слайды, просто сдвигает их transform'ом за экран) — этот
-  // эффект отрабатывает при каждом заходе на страницу тура, даже пока
-  // слайд не открыт. Раньше здесь был element.scrollIntoView() — он не
-  // знает про transform Swiper'а, видит чип "вне экрана" и тащит в
-  // видимую область ВСЮ страницу (сайт открывался сразу на слайде
-  // брони). Двигаем scrollLeft только у самого контейнера чипов вручную —
-  // наружу это гарантированно не протечёт.
-  const guestScrollRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    const container = guestScrollRef.current
-    const active = container?.querySelector<HTMLElement>(`[data-guest-chip="${guestCount}"]`)
-    if (!container || !active) return
-    const target =
-      active.offsetLeft - container.clientWidth / 2 + active.clientWidth / 2
-    container.scrollLeft = Math.max(0, target)
-  }, [guestCount])
+  // Индекс текущей ступени в списке тарифов — для +/- степпера гостей
+  // ниже (шагаем по реальным тарифным ступеням тура, не произвольным
+  // +1/-1, см. комментарий у степпера).
+  const guestTierIndex = tour.pricingTiers.findIndex((t) => t.guestCount === guestCount)
 
   function handleSelectDate(date: string) {
     setSelectedDate(date)
@@ -199,50 +183,46 @@ export function TourBookingSlide({
           </div>
         )}
 
-        {/* Гости — чипы по числу гостей, а не +/- степпер (Виктор дважды:
-            сначала "неудобно переключать", потом, уже после стиля пилюли,
-            "всё ещё неудобно, придумай другой" — сам механизм
-            "потыкать много раз +/-", чтобы дойти от 2 до 9, оставался
-            утомительным независимо от формы кнопок). Один тап сразу
-            выставляет нужное число — чипов ровно столько, сколько
-            тарифных ступеней у тура (обычно 2..9), без построения диапазона
-            вручную. Горизонтальный скролл на случай, если тарифов много и
-            не влезают в ширину экрана. */}
+        {/* Гости — было: ряд чипов-кружков по числу гостей. Виктор много
+            раз недоволен и чипами, и до того +/-. Финал: степпер на всю
+            ширину экрана — крупная цифра по центру, +/- по краям (не
+            крошечные кнопки сбоку от узкого чипа). Шаг идёт по реальным
+            тарифным ступеням тура (обычно 2..9 подряд), а не произвольным
+            +1/-1 — на случай, если когда-нибудь ступени не подряд. */}
         <div className="mt-3">
           <span className="px-1 text-sm font-medium text-muted-foreground">Гостей</span>
-          {/* Виктор: по умолчанию выбрана самая дешёвая ЗА ЧЕЛОВЕКА ступень
-              (обычно макс. группа, см. cheapestTier в tour-page-client.tsx) —
-              она оказывалась за пределами видимой области ряда, и казалось,
-              что чипы "не помещаются"/сломаны, а не просто скроллятся.
-              relative+fade-маска справа — визуальная подсказка, что ряд
-              скроллится, плюс автоскролл выбранного чипа в видимую область. */}
-          <div className="relative mt-1.5">
-            <div
-              ref={guestScrollRef}
-              className="flex gap-2 overflow-x-auto pr-6 pb-1"
+          <div className="mt-1.5 flex items-center gap-3">
+            <button
+              type="button"
+              aria-label="Меньше гостей"
+              disabled={guestTierIndex <= 0}
+              onClick={() =>
+                onGuestCountChange((count) => {
+                  const i = tour.pricingTiers.findIndex((t) => t.guestCount === count)
+                  return tour.pricingTiers[Math.max(0, i - 1)]?.guestCount ?? count
+                })
+              }
+              className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/70 disabled:pointer-events-none disabled:opacity-30"
             >
-              {tour.pricingTiers.map((tier) => (
-                <button
-                  key={tier.guestCount}
-                  type="button"
-                  data-guest-chip={tier.guestCount}
-                  aria-pressed={tier.guestCount === guestCount}
-                  onClick={() => onGuestCountChange(() => tier.guestCount)}
-                  className={cn(
-                    "flex size-10 shrink-0 items-center justify-center rounded-full text-base font-semibold transition-colors sm:size-11",
-                    tier.guestCount === guestCount
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground hover:bg-muted/70",
-                  )}
-                >
-                  {tier.guestCount}
-                </button>
-              ))}
-            </div>
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-background to-transparent"
-            />
+              <MinusIcon className="size-5" />
+            </button>
+            <span className="flex-1 text-center text-3xl font-semibold tabular-nums">
+              {guestCount}
+            </span>
+            <button
+              type="button"
+              aria-label="Больше гостей"
+              disabled={guestTierIndex >= tour.pricingTiers.length - 1}
+              onClick={() =>
+                onGuestCountChange((count) => {
+                  const i = tour.pricingTiers.findIndex((t) => t.guestCount === count)
+                  return tour.pricingTiers[Math.min(tour.pricingTiers.length - 1, i + 1)]?.guestCount ?? count
+                })
+              }
+              className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/70 disabled:pointer-events-none disabled:opacity-30"
+            >
+              <PlusIcon className="size-5" />
+            </button>
           </div>
         </div>
 
