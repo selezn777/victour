@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { ImageIcon } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { ChevronRightIcon } from "lucide-react"
 import type { ItineraryItem } from "@/lib/site-data"
 import { splitHighlights } from "@/lib/itinerary-highlights"
 import { LocationDetailSheet } from "@/components/tour/location-detail-sheet"
+import { Button } from "@/components/ui/button"
 
 // Триггерные слова (капибары, дракон, золотая башня и т.д.) — ярким акцентным
 // цветом прямо в тексте (Виктор: "тригерные туристические слова где ярким
@@ -80,6 +81,44 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
   const dayItems = itinerary.filter((i) => i.day === day)
   const openItem = openIndex != null ? dayItems[openIndex] : null
 
+  // Виктор: у коротких маршрутов (7 пунктов вместо 8) список сбивается в
+  // кучу вверху, а снизу пустует до самой плашки с ценой — просил
+  // растянуть пункты вниз "до плашки с ценой", через JS (не CSS), чтобы
+  // одинаково надёжно работало на любом устройстве/высоте экрана (тот же
+  // принцип, что и visualViewport в slide-deck.tsx — не полагаться на
+  // статичную раскладку, мерить реальную доступную высоту в рантайме).
+  // Меряем натуральную высоту списка (компактный gap) и доступную высоту
+  // контейнера — если есть запас, добавляем его как ДОПОЛНИТЕЛЬНЫЙ gap
+  // между пунктами (не через justify-content: space-between — тот
+  // требует, чтобы <ol> сам имел фиксированную высоту контейнера, что
+  // плодит собственные проблемы измерения).
+  const listRef = useRef<HTMLOListElement>(null)
+  const [growGapPx, setGrowGapPx] = useState<number | null>(null)
+  useEffect(() => {
+    const ol = listRef.current
+    const container = ol?.parentElement
+    if (!ol || !container) return
+
+    function recalc() {
+      if (!ol || !container) return
+      ol.style.rowGap = "" // сброс инлайна — меряем натуральную (компактную) высоту
+      const baseGap = parseFloat(getComputedStyle(ol).rowGap) || 0
+      const naturalHeight = ol.scrollHeight
+      const available = container.clientHeight
+      if (dayItems.length > 1 && available > naturalHeight) {
+        const extra = (available - naturalHeight) / (dayItems.length - 1)
+        setGrowGapPx(baseGap + extra)
+      } else {
+        setGrowGapPx(null)
+      }
+    }
+
+    recalc()
+    const ro = new ResizeObserver(recalc)
+    ro.observe(container)
+    return () => ro.disconnect()
+  }, [dayItems.length])
+
   // Виктор: системная кнопка "назад" уводила со страницы тура вместо
   // закрытия шита с фото локации. Пока шит открыт — держим лишнюю запись
   // в истории, чтобы "назад" её съедал и просто закрывал шит.
@@ -97,9 +136,15 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
   return (
     <>
       {/* Виктор: список должен весь помещаться на экране без скролла —
-          компактнее цифра, компактнее кнопка "Фото" (иконка без текста,
-          сразу рядом с названием, а не в дальнем углу), плотнее отступы. */}
-      <ol className="flex flex-col gap-2 pb-2 sm:gap-2.5">
+          компактнее цифра, плотнее отступы. Кнопка "Фото" была иконкой
+          без подписи — "непонятно, что это" — вернул текст "Подробнее" в
+          стиле общих кнопок сайта (Button variant=outline), прижата к
+          правому краю. */}
+      <ol
+        ref={listRef}
+        className="flex flex-col gap-2 pb-2 sm:gap-2.5"
+        style={growGapPx != null ? { rowGap: `${growGapPx}px` } : undefined}
+      >
         {dayItems.map((item, index) => (
           <li key={item.title} className="flex gap-2 text-left">
             {/* Виктор: "цифры надо сделать ярким цветом" — было bg-muted/text-muted-foreground (серое). */}
@@ -107,19 +152,21 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
               {index + 1}
             </span>
             <div className="min-w-0 flex-1">
-              <div className="flex items-baseline gap-1.5">
+              <div className="flex items-center justify-between gap-2">
                 <p className="text-[13px] leading-snug font-medium sm:text-sm">
                   <HighlightedText text={item.title} />
                 </p>
                 {item.photos.length > 0 && (
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="xs"
                     onClick={() => setOpenIndex(index)}
-                    aria-label="Фото локации"
-                    className="flex shrink-0 items-center justify-center rounded-full bg-muted p-1 text-muted-foreground active:bg-muted/70"
+                    className="shrink-0"
                   >
-                    <ImageIcon className="size-3" />
-                  </button>
+                    Подробнее
+                    <ChevronRightIcon className="size-3" />
+                  </Button>
                 )}
               </div>
               {item.description && (
