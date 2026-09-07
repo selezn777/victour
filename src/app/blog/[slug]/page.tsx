@@ -1,5 +1,4 @@
 import Link from "next/link"
-import Image from "next/image"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { getArticleBySlug } from "@/lib/articles-data"
@@ -40,19 +39,10 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       </span>
       <h1 className="mt-1 font-heading text-2xl font-semibold sm:text-3xl">{article.title}</h1>
 
-      {article.coverImageUrl && (
-        <div className="relative mt-6 aspect-[16/9] w-full overflow-hidden rounded-2xl bg-muted">
-          <Image
-            src={article.coverImageUrl}
-            alt={article.title}
-            fill
-            className="object-cover"
-            sizes="(min-width: 768px) 720px, 100vw"
-            priority
-          />
-        </div>
-      )}
-
+      {/* Виктор: cover_image_url дублирует первое инлайн-фото из body —
+          отдельный hero-блок здесь показывал одно и то же фото дважды
+          (было 4 видимых фото на 3 загруженных). Cover остаётся только
+          для превью в /blog и OG-метатегов. */}
       <div className="mt-8">
         <ArticleBody body={article.body} />
       </div>
