@@ -57,9 +57,18 @@ export function LocationDetailSheet({
             CSS зашит z-index:1 на обёртке, дефолтный крестик без своего
             z-index (z-index:auto) оказывался под ним и был кликабелен, но
             невидим. */}
+        {/* Виктор: "крестик надо сделать поярче" — явный белый цвет +
+            тень для контраста на любом фото, вместо обычного (тусклого
+            на светлых фото) текста по умолчанию. */}
         <DialogClose
           data-slot="dialog-close"
-          render={<Button variant="ghost" size="icon-sm" className="absolute top-2 right-2 z-10" />}
+          render={
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="absolute top-2 right-2 z-10 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)] hover:bg-black/20 hover:text-white"
+            />
+          }
         >
           <XIcon />
           <span className="sr-only">Закрыть</span>

@@ -81,10 +81,28 @@ export function TourPageClient({
 
       {/* paginationPosition="none" — тот же "переплёт"-индикатор слева,
           который Виктор уже попросил убрать на главной, здесь тоже мешал. */}
+      {/* Виктор: "Читать статью об этом месте" уводит на /blog/[slug] —
+          отдельный роут, а не слайд этой же деки. По кнопке "назад" со
+          статьи страница тура раньше монтировалась заново с нуля (слайд
+          "Маршрут" терялся, не то что открытый в нём попап конкретной
+          локации — "надо чтобы назад возвращало к маршруту, а не к
+          началу страницы"). Деке негде хранить активный слайд в URL, а
+          у Swiper вообще нет server-driven state — запоминаем индекс в
+          sessionStorage при каждой смене слайда и восстанавливаем при
+          новом монтировании (работает и для обычного "назад" в браузере,
+          и для перехода со статьи — тот же путь). */}
       <SlideDeck
         paginationPosition="none"
         onSwiper={(swiper) => {
           swiperRef.current = swiper
+          const saved = sessionStorage.getItem(`tour-slide:${tour.slug}`)
+          if (saved != null) {
+            swiper.slideTo(Number(saved), 0)
+            sessionStorage.removeItem(`tour-slide:${tour.slug}`)
+          }
+        }}
+        onSlideChange={(index) => {
+          sessionStorage.setItem(`tour-slide:${tour.slug}`, String(index))
         }}
         slides={[
           <TourPhotoSlide key="photo" tour={tour} />,
