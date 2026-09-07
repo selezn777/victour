@@ -84,8 +84,9 @@ export function LocationDetailSheet({
               </SwiperSlide>
             ))}
           </Swiper>
+          {/* Виктор: тёмная плашка-полоска под точками — убрать везде. */}
           {photos.length > 1 && (
-            <div className="pointer-events-none absolute right-4 bottom-4 z-10 flex items-center gap-1.5 rounded-full bg-black/25 px-3 py-1.5 backdrop-blur-md">
+            <div className="pointer-events-none absolute right-4 bottom-4 z-10 flex items-center gap-1.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]">
               <div className="location-detail-pagination pointer-events-auto flex items-center gap-1.5" />
             </div>
           )}

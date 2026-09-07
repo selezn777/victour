@@ -48,10 +48,13 @@ export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
               </SwiperSlide>
             ))}
           </Swiper>
+          {/* Виктор: тёмная плашка-полоска под точками — убрать везде, точки
+              и счётчик лежат прямо на фото (drop-shadow вместо плашки для
+              читаемости на светлых фото). */}
           {photos.length > 1 && (
-            <div className="pointer-events-none absolute right-4 bottom-4 z-10 flex items-center gap-2 rounded-full bg-black/25 px-3 py-1.5 backdrop-blur-md sm:right-6 sm:bottom-6">
+            <div className="pointer-events-none absolute right-4 bottom-4 z-10 flex items-center gap-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] sm:right-6 sm:bottom-6">
               <div className="tour-photo-slide-pagination pointer-events-auto flex items-center gap-1.5" />
-              <span className="font-mono text-xs tabular-nums text-white/90">
+              <span className="font-mono text-xs tabular-nums text-white">
                 {active + 1}/{photos.length}
               </span>
             </div>

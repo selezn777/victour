@@ -40,10 +40,11 @@ export function TourCard({
         fill ? "h-full w-full" : "aspect-3/4 rounded-2xl",
       )}
     >
-      <Link
-        href={`/tours/${tour.slug}`}
-        className="absolute inset-0 transition-transform duration-150 active:scale-[0.97]"
-      >
+      {/* Виктор: раньше вся карточка была одной большой ссылкой — тур
+          "неприемлемо" открывался тапом в любом месте карточки. Теперь тур
+          открывается ТОЛЬКО по кнопке "Программа тура" ниже — тут обычный
+          div, а не Link. */}
+      <div className="absolute inset-0">
         {/* Один статичный кадр — Виктор попросил убрать внутреннюю карусель
             фото на карточке совсем ("переключение убираем"), сам выберет,
             какое единственное фото ставить на каждый тур. */}
@@ -96,12 +97,18 @@ export function TourCard({
             <span className="text-base font-medium text-primary">
               от {formatUsd(tour.priceFromUsd)} / чел
             </span>
-            <span className="rounded-full border border-white/30 px-3 py-1.5 text-xs font-medium transition-colors group-hover:border-white/70">
+            {/* Виктор: была мелкая обводка-пилюля, просил крупнее и
+                "серебристо" — заметная кнопка с нажимаемым эффектом
+                (active:scale), единственный тап-таргет, ведущий на тур. */}
+            <Link
+              href={`/tours/${tour.slug}`}
+              className="rounded-full bg-gradient-to-b from-white to-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-900 shadow-sm transition-transform duration-150 active:scale-95"
+            >
               Программа тура
-            </span>
+            </Link>
           </div>
         </div>
-      </Link>
+      </div>
 
       <Button
         variant="secondary"
