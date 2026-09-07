@@ -4,6 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Pagination } from "swiper/modules"
+import { XIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 
@@ -35,7 +36,13 @@ export function LocationDetailSheet({
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[92vh] gap-0 overflow-hidden rounded-t-2xl p-0">
+      <SheetContent
+        side="bottom"
+        className="inset-x-0 bottom-0 mx-auto mb-3 max-h-[88vh] w-[calc(100%-1.5rem)] gap-0 overflow-hidden rounded-2xl p-0 sm:mb-6 sm:w-full sm:max-w-md"
+        // Виктор: крестик почти не видно на светлых фото — своя плашка
+        // вместо дефолтной прозрачной кнопки из Sheet.
+        showCloseButton={false}
+      >
         <div className="relative h-[48vh] w-full shrink-0 bg-muted sm:h-[52vh]">
           <Swiper
             modules={[Pagination]}
@@ -60,6 +67,16 @@ export function LocationDetailSheet({
               <div className="location-detail-pagination pointer-events-auto flex items-center gap-1.5" />
             </div>
           )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Закрыть"
+            onClick={() => onOpenChange(false)}
+            className="absolute top-3 right-3 z-10 rounded-full bg-black/25 text-white backdrop-blur-md hover:bg-black/40 hover:text-white"
+          >
+            <XIcon />
+          </Button>
         </div>
 
         <div className="flex flex-1 flex-col overflow-y-auto px-4 pt-4 pb-5 text-center sm:px-8">

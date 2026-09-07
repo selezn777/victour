@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ImageIcon } from "lucide-react"
 import type { ItineraryItem } from "@/lib/site-data"
 import { splitHighlights } from "@/lib/itinerary-highlights"
@@ -56,7 +56,11 @@ export function TourItinerarySlide({
         Маршрут{dayLabel && <span className="text-primary"> — {dayLabel}</span>}
       </h2>
 
-      <div className="mt-5 min-h-0 flex-1 overflow-y-auto sm:mx-auto sm:max-w-xl sm:px-4">
+      {/* Виктор: домотал список до конца — и жест "утекал" в свайп деки на
+          следующий слайд. swiper-no-swiping — штатный класс Swiper, при
+          touchstart внутри него Swiper вообще не перехватывает жест, скролл
+          списка остаётся чисто нативным до самого конца. */}
+      <div className="swiper-no-swiping mt-5 min-h-0 flex-1 overflow-y-auto sm:mx-auto sm:max-w-xl sm:px-4">
         <DayList itinerary={itinerary} day={day} />
       </div>
     </div>
@@ -73,6 +77,20 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const dayItems = itinerary.filter((i) => i.day === day)
   const openItem = openIndex != null ? dayItems[openIndex] : null
+
+  // Виктор: системная кнопка "назад" уводила со страницы тура вместо
+  // закрытия шита с фото локации. Пока шит открыт — держим лишнюю запись
+  // в истории, чтобы "назад" её съедал и просто закрывал шит.
+  const isOpen = openIndex != null
+  useEffect(() => {
+    if (!isOpen) return
+    function onPopState() {
+      setOpenIndex(null)
+    }
+    window.history.pushState({ locationSheetOpen: true }, "")
+    window.addEventListener("popstate", onPopState)
+    return () => window.removeEventListener("popstate", onPopState)
+  }, [isOpen])
 
   return (
     <>
@@ -115,8 +133,19 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
           description={openItem.description}
           photos={openItem.photos}
           articleSlug={openItem.articleSlug}
-          open={openIndex != null}
-          onOpenChange={(open) => setOpenIndex(open ? openIndex : null)}
+          open={isOpen}
+          onOpenChange={(open) => {
+            if (open) return
+            // Закрытие крестиком/свайпом/кнопкой тоже идёт через
+            // history.back() — съедает ту же лишнюю запись, что и
+            // "назад" (см. useEffect выше), иначе на следующий "назад"
+            // пользователю пришлось бы жать дважды.
+            if (window.history.state?.locationSheetOpen) {
+              window.history.back()
+            } else {
+              setOpenIndex(null)
+            }
+          }}
         />
       )}
     </>
