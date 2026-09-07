@@ -1,11 +1,11 @@
 "use client"
 
-import Image from "next/image"
 import { useState } from "react"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Pagination } from "swiper/modules"
 import type { Swiper as SwiperType } from "swiper/types"
 import type { TourDetail } from "@/lib/site-data"
+import { PinchZoomPhoto } from "@/components/pinch-zoom-photo"
 
 import "swiper/css"
 import "swiper/css/pagination"
@@ -37,14 +37,7 @@ export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
           >
             {photos.map((url, i) => (
               <SwiperSlide key={url} className="relative h-full w-full">
-                <Image
-                  src={url}
-                  alt={`${tour.title}, фото ${i + 1}`}
-                  fill
-                  priority={i === 0}
-                  className="object-cover"
-                  sizes="100vw"
-                />
+                <PinchZoomPhoto src={url} alt={`${tour.title}, фото ${i + 1}`} priority={i === 0} />
               </SwiperSlide>
             ))}
           </Swiper>

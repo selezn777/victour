@@ -1,12 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Pagination } from "swiper/modules"
 import { XIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog"
+import { PinchZoomPhoto } from "@/components/pinch-zoom-photo"
 
 import "swiper/css"
 import "swiper/css/pagination"
@@ -73,14 +73,7 @@ export function LocationDetailSheet({
           >
             {photos.map((url, i) => (
               <SwiperSlide key={url} className="relative h-full w-full">
-                <Image
-                  src={url}
-                  alt={`${title}, фото ${i + 1}`}
-                  fill
-                  priority={i === 0}
-                  className="object-cover"
-                  sizes="100vw"
-                />
+                <PinchZoomPhoto src={url} alt={`${title}, фото ${i + 1}`} priority={i === 0} />
               </SwiperSlide>
             ))}
           </Swiper>
