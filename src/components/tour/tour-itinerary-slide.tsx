@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, type ReactNode, type TouchEvent as ReactTouchEvent } from "react"
+import { useEffect, useState } from "react"
 import { ImageIcon } from "lucide-react"
 import type { ItineraryItem } from "@/lib/site-data"
 import { splitHighlights } from "@/lib/itinerary-highlights"
@@ -56,51 +56,15 @@ export function TourItinerarySlide({
         Маршрут{dayLabel && <span className="text-primary"> — {dayLabel}</span>}
       </h2>
 
-      <ItineraryScrollArea>
+      {/* Виктор: внутренний скролл списка с перехватом жеста "выглядит
+          дёшево" — убрал полностью (никакого overflow/touch-хендлинга
+          здесь). Вместо этого — компактная вёрстка пунктов (см. DayList),
+          рассчитанная на то, чтобы весь маршрут помещался на экране без
+          скролла; навигация между слайдами — только штатным свайпом
+          деки, как везде. */}
+      <div className="mt-5 min-h-0 flex-1 sm:mx-auto sm:max-w-xl sm:px-4">
         <DayList itinerary={itinerary} day={day} />
-      </ItineraryScrollArea>
-    </div>
-  )
-}
-
-// Виктор: сначала домотал список до конца — жест "утекал" в свайп деки
-// на следующий слайд (перескакивало сразу же). Полное swiper-no-swiping
-// это чинило, но заодно убирало вообще любой способ свайпом уйти со
-// слайда — "не понятно, как листать дальше" (список занимает почти весь
-// экран, свайпнуть больше не с чего). Правильное поведение: пока внутри
-// списка есть куда скроллить в сторону жеста — гасим жест здесь (гасим
-// именно нативное распространение touchmove, чтобы Swiper выше по DOM
-// его не увидел и не начал считать это свайпом слайда); как только
-// упёрлись в край и палец продолжает тянуть в ту же сторону — событие не
-// глушим, оно доходит до Swiper и обычным образом двигает слайд.
-function ItineraryScrollArea({ children }: { children: ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const startY = useRef(0)
-
-  function onTouchStart(e: ReactTouchEvent) {
-    startY.current = e.touches[0].clientY
-  }
-
-  function onTouchMove(e: ReactTouchEvent) {
-    const el = ref.current
-    if (!el) return
-    const draggingContentDown = e.touches[0].clientY - startY.current > 0 // палец вниз = открываем более ранний контент
-    const atTop = el.scrollTop <= 0
-    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
-    const releaseToSwiper = (atTop && draggingContentDown) || (atBottom && !draggingContentDown)
-    if (!releaseToSwiper) {
-      e.stopPropagation()
-    }
-  }
-
-  return (
-    <div
-      ref={ref}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      className="mt-5 min-h-0 flex-1 overflow-y-auto overscroll-contain sm:mx-auto sm:max-w-xl sm:px-4"
-    >
-      {children}
+      </div>
     </div>
   )
 }
@@ -132,31 +96,34 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
 
   return (
     <>
-      <ol className="flex flex-col gap-3 pb-4 sm:gap-4">
+      {/* Виктор: список должен весь помещаться на экране без скролла —
+          компактнее цифра, компактнее кнопка "Фото" (иконка без текста,
+          сразу рядом с названием, а не в дальнем углу), плотнее отступы. */}
+      <ol className="flex flex-col gap-2 pb-2 sm:gap-2.5">
         {dayItems.map((item, index) => (
-          <li key={item.title} className="flex gap-2.5 text-left sm:gap-3">
+          <li key={item.title} className="flex gap-2 text-left">
             {/* Виктор: "цифры надо сделать ярким цветом" — было bg-muted/text-muted-foreground (серое). */}
-            <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+            <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
               {index + 1}
             </span>
             <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-sm font-medium sm:text-base">
+              <div className="flex items-baseline gap-1.5">
+                <p className="text-[13px] leading-snug font-medium sm:text-sm">
                   <HighlightedText text={item.title} />
                 </p>
                 {item.photos.length > 0 && (
                   <button
                     type="button"
                     onClick={() => setOpenIndex(index)}
-                    className="mt-0.5 flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground active:bg-muted/70"
+                    aria-label="Фото локации"
+                    className="flex shrink-0 items-center justify-center rounded-full bg-muted p-1 text-muted-foreground active:bg-muted/70"
                   >
-                    <ImageIcon className="size-3.5" />
-                    Фото
+                    <ImageIcon className="size-3" />
                   </button>
                 )}
               </div>
               {item.description && (
-                <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+                <p className="mt-0.5 line-clamp-1 text-[11px] leading-snug text-muted-foreground sm:text-xs">
                   <HighlightedText text={item.description} />
                 </p>
               )}
