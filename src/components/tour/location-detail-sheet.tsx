@@ -97,6 +97,8 @@ export function LocationDetailSheet({
           {description && (
             <p className="mt-2 text-sm text-muted-foreground sm:text-base">{description}</p>
           )}
+          {/* Виктор: "крестика достаточно" — убрал отдельную кнопку
+              закрытия ("Вернуться к маршруту"), она дублировала крестик. */}
           {articleSlug && (
             <Button
               type="button"
@@ -108,9 +110,6 @@ export function LocationDetailSheet({
               Читать статью об этом месте
             </Button>
           )}
-          <Button type="button" className="mt-2 w-full" onClick={() => onOpenChange(false)}>
-            Вернуться к маршруту
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
