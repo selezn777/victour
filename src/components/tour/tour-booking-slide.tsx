@@ -82,11 +82,23 @@ export function TourBookingSlide({
   // Дефолт guestCount — САМАЯ ДЕШЁВАЯ ЗА ЧЕЛОВЕКА ступень (обычно
   // максимальная группа, см. cheapestTier в tour-page-client.tsx), она же
   // обычно за пределами видимой области ряда чипов при первой отрисовке.
+  //
+  // ВАЖНО: слайд брони смонтирован в DOM всегда (Swiper не отмонтирует
+  // неактивные слайды, просто сдвигает их transform'ом за экран) — этот
+  // эффект отрабатывает при каждом заходе на страницу тура, даже пока
+  // слайд не открыт. Раньше здесь был element.scrollIntoView() — он не
+  // знает про transform Swiper'а, видит чип "вне экрана" и тащит в
+  // видимую область ВСЮ страницу (сайт открывался сразу на слайде
+  // брони). Двигаем scrollLeft только у самого контейнера чипов вручную —
+  // наружу это гарантированно не протечёт.
   const guestScrollRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const container = guestScrollRef.current
     const active = container?.querySelector<HTMLElement>(`[data-guest-chip="${guestCount}"]`)
-    active?.scrollIntoView({ block: "nearest", inline: "center" })
+    if (!container || !active) return
+    const target =
+      active.offsetLeft - container.clientWidth / 2 + active.clientWidth / 2
+    container.scrollLeft = Math.max(0, target)
   }, [guestCount])
 
   function handleSelectDate(date: string) {
