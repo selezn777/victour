@@ -74,6 +74,13 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
         // Порядок появления — от самого нижнего слоя к самому верхнему,
         // имитирует реальную стопку: сначала легла нижняя карточка, потом
         // на неё следующая.
+        //
+        // Виктор: "по одной — долго, хочу чтобы выпадали по 2" — падают
+        // ПАРАМИ одновременно (Math.floor(order / 2) — оба фото пары
+        // получают одну и ту же задержку), если фото нечётное число —
+        // последнее само по себе в своём слоте, без пары, само собой
+        // (не нужен отдельный код на этот случай — просто у него нет
+        // соседа с тем же Math.floor).
         const byDepth = photos.map((_, i) => i).sort((a, b) => positions[b] - positions[a])
         byDepth.forEach((photoIndex, order) => {
           setTimeout(
@@ -84,7 +91,7 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
                 return next
               })
             },
-            DROP_INITIAL_DELAY_MS + order * DROP_STAGGER_MS,
+            DROP_INITIAL_DELAY_MS + Math.floor(order / 2) * DROP_STAGGER_MS,
           )
         })
       },
