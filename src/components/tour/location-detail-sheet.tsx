@@ -94,25 +94,27 @@ export function LocationDetailSheet({
           )}
         </div>
 
-        <div className="flex flex-1 flex-col overflow-y-auto px-4 pt-4 pb-5 text-center sm:px-8">
+        <div className="flex flex-1 flex-col overflow-y-auto px-4 pt-4 pb-4 text-center sm:px-8">
           <h3 className="font-heading text-xl leading-[1.15] font-semibold sm:text-2xl">{title}</h3>
           {description && (
             <p className="mt-2 text-sm text-muted-foreground sm:text-base">{description}</p>
           )}
-          {/* Виктор: "крестика достаточно" — убрал отдельную кнопку
-              закрытия ("Вернуться к маршруту"), она дублировала крестик. */}
-          {articleSlug && (
-            <Button
-              type="button"
-              variant="outline"
-              className="mt-4 w-full"
-              nativeButton={false}
-              render={<Link href={`/blog/${articleSlug}`} />}
-            >
-              Читать статью об этом месте
-            </Button>
-          )}
         </div>
+        {/* Виктор: обводка не смотрелась — сплошной акцентный цвет сайта
+            (тот же зелёный, что у кнопки брони на TourBottomBar), во всю
+            ширину и без полей, флашем к нижнему краю попапа (скругление
+            даёт overflow-hidden у DialogContent, свой rounded не нужен). */}
+        {articleSlug && (
+          <Button
+            type="button"
+            size="lg"
+            className="w-full shrink-0 rounded-none"
+            nativeButton={false}
+            render={<Link href={`/blog/${articleSlug}`} />}
+          >
+            Читать статью об этом месте
+          </Button>
+        )}
       </DialogContent>
     </Dialog>
   )
