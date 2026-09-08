@@ -1,19 +1,23 @@
 "use client"
 
-import { useRef } from "react"
+import { useRef, type TouchEvent as ReactTouchEvent } from "react"
 import { ReviewsSection } from "@/components/reviews/reviews-section"
 import type { Review, TourOption } from "@/lib/reviews-data"
 
 // Отзывы — теперь свой слайд в конце колоды, а не отдельный блок под ней
 // (Виктор: "пусть будет не кнопка, а прям ещё один слайд для отзывов").
-// Список внутри скроллится свободно (swiper-no-swiping — родительский
-// вертикальный Swiper вообще не трогает тачи внутри), а когда список
-// докручен до самого верха и человек всё равно тянет дальше вниз (жест
-// "листнуть назад"), это единственный момент, когда мы САМИ включаем
-// обратно механику слайдов и уходим на предыдущий слайд (FAQ) —
-// swiperRef.slidePrev() по явному запросу onRequestPrevSlide.
-const SWIPE_THRESHOLD = 40
-
+//
+// Виктор: "отзывы даже не открываются" — старая версия держалась на
+// swiper-no-swiping + Pointer Events с ручным порогом (см. подробный
+// разбор в tour-faq-slide.tsx — та же схема, тот же баг). Класс
+// swiper-no-swiping решает "не мой жест" один раз при touchstart и потом
+// игнорирует touchmove/touchend весь остаток жеста — работоспособность
+// держалась только на Pointer-коде, а Pointer Events на мобильных
+// браузерах ненадёжны. Новая схема: обычные touch-события, БЕЗ
+// swiper-no-swiping. Пока в списке есть куда скроллить вверх — глушим
+// touchmove; у верхней границы отпускаем событие Swiper'у, и он сам
+// (своей штатной логикой) переключает на предыдущий слайд (FAQ) —
+// вызывать slidePrev() руками больше не нужно.
 export function TourReviewsSlide({
   reviews,
   tours,
@@ -21,7 +25,6 @@ export function TourReviewsSlide({
   guideName,
   lockedTourId,
   emptyMessage,
-  onRequestPrevSlide,
 }: {
   reviews: Review[]
   tours: TourOption[]
@@ -29,35 +32,32 @@ export function TourReviewsSlide({
   guideName: string | null
   lockedTourId?: string
   emptyMessage: string
-  onRequestPrevSlide: () => void
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
-  const pointerRef = useRef<{ y: number; atTop: boolean } | null>(null)
+  const startYRef = useRef(0)
 
-  // Pointer events (не touch) — тот же приём, что уже проверен на
-  // вертикальном свайпе по горизонтальному каталогу туров (slide-deck.tsx):
-  // единообразно ловит и палец, и мышь/трекпад, без отдельной ветки под
-  // touch-only устройства.
-  const onPointerDown = (e: React.PointerEvent) => {
-    const el = scrollRef.current
-    pointerRef.current = { y: e.clientY, atTop: !el || el.scrollTop <= 0 }
+  function onTouchStart(e: ReactTouchEvent) {
+    startYRef.current = e.touches[0].clientY
   }
-  const onPointerUp = (e: React.PointerEvent) => {
-    const start = pointerRef.current
-    pointerRef.current = null
+  function onTouchMove(e: ReactTouchEvent) {
     const el = scrollRef.current
-    if (!start || !start.atTop || !el || el.scrollTop > 0) return
-    const dy = e.clientY - start.y
-    if (dy > SWIPE_THRESHOLD) onRequestPrevSlide()
+    if (!el) return
+    const draggingDown = e.touches[0].clientY - startYRef.current > 0
+    const atTop = el.scrollTop <= 0
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
+    const releaseToSwiper = (atTop && draggingDown) || (atBottom && !draggingDown)
+    if (!releaseToSwiper) {
+      e.stopPropagation()
+    }
   }
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-6 pb-24 sm:px-11 sm:pt-9">
       <div
         ref={scrollRef}
-        onPointerDown={onPointerDown}
-        onPointerUp={onPointerUp}
-        className="swiper-no-swiping no-scrollbar min-h-0 flex-1 overflow-y-auto sm:mx-auto sm:w-full sm:max-w-xl"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        className="no-scrollbar min-h-0 flex-1 overflow-y-auto sm:mx-auto sm:w-full sm:max-w-xl"
       >
         <ReviewsSection
           title="Отзывы об этом туре"

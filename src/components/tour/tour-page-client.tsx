@@ -121,8 +121,6 @@ export function TourPageClient({
             tours={tours}
             lockedTourId={tour.id}
             emptyMessage="Вопросов пока нет — задайте свой."
-            onRequestPrevSlide={() => swiperRef.current?.slidePrev()}
-            onRequestNextSlide={() => swiperRef.current?.slideNext()}
           />,
           <TourReviewsSlide
             key="reviews"
@@ -132,7 +130,6 @@ export function TourPageClient({
             guideName={primaryGuide?.name ?? null}
             lockedTourId={tour.id}
             emptyMessage="Пока нет отзывов об этом туре — станьте первым."
-            onRequestPrevSlide={() => swiperRef.current?.slidePrev()}
           />,
         ]}
       />

@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef, useState, type TouchEvent as ReactTouchEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { FaqQuestionForm } from "@/components/faq/faq-question-form"
 import type { FaqItem } from "@/lib/faq-data"
@@ -13,59 +13,56 @@ import { cn } from "@/lib/utils"
 // свой стейт (не нативный <details>), чтобы гарантировать это поведение
 // и анимировать раскрытие через grid-template-rows (0fr -> 1fr, плавно,
 // в отличие от нативного details/summary без transition).
-const SWIPE_THRESHOLD = 40
 
 export function TourFaqSlide({
   items,
   tours,
   lockedTourId,
   emptyMessage,
-  onRequestPrevSlide,
-  onRequestNextSlide,
 }: {
   items: FaqItem[]
   tours: TourOption[]
   lockedTourId?: string
   emptyMessage: string
-  onRequestPrevSlide: () => void
-  onRequestNextSlide: () => void
 }) {
   const [openId, setOpenId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const scrollRef = useRef<HTMLDivElement>(null)
-  const pointerRef = useRef<{ y: number; atTop: boolean; atBottom: boolean } | null>(null)
+  const startYRef = useRef(0)
 
-  // Виктор: "ничего не получилось" — swiper-no-swiping (прошлая правка)
-  // блокировал тач ВООБЩЕ везде внутри списка, а не только когда список
-  // реально скроллится — из-за этого обычный свайп вперёд (FAQ → следующий
-  // слайд с отзывами), начавшийся пальцем прямо на списке вопросов (почти
-  // весь экран), тоже переставал работать: не долистать было НИКУДА, ни
-  // вперёд, ни назад. Тот же приём, что уже на слайде отзывов
-  // (tour-reviews-slide.tsx) — swiper-no-swiping остаётся (список сам
-  // скроллится нативно, без конкуренции с Swiper), но на ГРАНИЦАХ (уже
-  // наверху и тянут дальше вниз, либо уже внизу и тянут дальше вверх) мы
-  // сами вызываем slidePrev/slideNext — ровно как просил: "листаем без
-  // привязки по точке" внутри списка, а на упоре в границу механика слайдов
-  // включается обратно сама.
-  const onPointerDown = (e: React.PointerEvent) => {
+  // Виктор: "не получается подняться назад, отзывы не открываются" —
+  // предыдущая версия держалась на swiper-no-swiping + Pointer Events с
+  // ручным порогом (dy > 40px) и явными вызовами slidePrev()/slideNext().
+  // Проблема глубже, чем сам порог: класс swiper-no-swiping заставляет
+  // Swiper решить "не мой жест" ОДИН РАЗ, в момент touchstart — если
+  // решение принято, Swiper потом игнорирует touchmove/touchend ВООБЩЕ,
+  // весь оставшийся жест целиком, что бы дальше ни происходило. То есть
+  // работоспособность слайда держалась ИСКЛЮЧИТЕЛЬНО на собственном
+  // Pointer-обработчике — а Pointer Events на мобильных браузерах
+  // исторически ненадёжны (не всегда доходит pointerup после скролла,
+  // скролл может забрать capture).
+  // Новая схема — тот же приём, что уже проверен на "Маршруте"
+  // (tour-itinerary-slide.tsx, ранее): БЕЗ swiper-no-swiping, обычные
+  // touch-события. Пока внутри списка есть куда скроллить в сторону
+  // жеста — глушим touchmove (stopPropagation), Swiper его не видит.
+  // На границе — НЕ глушим, событие доходит до Swiper естественным
+  // образом, и его собственная (годами обкатанная) логика свайпа сама
+  // переключает слайд — никаких ручных slidePrev()/slideNext() и
+  // подбора порога больше не нужно.
+  function onTouchStart(e: ReactTouchEvent) {
+    startYRef.current = e.touches[0].clientY
+  }
+  function onTouchMove(e: ReactTouchEvent) {
     const el = scrollRef.current
     if (!el) return
-    pointerRef.current = {
-      y: e.clientY,
-      atTop: el.scrollTop <= 0,
-      atBottom: el.scrollTop + el.clientHeight >= el.scrollHeight - 1,
+    const draggingDown = e.touches[0].clientY - startYRef.current > 0
+    const atTop = el.scrollTop <= 0
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
+    const releaseToSwiper = (atTop && draggingDown) || (atBottom && !draggingDown)
+    if (!releaseToSwiper) {
+      e.stopPropagation()
     }
-  }
-  const onPointerUp = (e: React.PointerEvent) => {
-    const start = pointerRef.current
-    pointerRef.current = null
-    const el = scrollRef.current
-    if (!start || !el) return
-    const dy = e.clientY - start.y
-    if (start.atTop && el.scrollTop <= 0 && dy > SWIPE_THRESHOLD) onRequestPrevSlide()
-    else if (start.atBottom && el.scrollTop + el.clientHeight >= el.scrollHeight - 1 && dy < -SWIPE_THRESHOLD)
-      onRequestNextSlide()
   }
 
   // Виктор: "нижние роллы раскрываются некорректно" — вопрос ближе к концу
@@ -97,16 +94,14 @@ export function TourFaqSlide({
         </div>
       )}
 
-      {/* swiper-no-swiping — список скроллится нативно, без конкуренции с
-          родительским Swiper (см. комментарий у onPointerDown/onPointerUp
-          выше про переключение слайда на границах). Клики по вопросам
-          (раскрыть/свернуть) не задеты — это только про свайп/драг.
-          no-scrollbar — "линия пролистывания сбоку не нужна". */}
+      {/* no-scrollbar — "линия пролистывания сбоку не нужна". Клики по
+          вопросам (раскрыть/свернуть) не задеты touch-обработчиками —
+          те реагируют только на движение (touchmove), не на тап. */}
       <div
         ref={scrollRef}
-        onPointerDown={onPointerDown}
-        onPointerUp={onPointerUp}
-        className="swiper-no-swiping no-scrollbar mt-4 min-h-0 flex-1 overflow-y-auto sm:mx-auto sm:w-full sm:max-w-xl"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        className="no-scrollbar mt-4 min-h-0 flex-1 overflow-y-auto sm:mx-auto sm:w-full sm:max-w-xl"
       >
         {items.length === 0 ? (
           <p className="text-sm text-muted-foreground">{emptyMessage}</p>
