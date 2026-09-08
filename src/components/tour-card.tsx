@@ -99,10 +99,12 @@ export function TourCard({
             </span>
             {/* Виктор: была мелкая обводка-пилюля, просил крупнее и
                 "серебристо" — заметная кнопка с нажимаемым эффектом
-                (active:scale), единственный тап-таргет, ведущий на тур. */}
+                (active:scale), единственный тап-таргет, ведущий на тур.
+                Потом ещё раз попросил "ещё больше" — увеличил паддинги и
+                шрифт дальше (px-4→px-6, py-2→py-3, text-sm→text-base). */}
             <Link
               href={`/tours/${tour.slug}`}
-              className="rounded-full bg-gradient-to-b from-white to-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-900 shadow-sm transition-transform duration-150 active:scale-95"
+              className="rounded-full bg-gradient-to-b from-white to-zinc-300 px-6 py-3 text-base font-semibold text-zinc-900 shadow-sm transition-transform duration-150 active:scale-95"
             >
               Программа тура
             </Link>
