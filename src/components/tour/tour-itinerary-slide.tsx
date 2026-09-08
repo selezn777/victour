@@ -113,7 +113,17 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
       }
     }
 
+    // Виктор: "то нормально растягивается, то нет" — нестабильно от захода
+    // к заходу. Причина: первый рендер меряет высоту текста ДО того, как
+    // догрузится кастомный шрифт (Unbounded/Inter) — до этого браузер
+    // рисует системным фолбэком с другим line-height, и расчёт уезжает.
+    // Разница проявляется только когда шрифт ещё не в кэше — отсюда
+    // "через раз". document.fonts.ready пересчитывает после реальной
+    // загрузки. ResizeObserver слушает КОНТЕЙНЕР (не сам <ol>) — если бы
+    // слушали список, инлайновый rowGap, который мы сами же меняем,
+    // спровоцировал бы ResizeObserver сам на себя (бесконечный цикл).
     recalc()
+    document.fonts?.ready.then(recalc).catch(() => {})
     const ro = new ResizeObserver(recalc)
     ro.observe(container)
     return () => ro.disconnect()
