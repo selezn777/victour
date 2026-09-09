@@ -15,7 +15,10 @@ export function ArticleBody({ body }: { body: string }) {
           const [, url, caption] = photoMatch
           return (
             <figure key={i}>
-              <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+              {/* Виктор: фото в статьи присылает квадратными, а aspect-[4/3]
+                  с object-cover их обрезал по высоте — "не нравится,
+                  сохрани квадратный формат". */}
+              <div className="relative aspect-square w-full overflow-hidden bg-muted">
                 <Image src={url} alt={caption ?? ""} fill className="object-cover" sizes="(min-width: 768px) 720px, 100vw" />
               </div>
               {caption && (
