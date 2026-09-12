@@ -934,15 +934,13 @@ const CATALOG_TOURS = [
   {
     slug: "fanrang-avtorskiy",
     title: "Авторский Фанранг",
-    // Фото временное (Виктор: "возьми любые фото, какая разница... потом
-    // заменим") — переснять на реальные кадры тура, когда будут.
-    imageSrc: "/images/tours/fanrang-avtorskiy.jpg",
+    imageSrc: "/images/tours/fanrang-avtorskiy-vertical.jpg",
     annotation: "Драконий лабиринт, виноградники и вкус южного Вьетнама за один день без спешки.",
   },
   {
     slug: "mayak-dai-lan",
     title: "Маяк Дай Лань",
-    imageSrc: "/images/tours/mayak-dai-lan.jpg",
+    imageSrc: "/images/tours/mayak-dai-lan-vertical.jpg",
     annotation: "Дикий пляж, но дорога туда - только проверенная, без решений на ходу.",
   },
   {
@@ -955,7 +953,7 @@ const CATALOG_TOURS = [
   {
     slug: "dalat-2-dnya",
     title: "Далат, 2 дня",
-    imageSrc: "/images/tours/dalat-2-dnya.jpg",
+    imageSrc: "/images/tours/dalat-2-dnya-vertical.jpg",
     annotation:
       "Не однодневный марш-бросок в горы: два спокойных дня, а вечер в городе - под присмотром, не самостоятельная прогулка.",
   },
