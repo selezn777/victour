@@ -946,8 +946,7 @@ const CATALOG_TOURS = [
   {
     slug: "nyachang-avtorskiy",
     title: "Авторский Нячанг",
-    imageSrc:
-      "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/nyachang-avtorskiy-b2ZHevFPr4gfLIEw3aV2oZPHvsRbs9.jpg",
+    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/nyachang-avtorskiy-pagoda.jpg",
     annotation: "Один гид и один водитель весь день - рядом с вами никого чужого.",
   },
   {
