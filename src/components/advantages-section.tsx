@@ -58,7 +58,7 @@ const COLLAGE_PHOTO_COUNT = 67
 // теоретически) показываться старая закэшированная картинка вместо новой
 // (Виктор: "все как надо кроме совпадения самих картинок" — не позиция,
 // не тайминг, а именно контент не совпадает с ожидаемым).
-const COLLAGE_CACHE_VERSION = 2
+const COLLAGE_CACHE_VERSION = 3
 const COLLAGE_PHOTOS = Array.from(
   { length: COLLAGE_PHOTO_COUNT },
   (_, i) => `/images/collage/collage-${String(i + 1).padStart(2, "0")}.jpg?v=${COLLAGE_CACHE_VERSION}`,
