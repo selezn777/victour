@@ -58,7 +58,7 @@ const COLLAGE_PHOTO_COUNT = 67
 // теоретически) показываться старая закэшированная картинка вместо новой
 // (Виктор: "все как надо кроме совпадения самих картинок" — не позиция,
 // не тайминг, а именно контент не совпадает с ожидаемым).
-const COLLAGE_CACHE_VERSION = 3
+const COLLAGE_CACHE_VERSION = 4
 const COLLAGE_PHOTOS = Array.from(
   { length: COLLAGE_PHOTO_COUNT },
   (_, i) => `/images/collage/collage-${String(i + 1).padStart(2, "0")}.jpg?v=${COLLAGE_CACHE_VERSION}`,
@@ -76,11 +76,10 @@ const GAP_MS = 780
 // ещё -10% (было 900).
 const TRANSITION_MS = 810
 // Пауза перед самым первым раскрытием в каждой полосе — уже ПОСЛЕ того, как
-// вся мозаика прогрузилась (см. ready в useRevealCycle), даём картинке
-// просто спокойно постоять секунду-другую, прежде чем начнётся моргание
-// (Виктор: "после загрузки пусть чуть-чуть перед морганием будет пауза").
-// Ускорена на 15% (было 2000) — Виктор: "слишком длинная пауза".
-const INITIAL_GAP_MS = 1700
+// вся мозаика прогрузилась (см. ready в useRevealCycle). Была 1700 (до этого
+// 2000) — Виктор попросил ещё короче: "после загрузки мозаики почти сразу
+// должно открываться какое-то фото", а не ждать секунду-другую.
+const INITIAL_GAP_MS = 300
 
 function shuffledIndices(count: number) {
   const arr = Array.from({ length: count }, (_, i) => i)

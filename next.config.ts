@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
       },
       {
         pathname: "/images/collage/**",
-        search: "?v=3",
+        search: "?v=4",
       },
     ],
   },
