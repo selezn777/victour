@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Pagination } from "swiper/modules"
 import type { Swiper as SwiperType } from "swiper/types"
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import type { TourDetail } from "@/lib/site-data"
 import { PinchZoomPhoto } from "@/components/pinch-zoom-photo"
 
@@ -18,6 +19,7 @@ import "swiper/css/pagination"
 // на низких широких окнах.
 export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
   const [active, setActive] = useState(0)
+  const swiperRef = useRef<SwiperType | null>(null)
   const photos = tour.galleryUrls.length > 0 ? tour.galleryUrls : tour.heroImageUrl ? [tour.heroImageUrl] : []
 
   return (
@@ -32,7 +34,9 @@ export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
           <Swiper
             modules={[Pagination]}
             pagination={{ clickable: true, el: ".tour-photo-slide-pagination" }}
+            onSwiper={(swiper: SwiperType) => (swiperRef.current = swiper)}
             onSlideChange={(swiper: SwiperType) => setActive(swiper.activeIndex)}
+            allowTouchMove={false}
             className="h-full w-full"
           >
             {photos.map((url, i) => (
@@ -41,16 +45,36 @@ export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
               </SwiperSlide>
             ))}
           </Swiper>
-          {/* Виктор: тёмная плашка-полоска под точками — убрать везде, точки
-              и счётчик лежат прямо на фото (drop-shadow вместо плашки для
-              читаемости на светлых фото). */}
           {photos.length > 1 && (
-            <div className="pointer-events-none absolute right-4 bottom-4 z-10 flex items-center gap-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] sm:right-6 sm:bottom-6">
-              <div className="tour-photo-slide-pagination pointer-events-auto flex items-center gap-1.5" />
-              <span className="font-mono text-xs tabular-nums text-white">
-                {active + 1}/{photos.length}
-              </span>
-            </div>
+            <>
+              {/* Виктор: "убираем свайп, добавляем аккуратные стрелочки по
+                  бокам" — листание теперь только кнопками. */}
+              <button
+                type="button"
+                aria-label="Предыдущее фото"
+                onClick={() => swiperRef.current?.slidePrev()}
+                className="absolute top-1/2 left-2 z-10 -translate-y-1/2 rounded-full bg-black/30 p-1.5 text-white backdrop-blur-sm transition hover:bg-black/50 sm:left-4 sm:p-2"
+              >
+                <ChevronLeftIcon className="size-4 sm:size-5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Следующее фото"
+                onClick={() => swiperRef.current?.slideNext()}
+                className="absolute top-1/2 right-2 z-10 -translate-y-1/2 rounded-full bg-black/30 p-1.5 text-white backdrop-blur-sm transition hover:bg-black/50 sm:right-4 sm:p-2"
+              >
+                <ChevronRightIcon className="size-4 sm:size-5" />
+              </button>
+              {/* Виктор: тёмная плашка-полоска под точками — убрать везде, точки
+                  и счётчик лежат прямо на фото (drop-shadow вместо плашки для
+                  читаемости на светлых фото). Счётчик с точками — по центру. */}
+              <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex items-center justify-center gap-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] sm:bottom-6">
+                <div className="tour-photo-slide-pagination pointer-events-auto flex w-auto! items-center gap-1.5" />
+                <span className="font-mono text-xs tabular-nums text-white">
+                  {active + 1}/{photos.length}
+                </span>
+              </div>
+            </>
           )}
         </div>
       ) : null}
