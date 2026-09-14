@@ -983,11 +983,12 @@ const TOUR_BLINK_GAP_MS = 1100
 
 function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
   const [active, setActive] = useState<number | null>(null)
-  // По одной карточке за раз "моргает", в случайном порядке — но ОДИН
-  // проход по всем карточкам и остановка (не бесконечный цикл): Виктор
-  // после первой версии попросил "один раз, чуть мягче и чуть реже" —
-  // слайд без фото должен быть местом, где можно спокойно погрузиться в
-  // текст, а не постоянно мельтешащим фоном. Без всплывающих подписей —
+  // По одной карточке за раз "моргает", в случайном порядке, бесконечно —
+  // Виктор сначала попросил "один раз, чуть мягче и чуть реже" (один
+  // проход и остановка), затем заметил, что эффект пропадает насовсем, и
+  // попросил сделать его постоянным: по исчерпании order перемешивается
+  // заново и step сбрасывается в 0, вместо остановки цикла. Без
+  // всплывающих подписей —
   // только яркость картинки (см. .tour-priming) и прозрачность заголовка
   // (см. .tour-caption-blinking) на СУЩЕСТВУЮЩЕМ тексте. Стартует, когда
   // блок реально попал в зону видимости (слайды в SlideDeck смонтированы
@@ -1009,17 +1010,21 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
       ([entry]) => {
         if (!entry.isIntersecting || startedRef.current) return
         startedRef.current = true
-        const order = shuffledIndices(tours.length)
+        let order = shuffledIndices(tours.length)
         let step = 0
         const runCycle = () => {
-          if (cancelled || step >= order.length) return
+          if (cancelled) return
+          if (step >= order.length) {
+            order = shuffledIndices(tours.length)
+            step = 0
+          }
           const idx = order[step]
           step += 1
           setBlinking(idx)
           after(() => {
             if (cancelled) return
             setBlinking(null)
-            if (step < order.length) after(runCycle, TOUR_BLINK_GAP_MS)
+            after(runCycle, TOUR_BLINK_GAP_MS)
           }, TOUR_BLINK_MS)
         }
         after(runCycle, 500)
