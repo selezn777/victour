@@ -113,7 +113,7 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
   }
 
   // Тихая статичная текстовая подсказка (не мигает и не торопит) — Виктор:
-  // автопереключение убрали совсем (после "тыкни" уже понятно, что можно
+  // автопереключение убрали совсем (после "нажми" уже понятно, что можно
   // тапнуть самому), подсказка теперь единственный намёк. Пропадает после
   // первого собственного тапа.
   const [tapped, setTapped] = useState(false)
@@ -162,7 +162,7 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
           aria-hidden
           className="cta-invite-pulse pointer-events-none absolute top-1/2 left-1/2 z-30 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-5 py-2.5 text-base font-bold text-primary-foreground shadow-lg sm:px-6 sm:py-3 sm:text-lg"
         >
-          тыкни
+          нажми
         </div>
       )}
     </button>
