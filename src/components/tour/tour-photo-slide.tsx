@@ -14,9 +14,11 @@ import "swiper/css/pagination"
 // Первый слайд колоды тура — фото-карусель во всю ширину (без скруглений,
 // не в колонке max-w-3xl, как раньше была TourPhotoGallery), но НЕ во всю
 // высоту слайда (не фон): зона фото ограничена сверху, снизу — заголовок и
-// описание, тот же приём высотного бюджета, что у PhotoSlide на главной
-// (advantages-section.tsx) — min(%, Nsvh), чтобы текст не уезжал за экран
-// на низких широких окнах.
+// описание. min-h-0 flex-1 — фото забирает весь остаток высоты после
+// текста (у текста естественный размер, приоритет) — тот же приём, что у
+// PhotoSlide на главной (advantages-section.tsx), без magic numbers
+// (раньше тут был фиксированный % + svh-потолок, подобранный вручную под
+// конкретные экраны — неустойчиво на других размерах).
 export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
   const [active, setActive] = useState(0)
   const swiperRef = useRef<SwiperType | null>(null)
@@ -27,10 +29,11 @@ export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
       {photos.length > 0 ? (
         // Виктор: "фотки на первом слайде огромные, почти на весь экран,
         // внизу описание такое же как сейчас, чтобы не было свободного
-        // места" — бюджет фото сильно увеличен (было 52%/42svh/38svh); тут,
-        // в отличие от PhotoSlide на главной (advantages-section.tsx), нет
-        // TourCtaButton под текстом, поджимать место под кнопку не нужно.
-        <div className="relative h-[64%] shrink-0 sm:h-[min(60%,50svh)] lg:h-[min(56%,46svh)]">
+        // места" — фото теперь забирает весь остаток после текста; в
+        // отличие от PhotoSlide на главной (advantages-section.tsx), тут
+        // нет TourCtaButton под текстом, текст короче — фото стабильно
+        // получает больше места, без ручной подстройки под конкретный %.
+        <div className="relative min-h-0 flex-1">
           <Swiper
             modules={[Pagination]}
             pagination={{ clickable: true, el: ".tour-photo-slide-pagination" }}
@@ -79,7 +82,16 @@ export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
         </div>
       ) : null}
 
-      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-4 pb-5 text-center sm:px-11 sm:pt-7">
+      {/* flex-1 только когда фото нет вообще (photos.length === 0) — тогда
+          текст остаётся единственным ребёнком и должен сам заполнить всю
+          высоту слайда (как раньше). Когда фото есть, весь остаток забирает
+          ОНО (см. min-h-0 flex-1 выше), текст — своего естественного
+          размера. */}
+      <div
+        className={`flex min-h-0 flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-4 pb-5 text-center sm:px-11 sm:pt-7 ${
+          photos.length === 0 ? "flex-1" : ""
+        }`}
+      >
         <span className="text-xs font-medium tracking-widest text-primary uppercase">{tour.durationLabel}</span>
         <h1 className="mt-2 max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {tour.title}

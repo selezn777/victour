@@ -1,5 +1,6 @@
 "use client"
 
+import { useRef } from "react"
 import Link from "next/link"
 import { HeartIcon, MenuIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -7,6 +8,7 @@ import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/co
 import { AccountMenu } from "@/components/account-menu"
 import { CartDrawer } from "@/components/cart-drawer"
 import { formatRubFromUsd, formatVndFromUsd } from "@/lib/format"
+import { useHeaderHeightVar } from "@/hooks/use-header-height-var"
 import type { SiteSettings, TourGuide } from "@/lib/site-data"
 import { cn } from "@/lib/utils"
 
@@ -21,8 +23,14 @@ export function TourHeader({
   isFavorite: boolean
   onToggleFavorite: () => void
 }) {
+  const headerRef = useRef<HTMLElement>(null)
+  useHeaderHeightVar(headerRef)
+
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header
+      ref={headerRef}
+      className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/60"
+    >
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-3 sm:h-16 sm:gap-4 sm:px-6">
         <CartDrawer />
 

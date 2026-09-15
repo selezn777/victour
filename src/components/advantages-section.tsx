@@ -8,6 +8,35 @@ import { PhotoStack } from "@/components/photo-stack"
 import { cn } from "@/lib/utils"
 import type { Review } from "@/lib/reviews-data"
 
+// Квадратный блок (коллаж, стопка фото) должен вписаться в ЛЮБОЙ остаток
+// места (см. min-h-0 flex-1 у его родителя) по короткой стороне — то есть
+// ту же задачу, что object-fit:contain решает для <img>, тут для обычного
+// div решить чистым CSS надёжно (без container query единиц, которые
+// заведомо не проверялись на Android WebView этого проекта) не получилось:
+// aspect-ratio на элементе без явных width/height внутри flex со
+// align-items:center разрешается в 0×0 (циклическая зависимость — ширина
+// квадрата определяется его же контентом (grid w-full), а контент ждёт
+// ширину квадрата). Поэтому здесь — минимальный ResizeObserver: меряем
+// реальный прямоугольник-контейнер (пересчитывается сам при любом
+// ресайзе/повороте/смене брейкпоинта, никаких магических % под конкретный
+// экран) и берём меньшую из сторон как размер квадрата в px.
+function useContainedSquareSize(containerRef: RefObject<HTMLDivElement | null>) {
+  const [size, setSize] = useState(0)
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const update = () => {
+      const rect = el.getBoundingClientRect()
+      setSize(Math.max(0, Math.floor(Math.min(rect.width, rect.height))))
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [containerRef])
+  return size
+}
+
 // hint — только на последнем слайде (QuoteSlide): кнопка периодически
 // мягко "моргает" (2 коротких пульса, потом пауза), приглашая нажать —
 // после того как стрелки-подсказки не прижились, Виктор попросил вернуть
@@ -407,7 +436,7 @@ const COLLAGE_CONCURRENCY = 16
 // плейсхолдеры (bg-white/15 pulse), без отдельного крупного фото поверх.
 // gridReady — сигнал для useRevealCycle (см. ready ниже): раскрытие плиток
 // начинается только после того, как вся мозаика уже видна целиком, не раньше.
-function PhotoCollage() {
+function PhotoCollage({ size }: { size: number }) {
   const [loadedTiles, setLoadedTiles] = useState<Set<number>>(() => new Set())
   const markLoaded = useCallback((i: number) => {
     setLoadedTiles((prev) => (prev.has(i) ? prev : new Set(prev).add(i)))
@@ -500,18 +529,18 @@ function PhotoCollage() {
   const activeByTile = new Map(reveals.filter((r) => r.phase !== "idle").map((r) => [r.target, r]))
 
   return (
-    // aspect-square — коллаж всегда квадрат (Виктор: "коллаж не
-    // квадратный... мне нужен именно квадратный"). На мобиле (< sm) —
-    // квадрат НА ВСЮ ШИРИНУ слайда (Виктор: "на телефонах квадрат должен
-    // быть по всей ширине"), высота производная = ширине экрана — шире,
-    // чем было (раньше 6 строк без фиксированной высоты, ~0.75×ширины), но
-    // это прямое следствие требования "по всей ширине". С sm и выше —
-    // наоборот: высота фиксирована в svh (тот же бюджет, что уже подобран
-    // под кнопку "Выбрать тур" на десктопе/планшете), ширина производная
-    // (self-center нужен, иначе родитель-flex со stretch по умолчанию всё
-    // равно растянул бы на всю ширину) — на широких коротких окнах именно
-    // высота была тесным местом (кнопка уезжала за экран), не ширина.
-    <div className="relative aspect-square w-full shrink-0 overflow-hidden sm:h-[38svh] sm:w-auto sm:self-center lg:h-[32svh]">
+    // Раньше высота на sm+ была захардкожена в svh (подобрана вручную под
+    // конкретные экраны Виктора) — неустойчиво: то кнопка "Выбрать тур" под
+    // текстом обрезалась на широких низких окнах, то оставалось пустое
+    // место на высоких узких (Виктор: "верстка не адаптивная... всегда
+    // неустойчивый результат"). Теперь без magic numbers: родитель (см.
+    // IntroSlide) — flex-1 min-h-0 контейнер, отдающий этому блоку ВЕСЬ
+    // остаток высоты после текста+кнопки (текст больше не flex-1, у него
+    // естественный размер и приоритет), size — реальный размер этого
+    // остатка по короткой стороне (см. useContainedSquareSize) — коллаж
+    // вписывается в него всегда квадратом, на любом экране, без ручной
+    // привязки к брейкпоинту.
+    <div className="relative overflow-hidden" style={{ width: size, height: size }}>
       <div className="grid w-full grid-cols-8">
         {COLLAGE_PHOTOS.map((src, i) => {
           const isPriming = activeByTile.get(i)?.phase === "priming"
@@ -609,11 +638,19 @@ function PhotoCollage() {
 }
 
 function IntroSlide() {
+  const photoWrapRef = useRef<HTMLDivElement>(null)
+  const photoSize = useContainedSquareSize(photoWrapRef)
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <PhotoCollage />
+      {/* min-h-0 flex-1 — коллаж забирает весь остаток высоты ПОСЛЕ текста
+          снизу (у текста естественный размер, не flex-1 — см. комментарий
+          у PhotoCollage). items-center/justify-center центрируют квадрат,
+          если остатка больше, чем нужно для его короткой стороны. */}
+      <div ref={photoWrapRef} className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+        <PhotoCollage size={photoSize} />
+      </div>
       {/* justify-[safe_center] (не просто justify-center) — на высоких экранах
-          центрирует текст+кнопку в оставшемся месте под коллажем (Виктор с
+          центрирует текст+кнопку внутри своего естественного блока (Виктор с
           iPhone: верхние слайды торчали заголовком, пустота внизу вместо
           адаптации по высоте). Обычный justify-center на НИЗКИХ/landscape
           экранах наоборот обрезал бы верх контента, если он не влезает —
@@ -627,7 +664,7 @@ function IntroSlide() {
           решают и жалобу на объём, и жалобу на "не влезло" (высота вниз
           от коллажа освобождается). text-center и leading-snug — как
           были. */}
-      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-3 pb-2 text-center sm:px-11 sm:pt-7">
+      <div className="flex min-h-0 flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-3 pb-2 text-center sm:px-11 sm:pt-7">
         <h1 className="max-w-xl font-heading text-3xl leading-[1.1] font-semibold sm:text-5xl">
           Каждый выезд тщательно продуман
         </h1>
@@ -668,27 +705,27 @@ function PhotoSlide({
    * перемешивает по кругу. */
   stackImages?: string[]
 }) {
+  const photoWrapRef = useRef<HTMLDivElement>(null)
+  const photoSize = useContainedSquareSize(photoWrapRef)
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      {/* min(%, Nsvh) — на низких широких окнах (десктоп/ноутбук) % от
-          высоты слайда даёт зону фото ощутимо выше, чем остаётся места под
-          заголовок+текст+кнопку (тот же текст на высоком узком мобильном
-          экране умещался: там % и так был небольшим в пикселях). Без
-          верхнего предела в svh кнопка "Выбрать тур" уезжала за нижний край
-          окна на широких экранах (Виктор: "кнопки не влазят на широкой
-          вёрстки"). PhotoCollage на IntroSlide уже ограничен похожим
-          образом (см. sm:h-[38svh] lg:h-[32svh]) — тут та же идея. Бюджет
-          увеличен ещё раз (было 48%/50%/46%) — Виктор попросил фото ещё
-          крупнее; текст под фото короткий, места хватает. 56% на мобиле
-          уже обрезало кнопку (проверено скриншотом) — 52% предел, при
-          котором кнопка ещё полностью видна. */}
-      <div className="relative h-[52%] shrink-0 sm:h-[min(52%,42svh)] lg:h-[min(48%,38svh)]">
+      {/* Раньше фото-зона была фиксированным % высоты с svh-потолком,
+          подобранным вручную под конкретные скриншоты Виктора — неустойчиво
+          (Виктор: "то кнопка не влазит на широком, то пустое место на
+          узком"). Теперь без magic numbers: min-h-0 flex-1 — фото забирает
+          ВЕСЬ остаток высоты после текста+кнопки снизу (у текста
+          естественный размер, не flex-1 — см. ниже), сам подстраивается
+          под любой экран. Для квадратной стопки (stackImages) —
+          photoSize (см. useContainedSquareSize) даёт точный размер квадрата
+          в px, вписанного в остаток без overflow. Для обычного фото — Image
+          fill/object-cover и так заполняет любую высоту, что ему достанется. */}
+      <div ref={photoWrapRef} className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden">
         {stackImages && stackImages.length > 1 ? (
           // Виктор сначала просил альбомную раму (не квадратную), потом
           // передумал — снова квадрат, но крупнее. Источники сами по себе
           // 1:1 (см. комментарий в истории задач), object-cover на всю
           // рамку в PhotoStack тут просто не обрезает лишнего.
-          <div className="mx-auto aspect-square h-full w-auto p-3 pb-6 sm:p-5 sm:pb-8">
+          <div className="p-3 pb-6 sm:p-5 sm:pb-8" style={{ width: photoSize, height: photoSize }}>
             <PhotoStack photos={stackImages} alt={imageAlt} />
           </div>
         ) : (
@@ -707,7 +744,7 @@ function PhotoSlide({
       {/* px-4 + max-w-full на теле (не px-6/max-w-sm) — тот же приём "текст
           на всю ширину", что уже на IntroSlide (Виктор: "на втором и на
           третьем слайде где текст причеши" — привёл в соответствие). */}
-      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-4 pb-5 text-center sm:px-11 sm:pt-7">
+      <div className="flex min-h-0 flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-4 pb-5 text-center sm:px-11 sm:pt-7">
         <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {title}
         </h2>
@@ -798,7 +835,7 @@ function ValuesSlide({
           sm:max-w-lg — на широком экране колонка с дорогой/пунктами была
           той же фиксированной ширины, что и на телефоне, хотя места вокруг
           явно больше. */}
-      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-4 py-6 text-center sm:px-11">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-4 py-6 text-center sm:px-11">
         <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {title}
         </h2>
@@ -1091,7 +1128,7 @@ function ToursSlide() {
       {/* px-4 + max-w-full на теле (не px-6/max-w-sm) — тот же приём "текст
           на всю ширину", что уже на IntroSlide (Виктор: "на втором и на
           третьем слайде где текст причеши" — привёл в соответствие). */}
-      <div className="flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-1 pb-6 text-center sm:px-11 sm:pt-2">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-1 pb-6 text-center sm:px-11 sm:pt-2">
         {/* Фото наверх, заголовок под ними — тот же порядок, что на первом
             и втором слайдах (Виктор: "надо всё-таки заголовок сделать под
             фотографией, фотографии поднять наверх"). */}
@@ -1295,7 +1332,7 @@ function QuoteSlide({
 }) {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="relative flex flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-3 pb-10 text-center sm:px-11 sm:pt-4 sm:pb-8">
+      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-3 pb-10 text-center sm:px-11 sm:pt-4 sm:pb-8">
         <h2 className="max-w-2xl font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">
           {title}
         </h2>
