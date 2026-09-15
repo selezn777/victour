@@ -1157,38 +1157,20 @@ function QuoteCard({ quote, author }: { quote: string; author: string }) {
 
 const SWIPE_THRESHOLD_PX = 40
 
-// Виктор уточнил ещё раз: 2 карточки друг под другом должны листаться
-// НЕЗАВИСИМО — свайп по верхней листает только верхнюю, свайп по нижней
-// только нижнюю (не единой парой), и сам переход — чуть мягче (длиннее и
-// меньше сдвиг), чем было. Каждая карточка — свой независимый "слот" со
-// своим индексом по общему пулу отзывов.
+// Раньше тут было 2 независимые карточки-карусели друг под другом — Виктор
+// решил, что это "не круто", и попросил одну карточку на всю ширину экрана
+// вместо пары (см. историю задач про useQuoteSlot ниже, если понадобится
+// логика синхронизации двух слотов — она была тут и её выпилили).
 // Автопереключение — Виктор: "отзывы с достаточно ощутимо большим
 // интервалом переключаются рандомно" (не только по свайпу). Целевой индекс —
 // случайный из ОСТАЛЬНЫХ (не текущий), не просто "следующий по кругу" —
-// иначе выглядело бы как обычная карусель, а не "рандомно". staggerMs
-// сдвигает старт первого тика для нижнего слота, чтобы верхняя и нижняя
-// карточки не переключались синхронно одним и тем же кадром.
+// иначе выглядело бы как обычная карусель, а не "рандомно".
 const AUTO_ROTATE_MS = 6000
 
-// siblingIndexRef — индекс СОСЕДНЕГО слота (верхнего для нижнего и наоборот).
-// Раньше оба слота выбирали случайный индекс НЕЗАВИСИМО, зная только свой
-// текущий индекс — иногда оба совпадали и показывали один и тот же отзыв
-// одновременно (Виктор: "2 блока, у них одинаковые отзывы — так не должно
-// быть"). pickRandom/pickAdjacent теперь исключают И свой текущий, И
-// индекс соседа. ownIndexRef — сюда слот сам пишет свой актуальный индекс
-// на каждый рендер, чтобы сосед мог его прочитать как chill siblingIndexRef.
-//
-// interactedRef — как только человек сам свайпнул или ткнул точку под
-// ЭТОЙ карточкой, автопереключение для неё останавливается насовсем
-// (Виктор: "устойчивые" — раз человек уже листает вручную, автомат не
-// должен вмешиваться). Второй слот (который не трогали) продолжает
-// переключаться сам как обычно.
-function useQuoteSlot(
-  quotes: Quote[],
-  startIndex: number,
-  opts: { staggerMs?: number; ownIndexRef?: RefObject<number>; siblingIndexRef?: RefObject<number> } = {},
-) {
-  const { staggerMs = 0, ownIndexRef, siblingIndexRef } = opts
+// interactedRef — как только человек сам свайпнул или ткнул точку,
+// автопереключение останавливается насовсем (Виктор: раз человек уже
+// листает вручную, автомат не должен вмешиваться).
+function useQuoteSlot(quotes: Quote[], startIndex: number) {
   const [index, setIndex] = useState(startIndex)
   const [direction, setDirection] = useState<1 | -1>(1)
   // setTimeout, а не requestAnimationFrame — см. коммит с фиксом выше: rAF в
@@ -1197,12 +1179,6 @@ function useQuoteSlot(
   const [entering, setEntering] = useState(false)
   const touchStartX = useRef<number | null>(null)
   const interactedRef = useRef(false)
-
-  // Пишем свой актуальный индекс в общий ref — сосед читает его как
-  // siblingIndexRef (в эффекте, не в теле рендера — react-hooks/refs).
-  useEffect(() => {
-    if (ownIndexRef) ownIndexRef.current = index
-  }, [index, ownIndexRef])
 
   useEffect(() => {
     const id = window.setTimeout(() => setEntering(false), 20)
@@ -1213,47 +1189,30 @@ function useQuoteSlot(
     interactedRef.current = true
     setDirection(dir)
     setEntering(true)
-    setIndex((i) => {
-      let next = (i + dir + quotes.length) % quotes.length
-      const exclude = siblingIndexRef?.current
-      // Если следующий по кругу совпал с тем, что уже показывает сосед —
-      // проматываем ещё на шаг в ту же сторону (при 2 отзывах в пуле
-      // пропускать некуда, тогда оставляем как есть).
-      if (exclude !== undefined && quotes.length > 2 && next === exclude) {
-        next = (next + dir + quotes.length) % quotes.length
-      }
-      return next
-    })
+    setIndex((i) => (i + dir + quotes.length) % quotes.length)
   }
 
   useEffect(() => {
-    if (quotes.length <= 2) return
-    let intervalId: ReturnType<typeof setInterval> | undefined
-    const startTimer = window.setTimeout(() => {
-      intervalId = setInterval(() => {
-        if (interactedRef.current) {
-          if (intervalId) clearInterval(intervalId)
-          return
+    if (quotes.length <= 1) return
+    const intervalId = setInterval(() => {
+      if (interactedRef.current) {
+        clearInterval(intervalId)
+        return
+      }
+      setDirection(1)
+      setEntering(true)
+      setIndex((i) => {
+        let next = Math.floor(Math.random() * quotes.length)
+        let guard = 0
+        while (next === i && guard < 20) {
+          next = Math.floor(Math.random() * quotes.length)
+          guard += 1
         }
-        setDirection(1)
-        setEntering(true)
-        setIndex((i) => {
-          let next = Math.floor(Math.random() * quotes.length)
-          const exclude = siblingIndexRef?.current
-          let guard = 0
-          while ((next === i || next === exclude) && guard < 20) {
-            next = Math.floor(Math.random() * quotes.length)
-            guard += 1
-          }
-          return next
-        })
-      }, AUTO_ROTATE_MS)
-    }, staggerMs)
-    return () => {
-      window.clearTimeout(startTimer)
-      if (intervalId) clearInterval(intervalId)
-    }
-  }, [quotes.length, staggerMs, siblingIndexRef])
+        return next
+      })
+    }, AUTO_ROTATE_MS)
+    return () => clearInterval(intervalId)
+  }, [quotes.length])
 
   const goTo = (i: number) => {
     interactedRef.current = true
@@ -1314,23 +1273,15 @@ function QuoteSlotView({ slot, count }: { slot: ReturnType<typeof useQuoteSlot>;
   )
 }
 
-function QuotePairs({ quotes }: { quotes: Quote[] }) {
+function QuoteCarousel({ quotes }: { quotes: Quote[] }) {
   const safeQuotes = quotes.length > 0 ? quotes : [{ quote: "", author: "" }]
-  const topIndexRef = useRef(0)
-  const bottomIndexRef = useRef(Math.min(1, safeQuotes.length - 1))
-  const top = useQuoteSlot(safeQuotes, 0, { ownIndexRef: topIndexRef, siblingIndexRef: bottomIndexRef })
-  const bottom = useQuoteSlot(safeQuotes, Math.min(1, safeQuotes.length - 1), {
-    staggerMs: AUTO_ROTATE_MS / 2,
-    ownIndexRef: bottomIndexRef,
-    siblingIndexRef: topIndexRef,
-  })
+  const slot = useQuoteSlot(safeQuotes, 0)
 
   if (quotes.length === 0) return null
 
   return (
-    <div className="mt-5 flex w-full max-w-sm flex-col gap-4 sm:hidden">
-      <QuoteSlotView slot={top} count={safeQuotes.length} />
-      <QuoteSlotView slot={bottom} count={safeQuotes.length} />
+    <div className="mt-5 flex w-full flex-col gap-4 sm:hidden">
+      <QuoteSlotView slot={slot} count={safeQuotes.length} />
     </div>
   )
 }
@@ -1349,7 +1300,7 @@ function QuoteSlide({
           {title}
         </h2>
 
-        <QuotePairs quotes={quotes} />
+        <QuoteCarousel quotes={quotes} />
 
         {quotes.length > 0 && (
           <div className="mt-6 hidden w-full max-w-5xl gap-3 sm:grid sm:grid-cols-3 lg:max-w-6xl lg:grid-cols-4 xl:max-w-7xl xl:grid-cols-6">
