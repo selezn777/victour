@@ -54,6 +54,16 @@
 }
 
 :root {
+  /* Реальная высота текущего хедера (SiteHeader/TourHeader) — пишется JS
+     (useHeaderHeightVar, ResizeObserver) сразу при монтировании. Этот
+     дефолт — только для самого первого пришедшего с сервера пейнта, до
+     гидратации; используется через var(--site-header-h) БЕЗ запятой с
+     fallback'ом внутри Tailwind-скобок h-[calc(...)] — вариант с запятой
+     var(--x,4rem) внутри arbitrary value не генерировал правило вообще
+     (тихо ломал Tailwind-парсер), из-за чего .swiper оставался без
+     height и Swiper считал огромную/битую высоту (виден 1.3M px на
+     проде) — сайт выглядел полностью пустым. */
+  --site-header-h: 4rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);

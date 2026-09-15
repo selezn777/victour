@@ -18,7 +18,7 @@ export function TourCatalog({ tours }: { tours: CatalogTour[] }) {
     // слева книжным столбиком.
     <section id="catalog">
       <SlideDeck
-        className="h-[calc(100dvh-var(--site-header-h,4rem))] w-full"
+        className="h-[calc(100dvh-var(--site-header-h))] w-full"
         direction="horizontal"
         paginationPosition="bottom-center"
         slides={tours.map((tour) => (
