@@ -1136,15 +1136,13 @@ function ToursSlide() {
         <h2 className="mt-6 max-w-xl font-heading text-3xl leading-[1.1] font-semibold sm:mt-8 sm:text-4xl">
           Всего четыре маршрута
         </h2>
-        {/* Первое предложение — точная формулировка от Виктора дословно
-            ("вот так скорее похоже на то что я хочу написать") — не
-            перефразировать. Второе — про полное сопровождение (Виктор
-            попросил добавить отдельным абзацем, но тот вместе с кнопкой не
-            влезал по высоте — "кнопка улетела, текста много стало" — объединил
-            в один абзац и уменьшил размер шрифта). */}
+        {/* Точная формулировка от Виктора дословно ("вот так скорее похоже
+            на то что я хочу написать") — не перефразировать. Второе
+            предложение (про полное сопровождение) Виктор убрал целиком —
+            заканчивается на "глубокие". */}
         <p className="mt-3 max-w-md text-base leading-snug font-medium text-foreground sm:mt-5 sm:max-w-xl sm:text-lg">
           Авторские маршруты, выверенные до мелочей! Всего 4 программы, потому что они безопасные,
-          интересные и при этом глубокие. Полное сопровождение: обо всём расскажем, никуда не торопим.
+          интересные и при этом глубокие.
         </p>
         <TourCtaButton spacious />
       </div>
@@ -1280,13 +1278,18 @@ function useQuoteSlot(quotes: Quote[], startIndex: number) {
 // Точки под каждой карточкой — видно, что это не единственный отзыв и его
 // можно листать (Виктор: "надо видеть, что отзывы можно листать"), а не
 // только через сам факт свайпа, который никак не подсказан визуально.
+// min-h-0 flex-1 на обёртке и transition-div — Виктор: "окно с отзывом
+// должно быть по всей высоте экрана до кнопки", а не компактной карточкой
+// по размеру текста. QuoteCard сам уже h-full (см. его определение) —
+// не хватало только реальной высоты от родителей, чтобы было куда
+// растягиваться.
 function QuoteSlotView({ slot, count }: { slot: ReturnType<typeof useQuoteSlot>; count: number }) {
   return (
-    <div>
-      <div className="overflow-hidden" onTouchStart={slot.onTouchStart} onTouchEnd={slot.onTouchEnd}>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="min-h-0 flex-1 overflow-hidden" onTouchStart={slot.onTouchStart} onTouchEnd={slot.onTouchEnd}>
         <div
           key={slot.index}
-          className={`transition-all duration-[380ms] ease-out ${
+          className={`h-full transition-all duration-[380ms] ease-out ${
             slot.entering ? (slot.direction === 1 ? "translate-x-4 opacity-0" : "-translate-x-4 opacity-0") : "translate-x-0 opacity-100"
           }`}
         >
@@ -1294,7 +1297,7 @@ function QuoteSlotView({ slot, count }: { slot: ReturnType<typeof useQuoteSlot>;
         </div>
       </div>
       {count > 1 && (
-        <div className="mt-2 flex justify-center gap-1.5">
+        <div className="mt-2 flex shrink-0 justify-center gap-1.5">
           {Array.from({ length: count }, (_, i) => (
             <button
               key={i}
@@ -1317,7 +1320,7 @@ function QuoteCarousel({ quotes }: { quotes: Quote[] }) {
   if (quotes.length === 0) return null
 
   return (
-    <div className="mt-5 flex w-full flex-col gap-4 sm:hidden">
+    <div className="mt-5 flex w-full min-h-0 flex-1 flex-col gap-4 sm:hidden">
       <QuoteSlotView slot={slot} count={safeQuotes.length} />
     </div>
   )
