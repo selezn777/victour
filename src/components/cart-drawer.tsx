@@ -26,10 +26,10 @@ export function CartDrawer() {
   return (
     <Sheet>
       <SheetTrigger
-        render={<Button variant="ghost" size="icon-sm" aria-label={`Заявка: ${items.length} тур(а)`} />}
+        render={<Button variant="ghost" size="icon" aria-label={`Заявка: ${items.length} тур(а)`} />}
       >
         <span className="relative">
-          <ShoppingBagIcon />
+          <ShoppingBagIcon className="size-6" />
           <span className="absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
             {items.length}
           </span>

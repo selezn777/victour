@@ -247,7 +247,7 @@ export function TourBookingSlide({
           disabled={!guide || !selectedDate}
           onClick={handleSubmit}
         >
-          Добавить в заявку
+          Добавить в корзину
         </Button>
 
         {error && (

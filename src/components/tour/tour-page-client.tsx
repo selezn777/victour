@@ -49,6 +49,7 @@ export function TourPageClient({
     tour.pricingTiers.find((t) => t.guestCount === guestCount)?.priceAdultUsd ?? 0
 
   const swiperRef = useRef<SwiperType | null>(null)
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0)
 
   // Двухдневные туры (Далат) — маршрут отдельными слайдами по дню, а не
   // колонками side-by-side на одном слайде (Виктор со скриншотом: "в
@@ -103,6 +104,7 @@ export function TourPageClient({
         }}
         onSlideChange={(index) => {
           sessionStorage.setItem(`tour-slide:${tour.slug}`, String(index))
+          setActiveSlideIndex(index)
         }}
         slides={[
           <TourPhotoSlide key="photo" tour={tour} />,
@@ -134,11 +136,18 @@ export function TourPageClient({
         ]}
       />
 
-      <TourBottomBar
-        priceAdultUsd={priceAdultUsd}
-        ctaLabel="Подробнее"
-        onCtaClick={() => swiperRef.current?.slideTo(bookingSlideIndex)}
-      />
+      {/* Виктор: убрать плашку на первом слайде (фото) и на слайде брони —
+          на фото она не нужна (там и так "тыкни"/свайп), на брони под ней
+          уже есть своя кнопка "Добавить в корзину" с ценой, дублировать не
+          нужно. На остальных слайдах (маршрут, что входит, FAQ, отзывы) —
+          оставить. */}
+      {activeSlideIndex !== 0 && activeSlideIndex !== bookingSlideIndex && (
+        <TourBottomBar
+          priceAdultUsd={priceAdultUsd}
+          ctaLabel="Подробнее"
+          onCtaClick={() => swiperRef.current?.slideTo(bookingSlideIndex)}
+        />
+      )}
     </>
   )
 }
