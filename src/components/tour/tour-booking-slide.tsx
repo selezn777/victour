@@ -190,7 +190,7 @@ export function TourBookingSlide({
             тарифным ступеням тура (обычно 2..9 подряд), а не произвольным
             +1/-1 — на случай, если когда-нибудь ступени не подряд. */}
         <div className="mt-3">
-          <span className="px-1 text-sm font-medium text-muted-foreground">Гостей</span>
+          <span className="px-1 text-sm font-medium text-muted-foreground">Количество человек</span>
           <div className="mt-1.5 flex items-center gap-3">
             <button
               type="button"
