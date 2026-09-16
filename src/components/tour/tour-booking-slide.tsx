@@ -1,9 +1,8 @@
 "use client"
 
-import Link from "next/link"
 import { useMemo, useState } from "react"
 import { sendGAEvent } from "@next/third-parties/google"
-import { MinusIcon, PlusIcon } from "lucide-react"
+import { CheckIcon, MinusIcon, PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BookingCalendar } from "@/components/tour/booking-calendar"
 import { GuideProfileSheet } from "@/components/tour/guide-profile-sheet"
@@ -163,7 +162,10 @@ export function TourBookingSlide({
                 <button
                   type="button"
                   aria-pressed={g.id === guideId}
-                  onClick={() => setGuideId(g.id)}
+                  onClick={() => {
+                    setGuideId(g.id)
+                    setAddedToPackage(false)
+                  }}
                   className="min-w-0 flex-1 text-left text-sm font-medium"
                 >
                   {g.name}
@@ -196,12 +198,13 @@ export function TourBookingSlide({
               type="button"
               aria-label="Меньше гостей"
               disabled={guestTierIndex <= 0}
-              onClick={() =>
+              onClick={() => {
                 onGuestCountChange((count) => {
                   const i = tour.pricingTiers.findIndex((t) => t.guestCount === count)
                   return tour.pricingTiers[Math.max(0, i - 1)]?.guestCount ?? count
                 })
-              }
+                setAddedToPackage(false)
+              }}
               className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/70 disabled:pointer-events-none disabled:opacity-30"
             >
               <MinusIcon className="size-5" />
@@ -213,12 +216,13 @@ export function TourBookingSlide({
               type="button"
               aria-label="Больше гостей"
               disabled={guestTierIndex >= tour.pricingTiers.length - 1}
-              onClick={() =>
+              onClick={() => {
                 onGuestCountChange((count) => {
                   const i = tour.pricingTiers.findIndex((t) => t.guestCount === count)
                   return tour.pricingTiers[Math.min(tour.pricingTiers.length - 1, i + 1)]?.guestCount ?? count
                 })
-              }
+                setAddedToPackage(false)
+              }}
               className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/70 disabled:pointer-events-none disabled:opacity-30"
             >
               <PlusIcon className="size-5" />
@@ -240,28 +244,32 @@ export function TourBookingSlide({
           <div className="text-xs text-muted-foreground">Итого за {guestCount}: {formatUsd(groupTotalUsd)}</div>
         </div>
 
+        {/* После успешного добавления кнопка сама показывает, что нажимать
+            второй раз не нужно (галочка + приглушённый secondary вместо
+            яркого primary) — раньше под кнопкой ещё был текст-подтверждение
+            "Добавлено в заявку: ...", Виктор попросил убрать текст и сделать
+            понятным через саму кнопку. */}
         <Button
           type="button"
           size="lg"
+          variant={addedToPackage ? "secondary" : "default"}
           className="mt-3 w-full"
           disabled={!guide || !selectedDate}
           onClick={handleSubmit}
         >
-          Добавить в корзину
+          {addedToPackage ? (
+            <span className="flex items-center gap-2">
+              <CheckIcon className="size-5" />
+              Добавлено в заявку
+            </span>
+          ) : (
+            "Добавить в заявку"
+          )}
         </Button>
 
         {error && (
           <p className="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}
-          </p>
-        )}
-
-        {addedToPackage && !error && (
-          <p className="mt-2 rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary">
-            Добавлено в заявку: {tour.title}, {guestCount} гостей, дата с {selectedDate}.{" "}
-            <Link href="/request" className="font-medium underline underline-offset-2">
-              Перейти к заявке
-            </Link>
           </p>
         )}
       </div>
