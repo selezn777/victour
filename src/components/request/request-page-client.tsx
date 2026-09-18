@@ -432,7 +432,7 @@ export function RequestPageClient({
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="mx-auto flex h-14 max-w-4xl items-center gap-4 px-4 sm:h-16 sm:px-6">
+        <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:h-16 sm:px-6">
           <Link href="/" className="shrink-0 font-heading text-lg font-semibold tracking-tight sm:text-xl">
             ВикТур
           </Link>
@@ -445,7 +445,7 @@ export function RequestPageClient({
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
+      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
         {submittedBookingId ? (
           <section className="rounded-2xl border border-border bg-card p-8 text-center shadow-sm sm:p-12">
             <h1 className="font-heading text-2xl font-semibold sm:text-3xl">Заявка принята</h1>
