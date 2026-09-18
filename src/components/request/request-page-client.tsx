@@ -663,10 +663,7 @@ export function RequestPageClient({
                           placeholder="Ник в WhatsApp / Telegram / VK"
                         />
                       )}
-                      <div className="mt-1.5 flex items-center justify-between gap-2">
-                        <p className="text-xs text-muted-foreground">
-                          Спрашиваем первым — если что-то пойдёт не так, сможем сами написать вам.
-                        </p>
+                      <div className="mt-1.5 flex items-center justify-end gap-2">
                         <button
                           type="button"
                           className="shrink-0 text-xs text-primary underline-offset-2 hover:underline"
