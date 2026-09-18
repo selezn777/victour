@@ -56,17 +56,17 @@ export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
                 type="button"
                 aria-label="Предыдущее фото"
                 onClick={() => swiperRef.current?.slidePrev()}
-                className="absolute top-1/2 left-2 z-10 -translate-y-1/2 rounded-full bg-black/30 p-1.5 text-white backdrop-blur-sm transition hover:bg-black/50 sm:left-4 sm:p-2"
+                className="absolute top-1/2 left-2 z-10 -translate-y-1/2 rounded-full bg-black/30 p-2.5 text-white backdrop-blur-sm transition hover:bg-black/50 sm:left-4 sm:p-3"
               >
-                <ChevronLeftIcon className="size-4 sm:size-5" />
+                <ChevronLeftIcon className="size-5 sm:size-6" />
               </button>
               <button
                 type="button"
                 aria-label="Следующее фото"
                 onClick={() => swiperRef.current?.slideNext()}
-                className="absolute top-1/2 right-2 z-10 -translate-y-1/2 rounded-full bg-black/30 p-1.5 text-white backdrop-blur-sm transition hover:bg-black/50 sm:right-4 sm:p-2"
+                className="absolute top-1/2 right-2 z-10 -translate-y-1/2 rounded-full bg-black/30 p-2.5 text-white backdrop-blur-sm transition hover:bg-black/50 sm:right-4 sm:p-3"
               >
-                <ChevronRightIcon className="size-4 sm:size-5" />
+                <ChevronRightIcon className="size-5 sm:size-6" />
               </button>
               {/* Виктор: тёмная плашка-полоска под точками — убрать везде, точки
                   и счётчик лежат прямо на фото (drop-shadow вместо плашки для
