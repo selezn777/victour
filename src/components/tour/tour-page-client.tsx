@@ -7,6 +7,8 @@ import { TourHeader } from "@/components/tour/tour-header"
 import { TourPhotoSlide } from "@/components/tour/tour-photo-slide"
 import { TourItinerarySlide } from "@/components/tour/tour-itinerary-slide"
 import { TourIncludesSlide } from "@/components/tour/tour-includes-slide"
+import { TourPackingSlide } from "@/components/tour/tour-packing-slide"
+import { whatToBringFor } from "@/lib/what-to-bring"
 import { TourBookingSlide } from "@/components/tour/tour-booking-slide"
 import { TourFaqSlide } from "@/components/tour/tour-faq-slide"
 import { TourReviewsSlide } from "@/components/tour/tour-reviews-slide"
@@ -17,9 +19,9 @@ import type { Review, TourOption } from "@/lib/reviews-data"
 import type { FaqItem } from "@/lib/faq-data"
 
 // Слайды по порядку: фото → маршрут (день 1[, день 2]) → что входит →
-// бронь → FAQ → отзывы. Отзывы теперь тоже слайд колоды (раньше были
-// отдельным блоком под ней — Виктор передумал: "пусть будет не кнопка, а
-// прям ещё один слайд").
+// что взять с собой → бронь → FAQ → отзывы. Отзывы теперь тоже слайд
+// колоды (раньше были отдельным блоком под ней — Виктор передумал: "пусть
+// будет не кнопка, а прям ещё один слайд").
 
 export function TourPageClient({
   tour,
@@ -69,7 +71,7 @@ export function TourPageClient({
           />
         ))
     : [<TourItinerarySlide key="itinerary" itinerary={tour.itinerary} day={tour.itinerary[0]?.day ?? 1} />]
-  const bookingSlideIndex = 1 + itinerarySlides.length + 1
+  const bookingSlideIndex = 1 + itinerarySlides.length + 2
 
   return (
     <>
@@ -110,6 +112,7 @@ export function TourPageClient({
           <TourPhotoSlide key="photo" tour={tour} />,
           ...itinerarySlides,
           <TourIncludesSlide key="includes" includes={tour.includes} excludes={tour.excludes} />,
+          <TourPackingSlide key="packing" items={whatToBringFor(tour.slug)} />,
           <TourBookingSlide
             key="booking"
             tour={tour}
