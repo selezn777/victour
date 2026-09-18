@@ -472,7 +472,7 @@ export function RequestPageClient({
           </section>
         ) : (
           <>
-            <h1 className="font-heading text-2xl font-semibold sm:text-3xl">Ваша заявка</h1>
+            <h1 className="text-center font-heading text-2xl font-semibold sm:text-3xl">Ваша заявка</h1>
 
             <section className="mt-6 flex flex-col gap-3">
               {items.map((item) =>
