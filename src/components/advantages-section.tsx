@@ -1161,30 +1161,25 @@ function reviewToQuote(r: Review): Quote {
   return { quote: r.text ?? "", author: `${r.authorName}, ${target}` }
 }
 
-// На мобиле карточки-цитаты в столбик не влезали в высоту слайда вместе с
-// кнопкой — сама секция скроллится (overflow-y-auto), но Swiper того же
-// направления (vertical) перехватывает вертикальный тач-свайп раньше, чем до
-// него доходит внутренний скролл, и кнопка оставалась недостижима. Прошли
-// через пару итераций (карусель по одной, потом узкий ряд по 2-3 в кадре) —
-// Виктор в итоге попросил именно "слоями друг за другом" (стопкой карточек
-// внахлёст, следующая проглядывает из-за первой), а не сжатые side-by-side
-// карточки. line-clamp на тексте цитаты держит высоту карточек одинаковой
-// независимо от длины реального отзыва — иначе стопка "прыгала" бы при
-// переключении. С sm и шире — обычная CSS grid (там высота не проблема).
+// Виктор: line-clamp на тексте цитаты обрезал реальные отзывы посередине
+// фразы ("...отвечает на…") — карточка тут full-height (см. h-full ниже) и
+// места достаточно, обрезать незачем. Высота карточек больше не должна
+// совпадать между собой — карточки не стопкой, а по одной (useQuoteSlot),
+// так что разная длина текста не "прыгает" соседними карточками.
 function QuoteCard({ quote, author }: { quote: string; author: string }) {
   return (
     <blockquote className="relative flex h-full flex-col rounded-2xl border border-border bg-card p-5 text-left shadow-lg sm:p-6">
       <span aria-hidden className="font-heading text-4xl leading-none text-primary/30 sm:text-5xl">
         “
       </span>
-      <p className="-mt-1 line-clamp-5 text-sm text-foreground/90 italic sm:-mt-2 sm:line-clamp-6 sm:text-base">
+      <p className="-mt-1 text-sm text-foreground/90 italic sm:-mt-2 sm:text-base">
         {quote}
       </p>
       <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground sm:mt-3 sm:gap-2 sm:text-sm">
         <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm sm:size-7 sm:text-base">
           🙂
         </span>
-        <span className="line-clamp-1">{author}</span>
+        <span>{author}</span>
       </p>
     </blockquote>
   )
@@ -1320,12 +1315,23 @@ function QuoteCarousel({ quotes }: { quotes: Quote[] }) {
   if (quotes.length === 0) return null
 
   return (
-    <div className="mt-5 flex w-full min-h-0 flex-1 flex-col gap-4 sm:hidden">
+    <div className="mx-auto mt-5 flex w-full min-h-0 flex-1 flex-col gap-4 sm:max-w-md">
       <QuoteSlotView slot={slot} count={safeQuotes.length} />
     </div>
   )
 }
 
+// Виктор: "если сбоку свайпнуть вниз, ломается переключение слайдов и
+// вылезает блок со всеми отзывами" — этот контейнер scroll-контейнер
+// (overflow-y-auto, когда цитата длинная), но без защиты вертикальный
+// тач-свайп прямо на нём "утекал" мимо Swiper'а колоды в обычный скролл
+// страницы, а дальше в flow шёл FeaturedReviews (дублирующий блок
+// "Что говорят гости" + "Все отзывы" под колодой) — отсюда ощущение,
+// что что-то ломается и "вылезает". Та же защита, что уже есть у
+// tour-reviews-slide.tsx/tour-faq-slide.tsx: пока есть куда скроллить
+// сам контейнер — глушим жест (stopPropagation), у границы — отпускаем
+// Swiper'у. FeaturedReviews с сайта убрали отдельно (дублировал этот
+// слайд), но контейнер всё равно теперь ведёт себя предсказуемо.
 function QuoteSlide({
   title,
   quotes,
@@ -1333,24 +1339,37 @@ function QuoteSlide({
   title: string
   quotes: Quote[]
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const startYRef = useRef(0)
+
+  function onTouchStart(e: React.TouchEvent) {
+    startYRef.current = e.touches[0].clientY
+  }
+  function onTouchMove(e: React.TouchEvent) {
+    const el = scrollRef.current
+    if (!el) return
+    const draggingDown = e.touches[0].clientY - startYRef.current > 0
+    const atTop = el.scrollTop <= 0
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
+    const releaseToSwiper = (atTop && draggingDown) || (atBottom && !draggingDown)
+    if (!releaseToSwiper) {
+      e.stopPropagation()
+    }
+  }
+
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-3 pb-10 text-center sm:px-11 sm:pt-4 sm:pb-8">
+      <div
+        ref={scrollRef}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        className="relative flex min-h-0 flex-1 flex-col items-center justify-[safe_center] overflow-y-auto px-6 pt-3 pb-10 text-center sm:px-11 sm:pt-4 sm:pb-8"
+      >
         <h2 className="max-w-2xl font-heading text-2xl leading-[1.15] font-semibold sm:text-3xl">
           {title}
         </h2>
 
         <QuoteCarousel quotes={quotes} />
-
-        {quotes.length > 0 && (
-          <div className="mt-6 hidden w-full max-w-5xl gap-3 sm:grid sm:grid-cols-3 lg:max-w-6xl lg:grid-cols-4 xl:max-w-7xl xl:grid-cols-6">
-            {quotes.map(({ quote, author }, i) => (
-              <div key={author} className={i === 3 ? "hidden lg:block" : i >= 4 ? "hidden xl:block" : ""}>
-                <QuoteCard quote={quote} author={author} />
-              </div>
-            ))}
-          </div>
-        )}
 
         <TourCtaButton hint large />
       </div>

@@ -22,5 +22,5 @@ export default async function Home() {
   // зафиксированным набором, а подтягивались рандомно из всех реальных.
   const heroQuotes: Review[] = shuffled(guideReviews.filter((r) => r.text)).slice(0, HERO_QUOTES_COUNT)
 
-  return <HomeClient settings={settings} guide={guide} guideReviews={guideReviews} heroQuotes={heroQuotes} />
+  return <HomeClient settings={settings} guide={guide} heroQuotes={heroQuotes} />
 }
