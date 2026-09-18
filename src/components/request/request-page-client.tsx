@@ -590,24 +590,6 @@ export function RequestPageClient({
               </div>
             </section>
 
-            {/* Отдельным пунктом, не строкой внутри "Итого" (Виктор: "надо
-                это отдельным пунктом вынести") - и цифра в $, не в рублях
-                (была РУБ основной суммой, $ мелким довеском - переставил
-                местами: "предоплата всего $80" звучит внушительно именно
-                в долларах, конвертация в рубли теперь просто справка). */}
-            <section className="mt-6 rounded-2xl border border-primary/30 bg-primary/10 p-5 text-center shadow-sm">
-              <span className="text-sm font-medium text-muted-foreground">Предоплата для брони</span>
-              <div className="mt-1 font-heading text-3xl font-bold text-primary">
-                Всего {formatUsd(prepaymentUsd)}
-              </div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                ≈ {formatRubFromUsd(prepaymentUsd, settings.usdRubRate, settings.rubMarkupPct)}
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Никаких крупных предоплат — остальное наличными при встрече.
-              </p>
-            </section>
-
             {allConfigured && (
               <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
                 <div className="flex items-center justify-center gap-2">
@@ -790,6 +772,26 @@ export function RequestPageClient({
                 )}
               </section>
             )}
+
+            {/* Отдельным пунктом, не строкой внутри "Итого" (Виктор: "надо
+                это отдельным пунктом вынести") - и цифра в $, не в рублях
+                (была РУБ основной суммой, $ мелким довеском - переставил
+                местами: "предоплата всего $80" звучит внушительно именно
+                в долларах, конвертация в рубли теперь просто справка).
+                Виктор: сразу после "Итого" должна идти форма контакта, а
+                эта карточка — ниже, после формы, а не перед ней. */}
+            <section className="mt-6 rounded-2xl border border-primary/30 bg-primary/10 p-5 text-center shadow-sm">
+              <span className="text-sm font-medium text-muted-foreground">Предоплата для брони</span>
+              <div className="mt-1 font-heading text-3xl font-bold text-primary">
+                Всего {formatUsd(prepaymentUsd)}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                ≈ {formatRubFromUsd(prepaymentUsd, settings.usdRubRate, settings.rubMarkupPct)}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Никаких крупных предоплат — остальное наличными при встрече.
+              </p>
+            </section>
           </>
         )}
       </main>
