@@ -52,7 +52,7 @@ export function TourReviewsSlide({
   }
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-6 pb-24 sm:px-11 sm:pt-9">
+    <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-6 pb-6 sm:px-11 sm:pt-9">
       <div
         ref={scrollRef}
         onTouchStart={onTouchStart}

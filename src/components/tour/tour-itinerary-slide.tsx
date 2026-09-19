@@ -46,13 +46,7 @@ export function TourItinerarySlide({
   dayLabel?: string
 }) {
   return (
-    // pb-24 (не pb-5) — Виктор: "Маршрут чуть-чуть не влазит, его баннер с
-    // ценой снизу перекрывает". Слайд сам не знает про fixed TourBottomBar
-    // снизу страницы (её высота не вычтена из h-full деки), так что нижний
-    // пункт списка при прокрутке до конца всё равно упирался в перекрытую
-    // барой зону. Тот же запас, что уже есть на слайде FAQ (см.
-    // tour-faq-slide.tsx) — сюда взят по аналогии, а не подобран заново.
-    <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-6 pb-24 sm:px-11 sm:pt-9">
+    <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-6 pb-6 sm:px-11 sm:pt-9">
       <h2 className="text-center font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
         Маршрут{dayLabel && <span className="text-primary"> — {dayLabel}</span>}
       </h2>

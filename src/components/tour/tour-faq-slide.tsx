@@ -78,7 +78,7 @@ export function TourFaqSlide({
   }
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-6 pb-24 sm:px-11 sm:pt-9">
+    <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-6 pb-6 sm:px-11 sm:pt-9">
       <div className="flex items-center justify-between gap-3">
         <h2 className="font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           Вопросы и ответы
