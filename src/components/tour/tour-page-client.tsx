@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
+import { useBottomBarHeightVar } from "@/hooks/use-bottom-bar-height-var"
 import type { Swiper as SwiperType } from "swiper/types"
 import { SlideDeck } from "@/components/slide-deck"
 import { TourHeader } from "@/components/tour/tour-header"
@@ -51,6 +52,8 @@ export function TourPageClient({
 
   const swiperRef = useRef<SwiperType | null>(null)
   const [activeSlideIndex, setActiveSlideIndex] = useState(0)
+  const bottomBarRef = useRef<HTMLDivElement>(null)
+  useBottomBarHeightVar(bottomBarRef)
 
   // Двухдневные туры (Далат) — маршрут отдельными слайдами по дню, а не
   // колонками side-by-side на одном слайде (Виктор со скриншотом: "в
@@ -95,6 +98,7 @@ export function TourPageClient({
           и для перехода со статьи — тот же путь). */}
       <SlideDeck
         paginationPosition="none"
+        className="h-[calc(100dvh-var(--site-header-h)-var(--tour-bottom-bar-h))] w-full"
         onSwiper={(swiper) => {
           swiperRef.current = swiper
           const saved = sessionStorage.getItem(`tour-slide:${tour.slug}`)
@@ -145,14 +149,19 @@ export function TourPageClient({
           на фото она не нужна (там и так "тыкни"/свайп), на брони под ней
           уже есть своя кнопка "Добавить в корзину" с ценой, дублировать не
           нужно. На остальных слайдах (маршрут, что входит, FAQ, отзывы) —
-          оставить. */}
-      {activeSlideIndex !== 0 && activeSlideIndex !== bookingSlideIndex && (
-        <TourBottomBar
-          priceAdultUsd={priceAdultUsd}
-          ctaLabel="Подробнее"
-          onCtaClick={() => swiperRef.current?.slideTo(bookingSlideIndex)}
-        />
-      )}
+          оставить. Прячем через opacity, не unmount: TourBottomBar всегда
+          в DOM, чтобы useBottomBarHeightVar не терял ref её элемента (эффект
+          там навешивает ResizeObserver один раз при монтировании) — иначе
+          деке ничего не вычитало бы из высоты, и плашка перекрывала бы
+          последние строчки высоких слайдов ("Что взять с собой" на турах с
+          длинным списком). */}
+      <TourBottomBar
+        barRef={bottomBarRef}
+        hidden={activeSlideIndex === 0 || activeSlideIndex === bookingSlideIndex}
+        priceAdultUsd={priceAdultUsd}
+        ctaLabel="Подробнее"
+        onCtaClick={() => swiperRef.current?.slideTo(bookingSlideIndex)}
+      />
     </>
   )
 }

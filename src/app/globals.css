@@ -64,6 +64,11 @@
      height и Swiper считал огромную/битую высоту (виден 1.3M px на
      проде) — сайт выглядел полностью пустым. */
   --site-header-h: 4rem;
+  /* Аналогично --site-header-h выше: реальная высота TourBottomBar,
+     пишется useBottomBarHeightVar. Дефолт — под самый первый пейнт до
+     гидратации, используется БЕЗ запятой-фолбэка внутри h-[calc(...)]
+     (см. комментарий выше — с запятой Tailwind тихо не генерит правило). */
+  --tour-bottom-bar-h: 4.75rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
