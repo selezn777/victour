@@ -17,9 +17,8 @@ import { useShrinkToFit } from "@/hooks/use-shrink-to-fit"
 // на одном экране, без скролла и без свайпа. Раз контент (Далат: 6+5
 // пунктов) не всегда помещается на весь рост при обычном размере текста —
 // используем useShrinkToFit: если натуральная высота больше доступной,
-// сжимаем ВЕСЬ блок через transform: scale (не трогая сам текст/gap'ы
-// по отдельности — тот же принцип "мерить реальную высоту в рантайме",
-// что уже применён в DayList/growGap, только в обратную сторону).
+// сжимаем ВЕСЬ блок через CSS zoom (не transform: scale — та схема
+// оставляла блок физически узким, см. комментарий в use-shrink-to-fit.ts).
 export function TourIncludesSlide({
   includes,
   packingItems,
@@ -29,18 +28,14 @@ export function TourIncludesSlide({
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
-  const scale = useShrinkToFit(containerRef, contentRef, [includes, packingItems])
+  useShrinkToFit(containerRef, contentRef, [includes, packingItems])
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden px-4 py-6 sm:px-11">
       {/* Мобила — одна колонка, сжимается целиком, чтобы гарантированно
           поместиться без скролла и без свайпа. */}
       <div ref={containerRef} className="flex min-h-0 flex-1 items-center justify-center overflow-hidden sm:hidden">
-        <div
-          ref={contentRef}
-          style={{ transform: `scale(${scale})`, transformOrigin: "center" }}
-          className="flex w-full flex-col gap-8"
-        >
+        <div ref={contentRef} className="flex w-full flex-col gap-8">
           <IncludesPanel includes={includes} />
           <PackingPanel packingItems={packingItems} />
         </div>
