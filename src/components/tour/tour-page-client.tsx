@@ -113,7 +113,6 @@ export function TourPageClient({
           <TourIncludesSlide
             key="includes"
             includes={tour.includes}
-            excludes={tour.excludes}
             packingItems={whatToBringFor(tour.slug)}
           />,
           <TourBookingSlide

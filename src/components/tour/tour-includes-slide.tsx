@@ -5,13 +5,14 @@ import { CheckCircle2Icon, LuggageIcon } from "lucide-react"
 // в один список. "Что входит" — обычный текстовый список. "Что взять с
 // собой" — отдельная карточка с пунктирной рамкой и своими иконками,
 // читается как отдельная заметка-чеклист внутри того же экрана.
+// "Не входит" убран совсем (был тут же, под "Что входит") — на турах с
+// длинным списком (6 входит + 3 не входит) он утапливал "Что взять с
+// собой" вниз, на мобиле не влезало на экран без скролла.
 export function TourIncludesSlide({
   includes,
-  excludes,
   packingItems,
 }: {
   includes: string[]
-  excludes: string[]
   packingItems: string[]
 }) {
   return (
@@ -27,20 +28,6 @@ export function TourIncludesSlide({
               </li>
             ))}
           </ul>
-
-          {excludes.length > 0 && (
-            <div className="mt-8 border-t border-border pt-5">
-              <h3 className="text-sm font-medium text-muted-foreground">Не входит</h3>
-              <ul className="mt-2.5 flex flex-col gap-1.5 text-sm text-muted-foreground">
-                {excludes.map((item) => (
-                  <li key={item} className="flex gap-2">
-                    <span>—</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
 
         <div className="rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-5 sm:p-6">
