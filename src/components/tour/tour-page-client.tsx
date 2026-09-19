@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react"
 import { useBottomBarHeightVar } from "@/hooks/use-bottom-bar-height-var"
+import { isRecentBackNavigation } from "@/lib/navigation"
 import type { Swiper as SwiperType } from "swiper/types"
 import { SlideDeck } from "@/components/slide-deck"
 import { TourHeader } from "@/components/tour/tour-header"
@@ -95,23 +96,27 @@ export function TourPageClient({
       {/* Виктор: "Читать статью об этом месте" уводит на /blog/[slug] —
           отдельный роут, а не слайд этой же деки. По кнопке "назад" со
           статьи страница тура раньше монтировалась заново с нуля (слайд
-          "Маршрут" терялся, не то что открытый в нём попап конкретной
-          локации — "надо чтобы назад возвращало к маршруту, а не к
-          началу страницы"). Деке негде хранить активный слайд в URL, а
+          "Маршрут" терялся — "надо чтобы назад возвращало к маршруту, а не
+          к началу страницы"). Деке негде хранить активный слайд в URL, а
           у Swiper вообще нет server-driven state — запоминаем индекс в
-          sessionStorage при каждой смене слайда и восстанавливаем при
-          новом монтировании (работает и для обычного "назад" в браузере,
-          и для перехода со статьи — тот же путь). */}
+          sessionStorage при каждой смене слайда.
+          Но восстанавливаем НЕ всегда — только если реально вернулись
+          назад (popstate), а не зашли на тур заново по обычной ссылке,
+          например с главной (Виктор: "если я хочу вернуться из подробнее
+          и из статей — да, вернуться нужно на маршрут, но если захожу с
+          главной заново — должен видеть первый слайд, как будто открыл
+          впервые"). isRecentBackNavigation() отличает эти два случая —
+          см. src/lib/navigation.ts. */}
       <SlideDeck
         paginationPosition="none"
         className="h-[calc(100dvh-var(--site-header-h)-var(--tour-bottom-bar-h))] w-full"
         onSwiper={(swiper) => {
           swiperRef.current = swiper
           const saved = sessionStorage.getItem(`tour-slide:${tour.slug}`)
-          if (saved != null) {
+          if (saved != null && isRecentBackNavigation()) {
             swiper.slideTo(Number(saved), 0)
-            sessionStorage.removeItem(`tour-slide:${tour.slug}`)
           }
+          sessionStorage.removeItem(`tour-slide:${tour.slug}`)
         }}
         onSlideChange={(index) => {
           sessionStorage.setItem(`tour-slide:${tour.slug}`, String(index))

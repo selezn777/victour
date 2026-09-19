@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Geist_Mono, Unbounded } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { CookieConsent } from "@/components/cookie-consent";
+import { NavigationTracker } from "@/components/navigation-tracker";
 import "./globals.css";
 
 const inter = Inter({
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {children}
         </ThemeProvider>
         <CookieConsent gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+        <NavigationTracker />
       </body>
     </html>
   );
