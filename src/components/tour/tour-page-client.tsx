@@ -73,7 +73,13 @@ export function TourPageClient({
           />
         ))
     : [<TourItinerarySlide key="itinerary" itinerary={tour.itinerary} day={tour.itinerary[0]?.day ?? 1} />]
-  const bookingSlideIndex = 1 + itinerarySlides.length + 2
+  // +1 фото, +1 слайд "Что входит" (раньше тут было +2 — "Что входит" и
+  // "Что взять с собой" были двумя отдельными слайдами; после их слияния
+  // обратно в один (см. tour-includes-slide.tsx) индекс брони съехал на 1,
+  // и плашка с ценой пряталась не на слайде брони, а на следующем за ним
+  // (FAQ) — там же из-за этого "обрезалась" страница (деке всё равно
+  // вычитала высоту плашки, а сама плашка на FAQ была скрыта).
+  const bookingSlideIndex = 1 + itinerarySlides.length + 1
 
   return (
     <>
