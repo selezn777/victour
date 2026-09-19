@@ -1,29 +1,25 @@
 "use client"
 
-import { useEffect, useRef, useState, type TouchEvent as ReactTouchEvent } from "react"
+import { useRef } from "react"
 import { CheckCircle2Icon, LuggageIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useShrinkToFit } from "@/hooks/use-shrink-to-fit"
 
-// Виктор: "Что входит" и "Что взять с собой" — обратно на один слайд
-// (были разнесены на два), но стилизовать по-разному, чтобы не сливались
-// в один список. "Что входит" — обычный текстовый список. "Что взять с
-// собой" — отдельная карточка с пунктирной рамкой и своими иконками,
-// читается как отдельная заметка-чеклист внутри того же экрана.
-// "Не входит" убран совсем — на турах с длинным списком утапливал "Что
-// взять с собой" вниз.
+// Виктор: "Что входит" и "Что взять с собой" — один слайд, но стилизовать
+// по-разному ("Что входит" — обычный список, "Что взять с собой" —
+// карточка с пунктирной рамкой и иконками), чтобы не сливались в одно.
+// "Не входит" убран совсем — утапливал "Что взять с собой" вниз.
 //
-// На мобиле (одна колонка) сумма двух списков (Далат: 6+5 пунктов) не
-// помещается на экран целиком. Пробовали вертикальный скролл внутри
-// слайда — не сработало: вертикальный Swiper колоды и внутренний скролл
-// конкурируют за один и тот же жест, и даже с ручным touch-перехватом
-// (см. историю коммитов) Виктор остался недоволен самой идеей скролла
-// вниз внутри слайда ("уберите идею с пролистыванием вниз" — то же он
-// попросил и про отзывы, см. tour-review-carousel.tsx). Решение то же:
-// на мобиле — два свайпаемых вбок панеля (точки-пагинация), каждый
-// список по отдельности всегда помещается на экране (это буквально тот
-// же контент, что раньше был двумя отдельными слайдами колоды и
-// прекрасно помещался). На sm+ места достаточно — там, как и раньше,
-// обе колонки видны одновременно side-by-side, без свайпа.
+// История поиска варианта для мобилы (одна колонка): вертикальный скролл
+// внутри слайда — физически не скроллился на телефоне (вертикальный
+// Swiper колоды перехватывал жест), почини́л touch-перехватом — Виктор
+// всё равно не хотел скролл как концепцию. Свайп вбок (как в отзывах) —
+// "никто не догадается листать вбок". Итог — Виктор явно попросил: всё
+// на одном экране, без скролла и без свайпа. Раз контент (Далат: 6+5
+// пунктов) не всегда помещается на весь рост при обычном размере текста —
+// используем useShrinkToFit: если натуральная высота больше доступной,
+// сжимаем ВЕСЬ блок через transform: scale (не трогая сам текст/gap'ы
+// по отдельности — тот же принцип "мерить реальную высоту в рантайме",
+// что уже применён в DayList/growGap, только в обратную сторону).
 export function TourIncludesSlide({
   includes,
   packingItems,
@@ -31,78 +27,31 @@ export function TourIncludesSlide({
   includes: string[]
   packingItems: string[]
 }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const scale = useShrinkToFit(containerRef, contentRef, [includes, packingItems])
+
   return (
     <div className="flex h-full w-full flex-col overflow-hidden px-4 py-6 sm:px-11">
-      <div className="min-h-0 flex-1 sm:hidden">
-        <MobilePanels includes={includes} packingItems={packingItems} />
+      {/* Мобила — одна колонка, сжимается целиком, чтобы гарантированно
+          поместиться без скролла и без свайпа. */}
+      <div ref={containerRef} className="flex min-h-0 flex-1 items-center justify-center overflow-hidden sm:hidden">
+        <div
+          ref={contentRef}
+          style={{ transform: `scale(${scale})`, transformOrigin: "center" }}
+          className="flex w-full flex-col gap-8"
+        >
+          <IncludesPanel includes={includes} />
+          <PackingPanel packingItems={packingItems} />
+        </div>
       </div>
 
+      {/* sm+ — места всегда хватало на обе колонки рядом, без сжатия. */}
       <div className="hidden min-h-0 flex-1 items-center justify-center sm:flex">
         <div className="grid w-full max-w-3xl gap-8 sm:grid-cols-2">
           <IncludesPanel includes={includes} />
           <PackingPanel packingItems={packingItems} />
         </div>
-      </div>
-    </div>
-  )
-}
-
-const SWIPE_THRESHOLD_PX = 40
-
-function MobilePanels({ includes, packingItems }: { includes: string[]; packingItems: string[] }) {
-  const [index, setIndex] = useState<0 | 1>(0)
-  const [direction, setDirection] = useState<1 | -1>(1)
-  const [entering, setEntering] = useState(false)
-  const touchStartX = useRef<number | null>(null)
-
-  useEffect(() => {
-    const id = window.setTimeout(() => setEntering(false), 20)
-    return () => window.clearTimeout(id)
-  }, [index])
-
-  function goTo(i: 0 | 1) {
-    setDirection(i > index ? 1 : -1)
-    setEntering(true)
-    setIndex(i)
-  }
-  function onTouchStart(e: ReactTouchEvent) {
-    touchStartX.current = e.touches[0].clientX
-  }
-  function onTouchEnd(e: ReactTouchEvent) {
-    if (touchStartX.current === null) return
-    const delta = e.changedTouches[0].clientX - touchStartX.current
-    touchStartX.current = null
-    if (Math.abs(delta) < SWIPE_THRESHOLD_PX) return
-    goTo(index === 0 && delta < 0 ? 1 : index === 1 && delta > 0 ? 0 : index)
-  }
-
-  return (
-    <div className="flex h-full w-full flex-col">
-      <div
-        className="flex min-h-0 flex-1 items-center overflow-hidden"
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
-      >
-        <div
-          key={index}
-          className={`w-full transition-all duration-[380ms] ease-out ${
-            entering ? (direction === 1 ? "translate-x-4 opacity-0" : "-translate-x-4 opacity-0") : "translate-x-0 opacity-100"
-          }`}
-        >
-          {index === 0 ? <IncludesPanel includes={includes} /> : <PackingPanel packingItems={packingItems} />}
-        </div>
-      </div>
-
-      <div className="mt-3 flex shrink-0 justify-center gap-1.5">
-        {([0, 1] as const).map((i) => (
-          <button
-            key={i}
-            type="button"
-            aria-label={i === 0 ? "Что входит" : "Что взять с собой"}
-            onClick={() => goTo(i)}
-            className={cn("size-1.5 rounded-full transition-colors", i === index ? "bg-primary" : "bg-primary/25")}
-          />
-        ))}
       </div>
     </div>
   )
