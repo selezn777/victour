@@ -7,7 +7,6 @@ import { TourHeader } from "@/components/tour/tour-header"
 import { TourPhotoSlide } from "@/components/tour/tour-photo-slide"
 import { TourItinerarySlide } from "@/components/tour/tour-itinerary-slide"
 import { TourIncludesSlide } from "@/components/tour/tour-includes-slide"
-import { TourPackingSlide } from "@/components/tour/tour-packing-slide"
 import { whatToBringFor } from "@/lib/what-to-bring"
 import { TourBookingSlide } from "@/components/tour/tour-booking-slide"
 import { TourFaqSlide } from "@/components/tour/tour-faq-slide"
@@ -111,8 +110,12 @@ export function TourPageClient({
         slides={[
           <TourPhotoSlide key="photo" tour={tour} />,
           ...itinerarySlides,
-          <TourIncludesSlide key="includes" includes={tour.includes} excludes={tour.excludes} />,
-          <TourPackingSlide key="packing" items={whatToBringFor(tour.slug)} />,
+          <TourIncludesSlide
+            key="includes"
+            includes={tour.includes}
+            excludes={tour.excludes}
+            packingItems={whatToBringFor(tour.slug)}
+          />,
           <TourBookingSlide
             key="booking"
             tour={tour}
