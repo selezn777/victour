@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef, useState, type TouchEvent as ReactTouchEvent } from "react"
+import { useMemo, useRef, useState } from "react"
 import { sendGAEvent } from "@next/third-parties/google"
 import { CheckIcon, MinusIcon, PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -8,6 +8,7 @@ import { BookingCalendar } from "@/components/tour/booking-calendar"
 import { GuideProfileSheet } from "@/components/tour/guide-profile-sheet"
 import { formatUsd } from "@/lib/format"
 import { datesUsedByOtherItems, usePackage } from "@/hooks/use-package"
+import { useShrinkToFit } from "@/hooks/use-shrink-to-fit"
 import type { TourDetail, TourGuide } from "@/lib/site-data"
 import { cn } from "@/lib/utils"
 
@@ -57,28 +58,8 @@ export function TourBookingSlide({
   const [profileGuide, setProfileGuide] = useState<{ id: string; name: string } | null>(null)
   const [profileSheetOpen, setProfileSheetOpen] = useState(false)
 
-  // Выбор гида после даты добавляет блок "Гид на эту дату" — контент
-  // может стать выше экрана, и кнопка "Добавить в заявку" уезжает вниз.
-  // Голый overflow-y-auto тут не скроллился на телефоне (тот же конфликт
-  // с вертикальным Swiper'ом колоды, что уже чинили в tour-faq-slide.tsx/
-  // tour-reviews-slide.tsx/tour-includes-slide.tsx) — тот же touch-перехват.
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const startYRef = useRef(0)
-
-  function onTouchStart(e: ReactTouchEvent) {
-    startYRef.current = e.touches[0].clientY
-  }
-  function onTouchMove(e: ReactTouchEvent) {
-    const el = scrollRef.current
-    if (!el) return
-    const draggingDown = e.touches[0].clientY - startYRef.current > 0
-    const atTop = el.scrollTop <= 0
-    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
-    const releaseToSwiper = (atTop && draggingDown) || (atBottom && !draggingDown)
-    if (!releaseToSwiper) {
-      e.stopPropagation()
-    }
-  }
+  const containerRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
 
   const commonBookedDates = useMemo(() => {
     const otherItemDates = datesUsedByOtherItems(items, tour.slug)
@@ -95,6 +76,15 @@ export function TourBookingSlide({
     if (!selectedDate) return []
     return guides.filter((g) => isGuideFreeOnDate(g, selectedDate, tour.durationDays))
   }, [guides, selectedDate, tour.durationDays])
+
+  // Выбор даты добавляет блок "Гид на эту дату" — контент может стать
+  // выше экрана, и кнопка "Добавить в заявку" уезжает вниз. Сначала
+  // чинил как FAQ/отзывы (touch-перехват под overflow-y-auto) — Виктор
+  // всё равно был недоволен (та же позиция, что и по "Что входит": скролл
+  // внутри слайда — не то, что нужно). Тот же приём, что и там —
+  // useShrinkToFit сжимает весь блок целиком через zoom (не transform,
+  // см. use-shrink-to-fit.ts), если он не помещается в доступную высоту.
+  useShrinkToFit(containerRef, contentRef, [selectedDate, availableGuides.length])
 
   const guide = guides.find((g) => g.id === guideId) ?? null
 
@@ -151,13 +141,9 @@ export function TourBookingSlide({
   }
 
   return (
-    <div
-      ref={scrollRef}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      className="flex h-full w-full flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-4 pb-4 sm:px-11 sm:pt-7"
-    >
-      <div className="w-full max-w-md">
+    <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-4 pb-4 sm:px-11 sm:pt-7">
+      <div ref={containerRef} className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+      <div ref={contentRef} className="w-full max-w-md">
         <h2 className="text-center font-heading text-xl leading-[1.15] font-semibold sm:text-3xl">
           Дата и бронь
         </h2>
@@ -300,6 +286,7 @@ export function TourBookingSlide({
             {error}
           </p>
         )}
+      </div>
       </div>
 
       {profileGuide && (
