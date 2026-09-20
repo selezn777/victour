@@ -1,7 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState, type TouchEvent as ReactTouchEvent } from "react"
-import { createPortal } from "react-dom"
+import { useMemo, useRef, useState, type TouchEvent as ReactTouchEvent } from "react"
 import { sendGAEvent } from "@next/third-parties/google"
 import { CheckIcon, MinusIcon, PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -36,29 +35,19 @@ function isGuideFreeOnDate(guide: TourGuide, date: string, durationDays: number)
 // commonBookedDates), а конкретный гид выбирается уже после даты, из тех,
 // кто на неё свободен.
 //
-// Кнопка "Добавить в заявку" уезжала за экран после выбора даты (блок
-// "Гид на эту дату" добавляет высоты). Пробовали touch-скролл, потом
-// zoom-сжатие, потом shrink-0 футер внутри слайда — не помогало, потому
-// что настоящая причина глубже: дека вычитает --tour-bottom-bar-h из
-// своей высоты ВЕЗДЕ (чтобы TourBottomBar не перекрывал слайды), но на
-// слайде брони этот бар всё равно скрыт (opacity-0) — а места под него
-// дека всё равно не отдаёт, получается голая чёрная зона внизу экрана,
-// в которую слайд не может залезть (Виктор это и заметил: "застолбили
-// место под кнопку, которую убрали"). Раз это место не используется —
-// отдаём его СОБСТВЕННОМУ футеру брони: тот же fixed-приём, что и у
-// TourBottomBar (см. tour-bottom-bar.tsx), но свой, показывается только
-// пока слайд брони активен (isActive) — занимает ровно ту же
-// зарезервированную зону, а не отжирает высоту у самого слайда, поэтому
-// прокручиваемая часть (календарь/гид/гости/цена) получает себе весь
-// h-full слайда целиком и в подавляющем большинстве случаев помещается
-// без скролла вообще.
+// Кнопка "Добавить в заявку" — обычный элемент в конце прокручиваемого
+// контента (Виктор явно попросил вернуть её сюда, не прижимать к низу
+// экрана — пробовали fixed-футер/портал, не то, что нужно). Единственное
+// реальное исправление, которое осталось от той истории, — touch-перехват
+// на скролл-контейнере (тот же приём, что в tour-faq-slide.tsx): голый
+// overflow-y-auto внутри вертикального Swiper'а колоды не скроллился на
+// телефоне без него.
 export function TourBookingSlide({
   tour,
   guides,
   guestCount,
   onGuestCountChange,
   onSubmitted,
-  isActive,
 }: {
   tour: TourDetail
   guides: TourGuide[]
@@ -67,10 +56,6 @@ export function TourBookingSlide({
   /** Вызывается после успешного добавления в заявку — родитель может,
    * например, показать плашку/переключить слайд. */
   onSubmitted?: () => void
-  /** Кнопка отправки — fixed-футер в зоне TourBottomBar, показывается
-   * только пока этот слайд активен (иначе будет видна поверх других
-   * слайдов колоды). */
-  isActive: boolean
 }) {
   const { items, addItem } = usePackage()
   const [guideId, setGuideId] = useState<string | null>(null)
@@ -79,19 +64,6 @@ export function TourBookingSlide({
   const [error, setError] = useState<string | null>(null)
   const [profileGuide, setProfileGuide] = useState<{ id: string; name: string } | null>(null)
   const [profileSheetOpen, setProfileSheetOpen] = useState(false)
-
-  // Fixed-футер рендерим через портал в document.body (не просто
-  // position: fixed на месте) — слайд лежит внутри Swiper, а тот двигает
-  // .swiper-wrapper через transform для анимации перехода между слайдами;
-  // transform на предке превращает его в containing block для fixed-
-  // потомков (стандартное поведение CSS), и "fixed" внутри слайда на деле
-  // становится fixed ОТНОСИТЕЛЬНО ЭТОГО ПРЕДКА, а не окна — кнопку
-  // обрезало собственным overflow:hidden Swiper'а, снаружи её не было
-  // видно вообще. document.body — вне дерева Swiper, проблема не
-  // возникает. mounted — портал нельзя рендерить на сервере (document
-  // недоступен при SSR).
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const startYRef = useRef(0)
@@ -187,7 +159,7 @@ export function TourBookingSlide({
         ref={scrollRef}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
-        className="no-scrollbar mx-auto min-h-0 w-full max-w-md flex-1 overflow-y-auto pb-4"
+        className="no-scrollbar mx-auto min-h-0 w-full max-w-md flex-1 overflow-y-auto"
       >
         <h2 className="text-center font-heading text-xl leading-[1.15] font-semibold sm:text-3xl">
           Дата и бронь
@@ -206,7 +178,10 @@ export function TourBookingSlide({
         {/* Гид — только после выбора даты, и только те, кто на неё
             свободен (Виктор: "не комфортно, что гид сразу"). Карточка гида
             намеренно НЕ похожа на рамку календаря/степпера — заливка
-            primary/5, а не border, чтобы секции визуально не сливались. */}
+            primary/5, а не border, чтобы секции визуально не сливались.
+            min-w-0 на кнопке с именем — без него длинное имя распирало
+            строку за пределы карточки вместо переноса/сжатия (Виктор:
+            "не помещается плашка по ширине"). */}
         {selectedDate && (
           <div className="mt-3 space-y-2">
             <span className="text-sm font-medium text-muted-foreground">Гид на эту дату</span>
@@ -225,7 +200,7 @@ export function TourBookingSlide({
                     setGuideId(g.id)
                     setAddedToPackage(false)
                   }}
-                  className="min-w-0 flex-1 text-left text-sm font-medium"
+                  className="min-w-0 flex-1 truncate text-left text-sm font-medium"
                 >
                   {g.name}
                 </button>
@@ -302,51 +277,36 @@ export function TourBookingSlide({
           </div>
           <div className="text-xs text-muted-foreground">Итого за {guestCount}: {formatUsd(groupTotalUsd)}</div>
         </div>
-      </div>
 
-      {/* Fixed-футер — рендерим порталом в document.body (см. комментарий
-          у mounted выше), а не на месте: занимает ровно ту же
-          зарезервированную под TourBottomBar зону внизу экрана (та же
-          высота, тот же стиль), не отжирая место у прокручиваемого
-          контента выше. Виден только пока слайд брони активен. */}
-      {isActive &&
-        mounted &&
-        createPortal(
-          <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80">
-            <div className="mx-auto max-w-md px-4 py-3 sm:px-11">
-              {/* После успешного добавления кнопка сама показывает, что
-                  нажимать второй раз не нужно (галочка + приглушённый
-                  secondary вместо яркого primary) — раньше под кнопкой ещё
-                  был текст-подтверждение "Добавлено в заявку: ...", Виктор
-                  попросил убрать текст и сделать понятным через саму
-                  кнопку. */}
-              <Button
-                type="button"
-                size="lg"
-                variant={addedToPackage ? "secondary" : "default"}
-                className="w-full"
-                disabled={!guide || !selectedDate}
-                onClick={handleSubmit}
-              >
-                {addedToPackage ? (
-                  <span className="flex items-center gap-2">
-                    <CheckIcon className="size-5" />
-                    Добавлено в заявку
-                  </span>
-                ) : (
-                  "Добавить в заявку"
-                )}
-              </Button>
+        {/* После успешного добавления кнопка сама показывает, что нажимать
+            второй раз не нужно (галочка + приглушённый secondary вместо
+            яркого primary) — раньше под кнопкой ещё был текст-подтверждение
+            "Добавлено в заявку: ...", Виктор попросил убрать текст и сделать
+            понятным через саму кнопку. */}
+        <Button
+          type="button"
+          size="lg"
+          variant={addedToPackage ? "secondary" : "default"}
+          className="mt-3 w-full"
+          disabled={!guide || !selectedDate}
+          onClick={handleSubmit}
+        >
+          {addedToPackage ? (
+            <span className="flex items-center gap-2">
+              <CheckIcon className="size-5" />
+              Добавлено в заявку
+            </span>
+          ) : (
+            "Добавить в заявку"
+          )}
+        </Button>
 
-              {error && (
-                <p className="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                  {error}
-                </p>
-              )}
-            </div>
-          </div>,
-          document.body,
+        {error && (
+          <p className="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </p>
         )}
+      </div>
 
       {profileGuide && (
         <GuideProfileSheet

@@ -136,7 +136,6 @@ export function TourPageClient({
             guides={guides}
             guestCount={guestCount}
             onGuestCountChange={setGuestCount}
-            isActive={activeSlideIndex === bookingSlideIndex}
           />,
           <TourFaqSlide
             key="faq"
