@@ -181,7 +181,13 @@ export function TourBookingSlide({
             primary/5, а не border, чтобы секции визуально не сливались.
             min-w-0 на кнопке с именем — без него длинное имя распирало
             строку за пределы карточки вместо переноса/сжатия (Виктор:
-            "не помещается плашка по ширине"). */}
+            "не помещается плашка по ширине"). flex-wrap — подстраховка на
+            случай крупного системного шрифта на телефоне: кнопка
+            "Подробнее" не резиновая (без truncate), при нехватке места
+            переносится на вторую строку внутри плашки, а не толкает саму
+            плашку за экран (повторная жалоба Виктора на "не влезает по
+            ширине" не воспроизвелась в браузере — похоже на масштаб
+            текста на конкретном устройстве). */}
         {selectedDate && (
           <div className="mt-3 space-y-2">
             <span className="text-sm font-medium text-muted-foreground">Гид на эту дату</span>
@@ -189,7 +195,7 @@ export function TourBookingSlide({
               <div
                 key={g.id}
                 className={cn(
-                  "flex items-center justify-between gap-3 rounded-xl bg-primary/5 px-4 py-2.5 transition-colors",
+                  "flex flex-wrap items-center justify-between gap-x-3 gap-y-1 overflow-hidden rounded-xl bg-primary/5 px-4 py-2.5 transition-colors",
                   g.id === guideId && "ring-1 ring-primary",
                 )}
               >

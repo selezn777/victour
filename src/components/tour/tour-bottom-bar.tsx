@@ -23,7 +23,10 @@ export function TourBottomBar({
   barRef?: Ref<HTMLDivElement>
   /** opacity, не unmount/display:none — иначе useBottomBarHeightVar теряет
    * элемент и высота на сайте не пересчитывается (см. вызов в
-   * tour-page-client.tsx). */
+   * tour-page-client.tsx). Плюс invisible (visibility:hidden): на
+   * некоторых мобильных браузерах backdrop-blur не всегда гаснет вместе
+   * с opacity (свой compositing-слой) — оставался виден чёрный
+   * блюр-фон при невидимой кнопке внутри него. */
   hidden?: boolean
 }) {
   return (
@@ -31,7 +34,7 @@ export function TourBottomBar({
       ref={barRef}
       aria-hidden={hidden}
       className={`fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur transition-opacity supports-backdrop-filter:bg-card/80 ${
-        hidden ? "pointer-events-none opacity-0" : ""
+        hidden ? "invisible pointer-events-none opacity-0" : ""
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
