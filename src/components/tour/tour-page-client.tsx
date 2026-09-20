@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useBottomBarHeightVar } from "@/hooks/use-bottom-bar-height-var"
 import { isRecentBackNavigation } from "@/lib/navigation"
 import type { Swiper as SwiperType } from "swiper/types"
@@ -53,6 +53,16 @@ export function TourPageClient({
 
   const swiperRef = useRef<SwiperType | null>(null)
   const [activeSlideIndex, setActiveSlideIndex] = useState(0)
+  // Индекс, которым считаем reserve под нижнюю плашку (см. ниже) — Swiper
+  // меняет activeIndex (и, соответственно, activeSlideIndex) в МОМЕНТ
+  // СТАРТА анимации перехода, не в конце. Если reserve считать от него
+  // напрямую, --tour-bottom-bar-h (а с ней и реальная высота .swiper) на
+  // границах фото/бронь меняется прямо ПОСРЕДИ 420мс свайпа — контейнер
+  // дёргано меняет размер во время анимации ("резкое перелистывание",
+  // Виктор). settledSlideIndex обновляется на transitionEnd — тем же
+  // способом, что и update() ниже, — так что размер контейнера меняется
+  // только когда слайд уже доехал до места.
+  const [settledSlideIndex, setSettledSlideIndex] = useState(0)
   const bottomBarRef = useRef<HTMLDivElement>(null)
 
   // Двухдневные туры (Далат) — маршрут отдельными слайдами по дню, а не
@@ -83,11 +93,21 @@ export function TourPageClient({
 
   // Плашка скрыта на фото (там и так "тыкни"/свайп) и на слайде брони
   // (там уже есть своя кнопка "Добавить в заявку" с ценой, дублировать не
-  // нужно) — см. TourBottomBar ниже. reserve=false на этих же слайдах
-  // отдаёт занимаемую плашкой высоту обратно деке (см. use-bottom-bar-
-  // height-var.ts) — иначе слайд брони обрезался снизу без надобности.
+  // нужно) — см. TourBottomBar ниже (там — от activeSlideIndex, сразу,
+  // это просто fade кнопки и никак не влияет на layout во время свайпа).
   const bottomBarHidden = activeSlideIndex === 0 || activeSlideIndex === bookingSlideIndex
-  useBottomBarHeightVar(bottomBarRef, !bottomBarHidden)
+  // А вот reserve=false (высота деки) — от settledSlideIndex (см. его
+  // определение выше), чтобы не менять размер контейнера посреди анимации.
+  const settledBottomBarHidden = settledSlideIndex === 0 || settledSlideIndex === bookingSlideIndex
+  useBottomBarHeightVar(bottomBarRef, !settledBottomBarHidden)
+
+  // update() тоже привязан к settledSlideIndex, не к самому transitionEnd
+  // напрямую — нужно, чтобы он сработал ПОСЛЕ того, как useLayoutEffect в
+  // useBottomBarHeightVar (выше) уже применил новое значение переменной
+  // (иначе update() посчитает размеры по ещё старой высоте).
+  useEffect(() => {
+    swiperRef.current?.update()
+  }, [settledSlideIndex])
 
   return (
     <>
@@ -124,15 +144,11 @@ export function TourPageClient({
             swiper.slideTo(Number(saved), 0)
           }
           sessionStorage.removeItem(`tour-slide:${tour.slug}`)
-          // Виктор: "переключение отвратительное, верни нормальное
-          // перелистывание" — сломал сам: раньше update() (пересчёт
-          // размеров слайдов после смены reserve у --tour-bottom-bar-h,
-          // см. useBottomBarHeightVar) вызывался в useEffect по
-          // activeSlideIndex, то есть СРАЗУ в начале анимации перехода —
-          // update() посреди 420мс transition дёргал/обрывал саму
-          // анимацию. transitionEnd — тот же пересчёт, но уже после того
-          // как слайд визуально доехал до места, свайп остаётся плавным.
-          swiper.on("transitionEnd", () => swiper.update())
+          // settledSlideIndex обновляется только здесь, на transitionEnd —
+          // см. его определение выше. Не activeIndex сразу (тот меняется
+          // в момент СТАРТА анимации, а не конца).
+          setSettledSlideIndex(swiper.activeIndex)
+          swiper.on("transitionEnd", () => setSettledSlideIndex(swiper.activeIndex))
         }}
         onSlideChange={(index) => {
           sessionStorage.setItem(`tour-slide:${tour.slug}`, String(index))
