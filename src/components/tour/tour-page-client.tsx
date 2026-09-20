@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useBottomBarHeightVar } from "@/hooks/use-bottom-bar-height-var"
 import { isRecentBackNavigation } from "@/lib/navigation"
 import type { Swiper as SwiperType } from "swiper/types"
@@ -54,7 +54,6 @@ export function TourPageClient({
   const swiperRef = useRef<SwiperType | null>(null)
   const [activeSlideIndex, setActiveSlideIndex] = useState(0)
   const bottomBarRef = useRef<HTMLDivElement>(null)
-  useBottomBarHeightVar(bottomBarRef)
 
   // Двухдневные туры (Далат) — маршрут отдельными слайдами по дню, а не
   // колонками side-by-side на одном слайде (Виктор со скриншотом: "в
@@ -81,6 +80,25 @@ export function TourPageClient({
   // (FAQ) — там же из-за этого "обрезалась" страница (деке всё равно
   // вычитала высоту плашки, а сама плашка на FAQ была скрыта).
   const bookingSlideIndex = 1 + itinerarySlides.length + 1
+
+  // Плашка скрыта на фото (там и так "тыкни"/свайп) и на слайде брони
+  // (там уже есть своя кнопка "Добавить в заявку" с ценой, дублировать не
+  // нужно) — см. TourBottomBar ниже. reserve=false на этих же слайдах
+  // отдаёт занимаемую плашкой высоту обратно деке (см. use-bottom-bar-
+  // height-var.ts) — иначе слайд брони обрезался снизу без надобности.
+  const bottomBarHidden = activeSlideIndex === 0 || activeSlideIndex === bookingSlideIndex
+  useBottomBarHeightVar(bottomBarRef, !bottomBarHidden)
+
+  // --tour-bottom-bar-h — CSS-переменная, не React-стейт: смена reserve
+  // меняет реальную высоту .swiper через calc() в className деки, но сам
+  // Swiper меряет и кеширует размеры слайдов один раз и сам не обязательно
+  // узнаёт об этом (тот же класс проблем, что и с схлопыванием тулбара
+  // браузера — см. комментарий у visualViewport в slide-deck.tsx). update()
+  // форсирует пересчёт сразу при переключении на/со слайда, где плашка
+  // скрыта, а не полагается на встроенный ResizeObserver Swiper.
+  useEffect(() => {
+    swiperRef.current?.update()
+  }, [bottomBarHidden])
 
   return (
     <>
@@ -156,19 +174,13 @@ export function TourPageClient({
         ]}
       />
 
-      {/* Виктор: убрать плашку на первом слайде (фото) и на слайде брони —
-          на фото она не нужна (там и так "тыкни"/свайп), на брони под ней
-          уже есть своя кнопка "Добавить в корзину" с ценой, дублировать не
-          нужно. На остальных слайдах (маршрут, что входит, FAQ, отзывы) —
-          оставить. Прячем через opacity, не unmount: TourBottomBar всегда
-          в DOM, чтобы useBottomBarHeightVar не терял ref её элемента (эффект
-          там навешивает ResizeObserver один раз при монтировании) — иначе
-          деке ничего не вычитало бы из высоты, и плашка перекрывала бы
-          последние строчки высоких слайдов ("Что взять с собой" на турах с
-          длинным списком). */}
+      {/* Скрыта opacity, не unmount: TourBottomBar всегда в DOM, чтобы
+          useBottomBarHeightVar не терял ref её элемента (см. bottomBarHidden
+          выше — на этих же слайдах занимаемая ею высота ещё и отдаётся
+          деке обратно, reserve=false). */}
       <TourBottomBar
         barRef={bottomBarRef}
-        hidden={activeSlideIndex === 0 || activeSlideIndex === bookingSlideIndex}
+        hidden={bottomBarHidden}
         priceAdultUsd={priceAdultUsd}
         ctaLabel="Подробнее"
         onCtaClick={() => swiperRef.current?.slideTo(bookingSlideIndex)}

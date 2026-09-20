@@ -11,22 +11,27 @@ import { useLayoutEffect, type RefObject } from "react"
 // вычитает её из своей высоты вместе с хедером — деке физически не хватает
 // места залезть под плашку.
 //
-// useLayoutEffect, не useEffect: слайд маршрута (TourItinerarySlide) сам
-// меряет доступную высоту в СВОЁМ useEffect, чтобы растянуть отступы между
-// пунктами на весь экран (см. growGapPx там). Обычный useEffect этого
-// компонента иногда срабатывал ПОЗЖЕ — маршрут успевал измерить высоту ДО
-// того, как здесь применялась реальная высота плашки (React не гарантирует
-// порядок между independent useEffect на разных компонентах), из-за чего
-// отступы то растягивались, то схлопывались "через раз", особенно при
-// возврате на тур кнопкой "назад" (слайд уже активен с первого кадра, а не
-// после того как пользователь долистает до него сам). useLayoutEffect
-// гарантированно отрабатывает ДО любого useEffect в дереве (React сначала
-// прогоняет ВСЕ layout-эффекты, потом красит кадр, потом ВСЕ обычные) —
-// маршрут увидит уже правильную высоту при первом же измерении.
-export function useBottomBarHeightVar(ref: RefObject<HTMLElement | null>) {
+// useLayoutEffect, не useEffect — отрабатывает ДО любого обычного useEffect
+// в дереве, так что другие компоненты, читающие эту CSS-переменную при
+// монтировании, всегда видят уже актуальное значение, а не дефолт.
+//
+// reserve: false — на слайдах, где сама плашка скрыта (фото, бронь —
+// см. tour-page-client.tsx), высота под неё всё равно вычиталась из ВСЕЙ
+// деки (общая для всех слайдов), хотя перекрывать там нечего — контент
+// слайда брони на маленьких экранах не помещался и обрезался снизу,
+// заставляя лишний раз скроллить (Виктор: "убери зарезервированный блок,
+// сделай весь экран доступным для контента"). Когда reserve=false, ставим
+// переменную в 0 — дека получает физически больше места на ИМЕННО этом
+// слайде, а на слайдах, где плашка видна, переменная возвращается к
+// реальной высоте.
+export function useBottomBarHeightVar(ref: RefObject<HTMLElement | null>, reserve: boolean) {
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
+    if (!reserve) {
+      document.documentElement.style.setProperty("--tour-bottom-bar-h", "0px")
+      return
+    }
     const update = () => {
       document.documentElement.style.setProperty("--tour-bottom-bar-h", `${el.getBoundingClientRect().height}px`)
     }
@@ -34,5 +39,5 @@ export function useBottomBarHeightVar(ref: RefObject<HTMLElement | null>) {
     const observer = new ResizeObserver(update)
     observer.observe(el)
     return () => observer.disconnect()
-  }, [ref])
+  }, [ref, reserve])
 }
