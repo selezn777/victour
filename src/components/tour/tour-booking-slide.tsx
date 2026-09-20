@@ -1,6 +1,7 @@
 "use client"
 
-import { useMemo, useRef, useState, type TouchEvent as ReactTouchEvent } from "react"
+import { useEffect, useMemo, useRef, useState, type TouchEvent as ReactTouchEvent } from "react"
+import { createPortal } from "react-dom"
 import { sendGAEvent } from "@next/third-parties/google"
 import { CheckIcon, MinusIcon, PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -78,6 +79,19 @@ export function TourBookingSlide({
   const [error, setError] = useState<string | null>(null)
   const [profileGuide, setProfileGuide] = useState<{ id: string; name: string } | null>(null)
   const [profileSheetOpen, setProfileSheetOpen] = useState(false)
+
+  // Fixed-футер рендерим через портал в document.body (не просто
+  // position: fixed на месте) — слайд лежит внутри Swiper, а тот двигает
+  // .swiper-wrapper через transform для анимации перехода между слайдами;
+  // transform на предке превращает его в containing block для fixed-
+  // потомков (стандартное поведение CSS), и "fixed" внутри слайда на деле
+  // становится fixed ОТНОСИТЕЛЬНО ЭТОГО ПРЕДКА, а не окна — кнопку
+  // обрезало собственным overflow:hidden Swiper'а, снаружи её не было
+  // видно вообще. document.body — вне дерева Swiper, проблема не
+  // возникает. mounted — портал нельзя рендерить на сервере (document
+  // недоступен при SSR).
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const startYRef = useRef(0)
@@ -290,45 +304,49 @@ export function TourBookingSlide({
         </div>
       </div>
 
-      {/* Fixed-футер, не часть флекс-колонки слайда — занимает ровно ту
-          же зарезервированную под TourBottomBar зону внизу экрана (та же
+      {/* Fixed-футер — рендерим порталом в document.body (см. комментарий
+          у mounted выше), а не на месте: занимает ровно ту же
+          зарезервированную под TourBottomBar зону внизу экрана (та же
           высота, тот же стиль), не отжирая место у прокручиваемого
           контента выше. Виден только пока слайд брони активен. */}
-      {isActive && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80">
-          <div className="mx-auto max-w-md px-4 py-3 sm:px-11">
-            {/* После успешного добавления кнопка сама показывает, что
-                нажимать второй раз не нужно (галочка + приглушённый
-                secondary вместо яркого primary) — раньше под кнопкой ещё
-                был текст-подтверждение "Добавлено в заявку: ...", Виктор
-                попросил убрать текст и сделать понятным через саму
-                кнопку. */}
-            <Button
-              type="button"
-              size="lg"
-              variant={addedToPackage ? "secondary" : "default"}
-              className="w-full"
-              disabled={!guide || !selectedDate}
-              onClick={handleSubmit}
-            >
-              {addedToPackage ? (
-                <span className="flex items-center gap-2">
-                  <CheckIcon className="size-5" />
-                  Добавлено в заявку
-                </span>
-              ) : (
-                "Добавить в заявку"
-              )}
-            </Button>
+      {isActive &&
+        mounted &&
+        createPortal(
+          <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80">
+            <div className="mx-auto max-w-md px-4 py-3 sm:px-11">
+              {/* После успешного добавления кнопка сама показывает, что
+                  нажимать второй раз не нужно (галочка + приглушённый
+                  secondary вместо яркого primary) — раньше под кнопкой ещё
+                  был текст-подтверждение "Добавлено в заявку: ...", Виктор
+                  попросил убрать текст и сделать понятным через саму
+                  кнопку. */}
+              <Button
+                type="button"
+                size="lg"
+                variant={addedToPackage ? "secondary" : "default"}
+                className="w-full"
+                disabled={!guide || !selectedDate}
+                onClick={handleSubmit}
+              >
+                {addedToPackage ? (
+                  <span className="flex items-center gap-2">
+                    <CheckIcon className="size-5" />
+                    Добавлено в заявку
+                  </span>
+                ) : (
+                  "Добавить в заявку"
+                )}
+              </Button>
 
-            {error && (
-              <p className="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {error}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
+              {error && (
+                <p className="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {error}
+                </p>
+              )}
+            </div>
+          </div>,
+          document.body,
+        )}
 
       {profileGuide && (
         <GuideProfileSheet
