@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState, type TouchEvent as ReactTouchEvent } from "react"
 import { sendGAEvent } from "@next/third-parties/google"
 import { CheckIcon, MinusIcon, PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -56,6 +56,29 @@ export function TourBookingSlide({
   const [error, setError] = useState<string | null>(null)
   const [profileGuide, setProfileGuide] = useState<{ id: string; name: string } | null>(null)
   const [profileSheetOpen, setProfileSheetOpen] = useState(false)
+
+  // Выбор гида после даты добавляет блок "Гид на эту дату" — контент
+  // может стать выше экрана, и кнопка "Добавить в заявку" уезжает вниз.
+  // Голый overflow-y-auto тут не скроллился на телефоне (тот же конфликт
+  // с вертикальным Swiper'ом колоды, что уже чинили в tour-faq-slide.tsx/
+  // tour-reviews-slide.tsx/tour-includes-slide.tsx) — тот же touch-перехват.
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const startYRef = useRef(0)
+
+  function onTouchStart(e: ReactTouchEvent) {
+    startYRef.current = e.touches[0].clientY
+  }
+  function onTouchMove(e: ReactTouchEvent) {
+    const el = scrollRef.current
+    if (!el) return
+    const draggingDown = e.touches[0].clientY - startYRef.current > 0
+    const atTop = el.scrollTop <= 0
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
+    const releaseToSwiper = (atTop && draggingDown) || (atBottom && !draggingDown)
+    if (!releaseToSwiper) {
+      e.stopPropagation()
+    }
+  }
 
   const commonBookedDates = useMemo(() => {
     const otherItemDates = datesUsedByOtherItems(items, tour.slug)
@@ -128,7 +151,12 @@ export function TourBookingSlide({
   }
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-4 pb-4 sm:px-11 sm:pt-7">
+    <div
+      ref={scrollRef}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      className="flex h-full w-full flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-4 pb-4 sm:px-11 sm:pt-7"
+    >
       <div className="w-full max-w-md">
         <h2 className="text-center font-heading text-xl leading-[1.15] font-semibold sm:text-3xl">
           Дата и бронь
