@@ -5,6 +5,7 @@ import { getArticleBySlug } from "@/lib/articles-data"
 import { getTourOptions } from "@/lib/reviews-data"
 import { destinationLabel } from "@/lib/article-destinations"
 import { ArticleBody } from "@/components/article-body"
+import { ArticleBackLink } from "@/components/article-back-link"
 import { Button } from "@/components/ui/button"
 
 export async function generateMetadata({
@@ -30,9 +31,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
-      <Link href="/blog" className="text-sm text-muted-foreground hover:underline">
-        ← Все статьи
-      </Link>
+      <ArticleBackLink />
 
       <span className="mt-4 block text-xs font-medium text-primary">
         {destinationLabel(article.destination)}
