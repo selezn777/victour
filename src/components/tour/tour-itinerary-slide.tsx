@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { ChevronRightIcon } from "lucide-react"
 import type { ItineraryItem } from "@/lib/site-data"
 import { splitHighlights } from "@/lib/itinerary-highlights"
@@ -75,104 +75,18 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
   const dayItems = itinerary.filter((i) => i.day === day)
   const openItem = openIndex != null ? dayItems[openIndex] : null
 
-  // Виктор: у коротких маршрутов (7 пунктов вместо 8) список сбивается в
-  // кучу вверху, а снизу пустует до самой плашки с ценой — просил
-  // растянуть пункты вниз "до плашки с ценой", через JS (не CSS), чтобы
-  // одинаково надёжно работало на любом устройстве/высоте экрана (тот же
-  // принцип, что и visualViewport в slide-deck.tsx — не полагаться на
-  // статичную раскладку, мерить реальную доступную высоту в рантайме).
-  // Меряем натуральную высоту списка (компактный gap) и доступную высоту
-  // контейнера — если есть запас, добавляем его как ДОПОЛНИТЕЛЬНЫЙ gap
-  // между пунктами (не через justify-content: space-between — тот
-  // требует, чтобы <ol> сам имел фиксированную высоту контейнера, что
-  // плодит собственные проблемы измерения).
-  const listRef = useRef<HTMLOListElement>(null)
-  const [growGapPx, setGrowGapPx] = useState<number | null>(null)
-  useEffect(() => {
-    const ol = listRef.current
-    const container = ol?.parentElement
-    if (!ol || !container) return
-
-    function recalc() {
-      if (!ol || !container) return
-      ol.style.rowGap = "" // сброс инлайна — меряем натуральную (компактную) высоту
-      const baseGap = parseFloat(getComputedStyle(ol).rowGap) || 0
-      const naturalHeight = ol.scrollHeight
-      const available = container.clientHeight
-      if (dayItems.length > 1 && available > naturalHeight) {
-        const extra = (available - naturalHeight) / (dayItems.length - 1)
-        setGrowGapPx(baseGap + extra)
-      } else {
-        setGrowGapPx(null)
-      }
-    }
-
-    // Виктор: "то нормально растягивается, то нет" — нестабильно от захода
-    // к заходу. Причина: первый рендер меряет высоту текста ДО того, как
-    // догрузится кастомный шрифт (Unbounded/Inter) — до этого браузер
-    // рисует системным фолбэком с другим line-height, и расчёт уезжает.
-    // Разница проявляется только когда шрифт ещё не в кэше — отсюда
-    // "через раз". document.fonts.ready пересчитывает после реальной
-    // загрузки. ResizeObserver слушает КОНТЕЙНЕР (не сам <ol>) — если бы
-    // слушали список, инлайновый rowGap, который мы сами же меняем,
-    // спровоцировал бы ResizeObserver сам на себя (бесконечный цикл).
-    //
-    // Второй источник той же нестабильности (Виктор: слайд ломается именно
-    // при возврате кнопкой "назад", а не при обычном первом заходе) —
-    // порядок эффектов: `container` берёт свою высоту из --tour-bottom-bar-h
-    // (см. useBottomBarHeightVar), а этот useEffect тут мог отработать
-    // РАНЬШЕ, чем TourBottomBar успевал измерить и применить реальную
-    // высоту плашки — тогда available считался по ещё не применённому
-    // (дефолтному) значению переменной. При обычном заходе пользователь
-    // долистывает до этого слайда не мгновенно, так что переменная почти
-    // всегда успевает — а при restore-через-history slideTo(index, 0)
-    // происходит сразу на первом кадре, гонку видно чаще. Исправлено в
-    // самом источнике (useBottomBarHeightVar/useHeaderHeightVar теперь на
-    // useLayoutEffect, который гарантированно отрабатывает раньше ЛЮБОГО
-    // useEffect в дереве) — оставляю это здесь как контекст, не как фикс.
-    recalc()
-    document.fonts?.ready.then(recalc).catch(() => {})
-    const ro = new ResizeObserver(recalc)
-    ro.observe(container)
-
-    // Виктор: и после useLayoutEffect-фикса выше всё равно "попадает в
-    // старый паттерн" именно по кнопке "назад" — это отдельный механизм:
-    // bfcache браузера. При навигации назад/вперёд между СТРАНИЦАМИ (не
-    // слайдами колоды) мобильный Chrome может не выполнять JS заново
-    // вообще, а мгновенно показать ЗАМОРОЖЕННЫЙ DOM таким, каким он был
-    // в момент ухода со страницы — если пользователь успел уйти ДО того,
-    // как growGapPx досчитался (быстрый переход, что на телефоне обычное
-    // дело), с bfcache вернётся именно этот недосчитанный снимок, и ни один
-    // из useEffect/ResizeObserver выше просто не перезапустится (страница
-    // не перемонтируется, а размораживается как есть). pageshow с
-    // event.persisted — единственный сигнал, что произошло именно это.
-    function onPageShow(e: PageTransitionEvent) {
-      if (e.persisted) recalc()
-    }
-    window.addEventListener("pageshow", onPageShow)
-
-    // Ни один из фиксов выше не добил race до конца — на реальном
-    // телефоне Виктора при быстром "туда и сразу назад" (меньше 2 секунд)
-    // отступы всё равно оставались чуть уже, чем при обычном заходе
-    // (проверено вручную: available после такого возврата стабильно на
-    // несколько px меньше, чем на чистой загрузке). Явную причину этих
-    // оставшихся пары кадров race найти не удалось — вместо очередной
-    // точечной гипотезы бьём тупо, но надёжно: пересчитываем ещё
-    // несколько кадров подряд после маунта, чтобы поймать ЛЮБОЕ позднее
-    // изменение доступной высоты, откуда бы оно ни пришло.
-    let rafCount = 0
-    let rafId = requestAnimationFrame(function rafRecalc() {
-      recalc()
-      rafCount += 1
-      if (rafCount < 10) rafId = requestAnimationFrame(rafRecalc)
-    })
-
-    return () => {
-      ro.disconnect()
-      window.removeEventListener("pageshow", onPageShow)
-      cancelAnimationFrame(rafId)
-    }
-  }, [dayItems.length])
+  // Виктор: у коротких маршрутов список сбивался в кучу вверху, а снизу
+  // пустовало до самой плашки с ценой — нужно, чтобы пункты равномерно
+  // распределялись по всей высоте слайда. Раньше это считалось в JS
+  // (измерение natural/available высоты через ResizeObserver) — тройная
+  // гонка с другими эффектами (высота хедера/нижней плашки, шрифты,
+  // bfcache/restore при возврате "назад") так и не была добита надёжно
+  // до конца ни одним из точечных фиксов. Убрано целиком: чистый
+  // flexbox — `<ol>` растянут на всю высоту родителя (h-full) и сам
+  // распределяет пункты через justify-between, `gap` держит минимальный
+  // отступ, если пунктов много и им не хватает места. Это пересчитывается
+  // браузером на каждом рендере/ресайзе сам по себе — никакой JS-гонки
+  // с другими эффектами в принципе не может быть.
 
   // Виктор: системная кнопка "назад" уводила со страницы тура вместо
   // закрытия шита с фото локации. Пока шит открыт — держим лишнюю запись
@@ -195,11 +109,7 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
           без подписи — "непонятно, что это" — вернул текст "Подробнее" в
           стиле общих кнопок сайта (Button variant=outline), прижата к
           правому краю. */}
-      <ol
-        ref={listRef}
-        className="flex flex-col gap-2 pb-2 sm:gap-2.5"
-        style={growGapPx != null ? { rowGap: `${growGapPx}px` } : undefined}
-      >
+      <ol className="flex h-full flex-col justify-between gap-2 pb-2 sm:gap-2.5">
         {dayItems.map((item, index) => (
           <li key={item.title} className="flex gap-2 text-left">
             {/* Виктор: "цифры надо сделать ярким цветом" — было bg-muted/text-muted-foreground (серое). */}
