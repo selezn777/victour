@@ -37,8 +37,9 @@ export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
           <Swiper
             modules={[Pagination]}
             pagination={{ clickable: true, el: ".tour-photo-slide-pagination" }}
+            loop={photos.length > 1}
             onSwiper={(swiper: SwiperType) => (swiperRef.current = swiper)}
-            onSlideChange={(swiper: SwiperType) => setActive(swiper.activeIndex)}
+            onSlideChange={(swiper: SwiperType) => setActive(swiper.realIndex)}
             allowTouchMove={false}
             className="h-full w-full"
           >
