@@ -36,23 +36,28 @@ function isGuideFreeOnDate(guide: TourGuide, date: string, durationDays: number)
 // кто на неё свободен.
 //
 // Кнопка "Добавить в заявку" уезжала за экран после выбора даты (блок
-// "Гид на эту дату" добавляет высоты) — четыре попытки почини́ть это через
-// скролл/сжатие всего блока не дали стабильного результата на реальных
-// телефонах (то, что помещалось в моих тестах, не помещалось у Виктора —
-// разная высота вьюпорта/масштаб шрифта). Вместо очередной попытки
-// подогнать высоту — структурное решение: кнопка теперь в своём
-// отдельном, никогда не сжимаемом футере (shrink-0) ВНЕ прокручиваемой
-// области. Она физически не может уехать за экран, что бы ни показывалось
-// выше. Прокручиваемая часть (календарь/гид/гости/цена) — обычный
-// overflow-y-auto с touch-перехватом (тот же приём, что в
-// tour-faq-slide.tsx), чтобы редко, но при необходимости можно было
-// докрутить и её пальцем на телефоне.
+// "Гид на эту дату" добавляет высоты). Пробовали touch-скролл, потом
+// zoom-сжатие, потом shrink-0 футер внутри слайда — не помогало, потому
+// что настоящая причина глубже: дека вычитает --tour-bottom-bar-h из
+// своей высоты ВЕЗДЕ (чтобы TourBottomBar не перекрывал слайды), но на
+// слайде брони этот бар всё равно скрыт (opacity-0) — а места под него
+// дека всё равно не отдаёт, получается голая чёрная зона внизу экрана,
+// в которую слайд не может залезть (Виктор это и заметил: "застолбили
+// место под кнопку, которую убрали"). Раз это место не используется —
+// отдаём его СОБСТВЕННОМУ футеру брони: тот же fixed-приём, что и у
+// TourBottomBar (см. tour-bottom-bar.tsx), но свой, показывается только
+// пока слайд брони активен (isActive) — занимает ровно ту же
+// зарезервированную зону, а не отжирает высоту у самого слайда, поэтому
+// прокручиваемая часть (календарь/гид/гости/цена) получает себе весь
+// h-full слайда целиком и в подавляющем большинстве случаев помещается
+// без скролла вообще.
 export function TourBookingSlide({
   tour,
   guides,
   guestCount,
   onGuestCountChange,
   onSubmitted,
+  isActive,
 }: {
   tour: TourDetail
   guides: TourGuide[]
@@ -61,6 +66,10 @@ export function TourBookingSlide({
   /** Вызывается после успешного добавления в заявку — родитель может,
    * например, показать плашку/переключить слайд. */
   onSubmitted?: () => void
+  /** Кнопка отправки — fixed-футер в зоне TourBottomBar, показывается
+   * только пока этот слайд активен (иначе будет видна поверх других
+   * слайдов колоды). */
+  isActive: boolean
 }) {
   const { items, addItem } = usePackage()
   const [guideId, setGuideId] = useState<string | null>(null)
@@ -159,12 +168,12 @@ export function TourBookingSlide({
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-md flex-col overflow-hidden px-4 pt-4 pb-4 sm:px-11 sm:pt-7">
+    <div className="h-full w-full overflow-hidden px-4 pt-4 pb-4 sm:px-11 sm:pt-7">
       <div
         ref={scrollRef}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
-        className="no-scrollbar min-h-0 flex-1 overflow-y-auto"
+        className="no-scrollbar mx-auto h-full w-full max-w-md overflow-y-auto pb-4"
       >
         <h2 className="text-center font-heading text-xl leading-[1.15] font-semibold sm:text-3xl">
           Дата и бронь
@@ -281,38 +290,45 @@ export function TourBookingSlide({
         </div>
       </div>
 
-      {/* Футер вне прокручиваемой области — shrink-0 гарантирует, что
-          кнопка всегда в кадре, независимо от высоты контента выше. */}
-      <div className="shrink-0 pt-3">
-        {/* После успешного добавления кнопка сама показывает, что нажимать
-            второй раз не нужно (галочка + приглушённый secondary вместо
-            яркого primary) — раньше под кнопкой ещё был текст-подтверждение
-            "Добавлено в заявку: ...", Виктор попросил убрать текст и сделать
-            понятным через саму кнопку. */}
-        <Button
-          type="button"
-          size="lg"
-          variant={addedToPackage ? "secondary" : "default"}
-          className="w-full"
-          disabled={!guide || !selectedDate}
-          onClick={handleSubmit}
-        >
-          {addedToPackage ? (
-            <span className="flex items-center gap-2">
-              <CheckIcon className="size-5" />
-              Добавлено в заявку
-            </span>
-          ) : (
-            "Добавить в заявку"
-          )}
-        </Button>
+      {/* Fixed-футер, не часть флекс-колонки слайда — занимает ровно ту
+          же зарезервированную под TourBottomBar зону внизу экрана (та же
+          высота, тот же стиль), не отжирая место у прокручиваемого
+          контента выше. Виден только пока слайд брони активен. */}
+      {isActive && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80">
+          <div className="mx-auto max-w-md px-4 py-3 sm:px-11">
+            {/* После успешного добавления кнопка сама показывает, что
+                нажимать второй раз не нужно (галочка + приглушённый
+                secondary вместо яркого primary) — раньше под кнопкой ещё
+                был текст-подтверждение "Добавлено в заявку: ...", Виктор
+                попросил убрать текст и сделать понятным через саму
+                кнопку. */}
+            <Button
+              type="button"
+              size="lg"
+              variant={addedToPackage ? "secondary" : "default"}
+              className="w-full"
+              disabled={!guide || !selectedDate}
+              onClick={handleSubmit}
+            >
+              {addedToPackage ? (
+                <span className="flex items-center gap-2">
+                  <CheckIcon className="size-5" />
+                  Добавлено в заявку
+                </span>
+              ) : (
+                "Добавить в заявку"
+              )}
+            </Button>
 
-        {error && (
-          <p className="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {error}
-          </p>
-        )}
-      </div>
+            {error && (
+              <p className="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {error}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {profileGuide && (
         <GuideProfileSheet
