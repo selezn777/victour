@@ -18,6 +18,13 @@ function formatDate(iso: string): string {
 // Донастройка (дата/гости по каждому туру, доплаты, форма) остаётся на
 // /request — там это уже полноценно сделано; здесь только быстрый обзор +
 // удаление позиции, чтобы не дублировать календарь внутри шторки.
+//
+// data-cart-trigger — Виктор: "не совсем очевидно куда нажимать дальше"
+// после "Добавить в заявку", нужно анимацией показать, куда смотреть.
+// TourBookingSlide (flyToCart) ищет этот атрибут через querySelector,
+// чтобы долететь именно до этой иконки — компоненты не связаны напрямую
+// (разные части шапки/страницы тура), общий стейт под одноразовую
+// анимацию заводить избыточно.
 export function CartDrawer() {
   const { items, removeItem } = usePackage()
 
@@ -26,7 +33,14 @@ export function CartDrawer() {
   return (
     <Sheet>
       <SheetTrigger
-        render={<Button variant="ghost" size="icon" aria-label={`Заявка: ${items.length} тур(а)`} />}
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={`Заявка: ${items.length} тур(а)`}
+            data-cart-trigger
+          />
+        }
       >
         <span className="relative">
           <ShoppingBagIcon className="size-6" />

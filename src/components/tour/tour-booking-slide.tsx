@@ -11,6 +11,58 @@ import { datesUsedByOtherItems, usePackage } from "@/hooks/use-package"
 import type { TourDetail, TourGuide } from "@/lib/site-data"
 import { cn } from "@/lib/utils"
 
+// Виктор: "не совсем очевидно куда нажимать дальше" после "Добавить в
+// заявку" — нужна анимация, которая физически показывает, куда смотреть
+// (иконка корзины в шапке). Чистый DOM, не React-стейт: кнопка и корзина
+// живут в РАЗНЫХ компонентах (TourBookingSlide и TourHeader/CartDrawer),
+// а сама анимация одноразовая и не должна переживать ре-рендеры — заводить
+// под неё общий стейт/контекст ради одного полёта шарика избыточно.
+// Двойной requestAnimationFrame перед поиском корзины — если это ПЕРВЫЙ
+// тур в заявке, иконка корзины ДО этого клика не существовала в DOM
+// (CartDrawer рендерит null при пустой заявке) и появляется только
+// после ре-рендера шапки, которому нужен хотя бы один кадр.
+function flyToCart(buttonEl: HTMLElement) {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const cartEl = document.querySelector<HTMLElement>("[data-cart-trigger]")
+      if (!cartEl) return
+      const from = buttonEl.getBoundingClientRect()
+      const to = cartEl.getBoundingClientRect()
+      const ball = document.createElement("div")
+      ball.textContent = "+1"
+      ball.setAttribute("aria-hidden", "true")
+      ball.style.cssText = `
+        position: fixed;
+        left: ${from.left + from.width / 2 - 15}px;
+        top: ${from.top + from.height / 2 - 15}px;
+        width: 30px;
+        height: 30px;
+        border-radius: 9999px;
+        background: var(--color-primary);
+        color: var(--color-primary-foreground);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: inherit;
+        z-index: 100;
+        pointer-events: none;
+        will-change: transform, opacity;
+        transition: transform 700ms cubic-bezier(0.34, 0.8, 0.6, 1), opacity 700ms ease-in 250ms;
+      `
+      document.body.appendChild(ball)
+      const dx = to.left + to.width / 2 - (from.left + from.width / 2)
+      const dy = to.top + to.height / 2 - (from.top + from.height / 2)
+      requestAnimationFrame(() => {
+        ball.style.transform = `translate(${dx}px, ${dy}px) scale(0.15)`
+        ball.style.opacity = "0"
+      })
+      setTimeout(() => ball.remove(), 750)
+    })
+  })
+}
+
 function isoDatePlusOne(iso: string): string {
   const d = new Date(`${iso}T00:00:00`)
   d.setDate(d.getDate() + 1)
@@ -125,7 +177,7 @@ export function TourBookingSlide({
     })
   }
 
-  function handleSubmit() {
+  function handleSubmit(buttonEl: HTMLElement) {
     if (!guide || !selectedDate) return
     const result = addItem({
       tourId: tour.id,
@@ -145,6 +197,7 @@ export function TourBookingSlide({
     setError(null)
     setAddedToPackage(true)
     onSubmitted?.()
+    flyToCart(buttonEl)
     sendGAEvent("event", "add_to_package", {
       tour_slug: tour.slug,
       tour_title: tour.title,
@@ -302,7 +355,7 @@ export function TourBookingSlide({
           variant={addedToPackage ? "secondary" : "default"}
           className="mt-3 w-full"
           disabled={!guide || !selectedDate}
-          onClick={handleSubmit}
+          onClick={(e) => handleSubmit(e.currentTarget)}
         >
           {addedToPackage ? (
             <span className="flex items-center gap-2">
