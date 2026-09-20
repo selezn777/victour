@@ -16,6 +16,7 @@ const STACK_TRANSFORM = [
   "translate(-20px, -18px) rotate(5deg) scale(0.82)",
   "translate(34px, -8px) rotate(-9deg) scale(0.78)",
   "translate(-10px, 34px) rotate(4deg) scale(0.74)",
+  "translate(18px, 20px) rotate(-5deg) scale(0.7)",
 ]
 
 // Откуда каждая карточка "падает", ПО ПОЗИЦИИ (как STACK_TRANSFORM). Первая
@@ -33,17 +34,17 @@ const STACK_DROP_FROM = [
   "translate(-20px, -58px) rotate(5deg) scale(1.32)",
   "translate(34px, -48px) rotate(-9deg) scale(1.28)",
   "translate(-10px, -6px) rotate(4deg) scale(1.24)",
+  "translate(18px, -20px) rotate(-5deg) scale(1.2)",
 ]
 
-// Задержка между "падениями" фото при появлении — должна быть заметной
-// (Виктор: "эффект от падения я так и не увидел" — раньше было 280мс).
-// Ускорена уже четырежды (1080→920→650→450→300). Виктор: "видно только 3
-// фото, надо чтобы все 7 выпадывали по очереди, просто очень быстро" —
-// парами (см. ниже) при 300мс задние карточки успевали почти полностью
-// скрыться под передними ДО того, как падение вообще стало заметно;
-// вернул падение ПО ОДНОЙ (не парами) и ускорил ещё — 300→130, так все 7
-// отдельных падений видны, но вся серия укладывается меньше чем в секунду.
-const DROP_STAGGER_MS = 130
+// Задержка между "падениями" фото при появлении. История: 1080→920→
+// 650→450→300 (Виктор торопил), затем перешли на падение ПО ОДНОЙ и
+// ускорили до 130 (парами задние карточки прятались под передними
+// раньше, чем падение становилось заметно) — но по одной, да ещё так
+// быстро, оказалось хуже: "укачивает". Вернул падение СТОПКАМИ (пара за
+// раз — при 8 фото ровно 4 этапа, как попросил Виктор), интервал
+// умеренный, не быстрый и не по одной.
+const DROP_STAGGER_MS = 280
 // Пауза перед появлением ПЕРВОГО фото — Виктор: "открытие фото делаем чуть
 // быстрее, особенно первой" (300 -> 150 -> 80 -> 50).
 const DROP_INITIAL_DELAY_MS = 50
@@ -77,9 +78,9 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
         startedRef.current = true
         // Порядок появления — от самого нижнего слоя к самому верхнему,
         // имитирует реальную стопку: сначала легла нижняя карточка, потом
-        // на неё следующая. По одной, не парами (см. DROP_STAGGER_MS) —
-        // при парном падении задние карточки скрывались под передними
-        // раньше, чем падение вообще успевало стать заметным.
+        // на неё следующая. Стопками по 2 (Math.floor(order / 2) — обе
+        // карточки пары получают одну и ту же задержку) — при 8 фото это
+        // ровно 4 этапа падения, как попросил Виктор.
         const byDepth = photos.map((_, i) => i).sort((a, b) => positions[b] - positions[a])
         byDepth.forEach((photoIndex, order) => {
           setTimeout(
@@ -90,7 +91,7 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
                 return next
               })
             },
-            DROP_INITIAL_DELAY_MS + order * DROP_STAGGER_MS,
+            DROP_INITIAL_DELAY_MS + Math.floor(order / 2) * DROP_STAGGER_MS,
           )
         })
       },
@@ -159,7 +160,7 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
         // просто маячит статично. Пропадает после первого тапа (см. tapped).
         <div
           aria-hidden
-          className="cta-invite-pulse pointer-events-none absolute top-1/2 left-1/2 z-30 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-5 py-2.5 text-base font-bold text-primary-foreground shadow-lg sm:px-6 sm:py-3 sm:text-lg"
+          className="cta-invite-pulse pointer-events-none absolute top-[58%] left-1/2 z-30 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-5 py-2.5 text-base font-bold text-primary-foreground shadow-lg sm:px-6 sm:py-3 sm:text-lg"
         >
           нажми
         </div>
