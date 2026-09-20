@@ -31,7 +31,10 @@ export function TourIncludesSlide({
   useShrinkToFit(containerRef, contentRef, [includes, packingItems])
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden px-4 py-6 sm:px-11">
+    // pb-[calc(...+var(--tour-bottom-bar-h))] — резервирует место под
+    // видимую на этом слайде нижнюю плашку сам слайд (высота деки — общая
+    // константа на всех слайдах, см. tour-page-client.tsx).
+    <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-6 pb-[calc(1.5rem+var(--tour-bottom-bar-h))] sm:px-11">
       {/* Мобила — одна колонка, сжимается целиком, чтобы гарантированно
           поместиться без скролла и без свайпа. */}
       <div ref={containerRef} className="flex min-h-0 flex-1 items-center justify-center overflow-hidden sm:hidden">

@@ -78,7 +78,10 @@ export function TourFaqSlide({
   }
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-6 pb-6 sm:px-11 sm:pt-9">
+    // pb-[calc(...+var(--tour-bottom-bar-h))] — резервирует место под
+    // видимую на этом слайде нижнюю плашку сам слайд (высота деки — общая
+    // константа на всех слайдах, см. tour-page-client.tsx).
+    <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-6 pb-[calc(1.5rem+var(--tour-bottom-bar-h))] sm:px-11 sm:pt-9">
       <div className="flex items-center justify-between gap-3">
         <h2 className="font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           Вопросы и ответы

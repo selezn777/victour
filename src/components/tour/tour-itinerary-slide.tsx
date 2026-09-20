@@ -46,7 +46,14 @@ export function TourItinerarySlide({
   dayLabel?: string
 }) {
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-6 pb-6 sm:px-11 sm:pt-9">
+    // pb-[calc(...+var(--tour-bottom-bar-h))] — резервирует место под
+    // ВИДИМУЮ на этом слайде нижнюю плашку САМ слайд, а не общая высота
+    // деки (та теперь константа на всех слайдах — см. tour-page-client.tsx,
+    // use-bottom-bar-height-var.ts): Swiper никогда не пересчитывает
+    // размеры при переключении, а видимое "дёрганье" при смене слайдов
+    // (три фикса подряд не добили это через тайминг пересчёта) исключено
+    // структурно.
+    <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-6 pb-[calc(1.5rem+var(--tour-bottom-bar-h))] sm:px-11 sm:pt-9">
       <h2 className="text-center font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
         Маршрут{dayLabel && <span className="text-primary"> — {dayLabel}</span>}
       </h2>

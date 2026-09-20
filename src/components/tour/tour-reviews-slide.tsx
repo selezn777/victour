@@ -58,7 +58,10 @@ export function TourReviewsSlide({
   }
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-6 pb-6 sm:px-11 sm:pt-9">
+    // pb-[calc(...+var(--tour-bottom-bar-h))] — резервирует место под
+    // видимую на этом слайде нижнюю плашку сам слайд (высота деки — общая
+    // константа на всех слайдах, см. tour-page-client.tsx).
+    <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-6 pb-[calc(1.5rem+var(--tour-bottom-bar-h))] sm:px-11 sm:pt-9">
       <div
         ref={scrollRef}
         onTouchStart={onTouchStart}
