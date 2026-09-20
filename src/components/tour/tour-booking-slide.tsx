@@ -185,11 +185,16 @@ export function TourBookingSlide({
             случай крупного системного шрифта на телефоне: кнопка
             "Подробнее" не резиновая (без truncate), при нехватке места
             переносится на вторую строку внутри плашки, а не толкает саму
-            плашку за экран. Без overflow-hidden на этом же div — он
-            комбинируется с ring (box-shadow) у выбранного гида и даёт
-            визуальные артефакты по скруглённым углам на некоторых
-            устройствах (Виктор: "притягивается к углам"); flex-wrap сам
-            по себе уже не даёт содержимому вылезти за рамки плашки. */}
+            плашку за экран.
+            Подсветка выбранного гида — border, а не ring (box-shadow):
+            Виктор трижды присылал скрин с "пропаданиями по углам" у этой
+            плашки, которые не воспроизводились ни на одном устройстве под
+            рукой — box-shadow на скруглённом углу способен давать
+            edge-case субпиксельные артефакты на некоторых мобильных GPU,
+            которых у border в принципе не бывает (обычная заливка формы,
+            не отдельный слой поверх). border-2 border-transparent всегда
+            в разметке (не только когда выбран) — иначе граница появлялась
+            бы ПОСЛЕ рендера и на миг сдвигала бы контент на 2px. */}
         {selectedDate && (
           <div className="mt-3 space-y-2">
             <span className="text-sm font-medium text-muted-foreground">Гид на эту дату</span>
@@ -197,8 +202,8 @@ export function TourBookingSlide({
               <div
                 key={g.id}
                 className={cn(
-                  "flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl bg-primary/5 px-4 py-2.5 transition-colors",
-                  g.id === guideId && "ring-1 ring-primary",
+                  "flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl border-2 border-transparent bg-primary/5 px-4 py-2.5 transition-colors",
+                  g.id === guideId && "border-primary",
                 )}
               >
                 <button
