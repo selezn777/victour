@@ -134,7 +134,27 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
     document.fonts?.ready.then(recalc).catch(() => {})
     const ro = new ResizeObserver(recalc)
     ro.observe(container)
-    return () => ro.disconnect()
+
+    // Виктор: и после useLayoutEffect-фикса выше всё равно "попадает в
+    // старый паттерн" именно по кнопке "назад" — это отдельный механизм:
+    // bfcache браузера. При навигации назад/вперёд между СТРАНИЦАМИ (не
+    // слайдами колоды) мобильный Chrome может не выполнять JS заново
+    // вообще, а мгновенно показать ЗАМОРОЖЕННЫЙ DOM таким, каким он был
+    // в момент ухода со страницы — если пользователь успел уйти ДО того,
+    // как growGapPx досчитался (быстрый переход, что на телефоне обычное
+    // дело), с bfcache вернётся именно этот недосчитанный снимок, и ни один
+    // из useEffect/ResizeObserver выше просто не перезапустится (страница
+    // не перемонтируется, а размораживается как есть). pageshow с
+    // event.persisted — единственный сигнал, что произошло именно это.
+    function onPageShow(e: PageTransitionEvent) {
+      if (e.persisted) recalc()
+    }
+    window.addEventListener("pageshow", onPageShow)
+
+    return () => {
+      ro.disconnect()
+      window.removeEventListener("pageshow", onPageShow)
+    }
   }, [dayItems.length])
 
   // Виктор: системная кнопка "назад" уводила со страницы тура вместо
