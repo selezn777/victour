@@ -151,9 +151,26 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
     }
     window.addEventListener("pageshow", onPageShow)
 
+    // Ни один из фиксов выше не добил race до конца — на реальном
+    // телефоне Виктора при быстром "туда и сразу назад" (меньше 2 секунд)
+    // отступы всё равно оставались чуть уже, чем при обычном заходе
+    // (проверено вручную: available после такого возврата стабильно на
+    // несколько px меньше, чем на чистой загрузке). Явную причину этих
+    // оставшихся пары кадров race найти не удалось — вместо очередной
+    // точечной гипотезы бьём тупо, но надёжно: пересчитываем ещё
+    // несколько кадров подряд после маунта, чтобы поймать ЛЮБОЕ позднее
+    // изменение доступной высоты, откуда бы оно ни пришло.
+    let rafCount = 0
+    let rafId = requestAnimationFrame(function rafRecalc() {
+      recalc()
+      rafCount += 1
+      if (rafCount < 10) rafId = requestAnimationFrame(rafRecalc)
+    })
+
     return () => {
       ro.disconnect()
       window.removeEventListener("pageshow", onPageShow)
+      cancelAnimationFrame(rafId)
     }
   }, [dayItems.length])
 
