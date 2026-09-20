@@ -678,7 +678,7 @@ export function RequestPageClient({
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium" htmlFor="hotel">Где вас забрать?</label>
+                      <label className="text-sm font-medium" htmlFor="hotel">Какой у вас отель?</label>
                       <Input
                         id="hotel"
                         className="mt-1.5"

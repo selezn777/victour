@@ -160,7 +160,7 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
         // просто маячит статично. Пропадает после первого тапа (см. tapped).
         <div
           aria-hidden
-          className="cta-invite-pulse pointer-events-none absolute top-[58%] left-1/2 z-30 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-5 py-2.5 text-base font-bold text-primary-foreground shadow-lg sm:px-6 sm:py-3 sm:text-lg"
+          className="cta-invite-pulse pointer-events-none absolute top-[88%] left-1/2 z-30 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-5 py-2.5 text-base font-bold text-primary-foreground shadow-lg sm:px-6 sm:py-3 sm:text-lg"
         >
           нажми
         </div>
