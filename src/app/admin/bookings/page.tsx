@@ -6,6 +6,7 @@ import { usdToRub } from "@/lib/pricing"
 import { SignOutButton } from "@/components/sign-out-button"
 import { AdminNav } from "@/components/admin/admin-nav"
 import { BookingActions } from "@/components/admin/booking-actions"
+import { RescheduleBookingItem } from "@/components/admin/reschedule-booking-item"
 import { PaymentRequisites } from "@/components/admin/payment-requisites"
 import { LeadsList } from "@/components/admin/leads-list"
 import { ReviewsAdminList } from "@/components/admin/reviews-admin-list"
@@ -66,12 +67,12 @@ function formatDateTime(iso: string): string {
 export default async function AdminBookingsPage() {
   const supabase = await createClient()
 
-  const [{ data: bookings, error }, { data: settingsRows }, { data: leads }, { data: faqItems }, reviews] =
+  const [{ data: bookings, error }, { data: settingsRows }, { data: leads }, { data: faqItems }, { data: guideRows }, reviews] =
     await Promise.all([
       supabase
         .from("bookings")
         .select(
-          "id, status, payment_status, guest_name, contact_channel, contact_value, hotel, notes, total_usd, prepayment_usd, created_at, booking_items(date, date_end, adults, children, tours(title), guides(name))",
+          "id, status, payment_status, guest_name, contact_channel, contact_value, hotel, notes, total_usd, prepayment_usd, created_at, booking_items(id, tour_id, guide_id, date, date_end, adults, children, tours(title, duration_days), guides(name))",
         )
         .order("created_at", { ascending: false }),
       supabase.from("settings").select("key, value"),
@@ -84,8 +85,20 @@ export default async function AdminBookingsPage() {
         .from("faq_items")
         .select("id, question, answer, created_at, tours(title)")
         .order("created_at", { ascending: false }),
+      supabase.from("guides").select("id, name").eq("is_active", true).order("sort_order", { ascending: true }),
       getAllReviews(),
     ])
+
+  const guides = guideRows ?? []
+
+  // Виктор: "заявки продублированы — один и тот же контакт отображается
+  // двумя способами" — лид (оставил контакт, не отправил заявку) не
+  // снимался с этого списка сам, если человек всё-таки потом отправил
+  // настоящую заявку тем же контактом. Отфильтровываем такие: если
+  // contact_value уже встречается среди реальных заявок — это больше не
+  // "незавершённый" контакт, ему тут не место.
+  const bookingContacts = new Set((bookings ?? []).map((b) => b.contact_value))
+  const openLeads = (leads ?? []).filter((l) => !bookingContacts.has(l.contact_value))
 
   const faqItemsForAdmin: AdminFaqItem[] = (faqItems ?? []).map((item) => ({
     id: item.id,
@@ -104,7 +117,12 @@ export default async function AdminBookingsPage() {
   const depositRub = usdToRub(depositUsd, usdRubRate, rubMarkupPct)
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
+    // overflow-x-hidden — Виктор: "вся страница отображается так, что
+    // приходится листать вбок". AdminNav сам скроллится (overflow-x-auto
+    // + отрицательный отступ, чтобы вылезти к краям экрана) — подстраховка
+    // на случай, если этот бег содержимого куда-то протекает выше по
+    // дереву и тянет за собой скролл всей страницы.
+    <main className="mx-auto max-w-4xl overflow-x-hidden px-4 py-10 sm:px-6 sm:py-14">
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <div>
           <h1 className="font-heading text-2xl font-semibold sm:text-3xl">Заявки</h1>
@@ -119,7 +137,7 @@ export default async function AdminBookingsPage() {
 
       <div className="mt-6">
         <PaymentRequisites amountRub={depositRub} />
-        <LeadsList leads={leads ?? []} />
+        <LeadsList leads={openLeads} />
         <FaqAdminList items={faqItemsForAdmin} />
         <ReviewsAdminList reviews={reviews} />
       </div>
@@ -170,16 +188,28 @@ export default async function AdminBookingsPage() {
               {booking.contact_value} · Отель: {booking.hotel}
             </p>
 
-            <ul className="mt-3 flex flex-col gap-1 text-sm">
-              {booking.booking_items.map((item, i) => (
-                <li key={i}>
-                  {(item.tours as unknown as { title: { ru: string } } | null)?.title.ru ?? "Тур"}{" "}
-                  — {formatDate(item.date)}
-                  {item.date_end ? ` — ${formatDate(item.date_end)}` : ""} · {item.adults} взр.
-                  {item.children > 0 ? ` + ${item.children} дет.` : ""}
-                  {(item.guides as unknown as { name: string } | null)?.name
-                    ? ` · гид ${(item.guides as unknown as { name: string }).name}`
-                    : ""}
+            <ul className="mt-3 flex flex-col gap-2 text-sm">
+              {booking.booking_items.map((item) => (
+                <li key={item.id}>
+                  <div className="break-words">
+                    {(item.tours as unknown as { title: { ru: string } } | null)?.title.ru ?? "Тур"}{" "}
+                    — {formatDate(item.date)}
+                    {item.date_end ? ` — ${formatDate(item.date_end)}` : ""} · {item.adults} взр.
+                    {item.children > 0 ? ` + ${item.children} дет.` : ""}
+                    {(item.guides as unknown as { name: string } | null)?.name
+                      ? ` · гид ${(item.guides as unknown as { name: string }).name}`
+                      : ""}
+                  </div>
+                  <RescheduleBookingItem
+                    itemId={item.id}
+                    currentGuideId={item.guide_id}
+                    currentDate={item.date}
+                    currentDateEnd={item.date_end}
+                    isTwoDay={
+                      (item.tours as unknown as { duration_days: number } | null)?.duration_days === 2
+                    }
+                    guides={guides}
+                  />
                 </li>
               ))}
             </ul>
