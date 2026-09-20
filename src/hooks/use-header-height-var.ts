@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, type RefObject } from "react"
+import { useLayoutEffect, type RefObject } from "react"
 
 // Полноэкранные SlideDeck на разных страницах (главная, каталог /tours,
 // страница тура) вычитают высоту хедера из 100dvh, чтобы деке хватало
@@ -14,8 +14,11 @@ import { useEffect, type RefObject } from "react"
 // любом брейкпоинте и после любой будущей правки самого хедера — без
 // ручной подгонки чисел где-то ещё. Общий var (не отдельный на хедер) —
 // на странице в любой момент виден только один из хедеров.
+// useLayoutEffect, не useEffect: см. подробное объяснение в
+// use-bottom-bar-height-var.ts — та же гонка между этим эффектом и
+// измерением доступной высоты внутри слайдов (например маршрута).
 export function useHeaderHeightVar(ref: RefObject<HTMLElement | null>) {
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
     const update = () => {
