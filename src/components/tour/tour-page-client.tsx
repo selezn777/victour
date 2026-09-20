@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import { useBottomBarHeightVar } from "@/hooks/use-bottom-bar-height-var"
 import { isRecentBackNavigation } from "@/lib/navigation"
 import type { Swiper as SwiperType } from "swiper/types"
@@ -89,17 +89,6 @@ export function TourPageClient({
   const bottomBarHidden = activeSlideIndex === 0 || activeSlideIndex === bookingSlideIndex
   useBottomBarHeightVar(bottomBarRef, !bottomBarHidden)
 
-  // --tour-bottom-bar-h — CSS-переменная, не React-стейт: смена reserve
-  // меняет реальную высоту .swiper через calc() в className деки, но сам
-  // Swiper меряет и кеширует размеры слайдов один раз и сам не обязательно
-  // узнаёт об этом (тот же класс проблем, что и с схлопыванием тулбара
-  // браузера — см. комментарий у visualViewport в slide-deck.tsx). update()
-  // форсирует пересчёт сразу при переключении на/со слайда, где плашка
-  // скрыта, а не полагается на встроенный ResizeObserver Swiper.
-  useEffect(() => {
-    swiperRef.current?.update()
-  }, [bottomBarHidden])
-
   return (
     <>
       <TourHeader
@@ -135,6 +124,15 @@ export function TourPageClient({
             swiper.slideTo(Number(saved), 0)
           }
           sessionStorage.removeItem(`tour-slide:${tour.slug}`)
+          // Виктор: "переключение отвратительное, верни нормальное
+          // перелистывание" — сломал сам: раньше update() (пересчёт
+          // размеров слайдов после смены reserve у --tour-bottom-bar-h,
+          // см. useBottomBarHeightVar) вызывался в useEffect по
+          // activeSlideIndex, то есть СРАЗУ в начале анимации перехода —
+          // update() посреди 420мс transition дёргал/обрывал саму
+          // анимацию. transitionEnd — тот же пересчёт, но уже после того
+          // как слайд визуально доехал до места, свайп остаётся плавным.
+          swiper.on("transitionEnd", () => swiper.update())
         }}
         onSlideChange={(index) => {
           sessionStorage.setItem(`tour-slide:${tour.slug}`, String(index))
