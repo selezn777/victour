@@ -185,9 +185,11 @@ export function TourBookingSlide({
             случай крупного системного шрифта на телефоне: кнопка
             "Подробнее" не резиновая (без truncate), при нехватке места
             переносится на вторую строку внутри плашки, а не толкает саму
-            плашку за экран (повторная жалоба Виктора на "не влезает по
-            ширине" не воспроизвелась в браузере — похоже на масштаб
-            текста на конкретном устройстве). */}
+            плашку за экран. Без overflow-hidden на этом же div — он
+            комбинируется с ring (box-shadow) у выбранного гида и даёт
+            визуальные артефакты по скруглённым углам на некоторых
+            устройствах (Виктор: "притягивается к углам"); flex-wrap сам
+            по себе уже не даёт содержимому вылезти за рамки плашки. */}
         {selectedDate && (
           <div className="mt-3 space-y-2">
             <span className="text-sm font-medium text-muted-foreground">Гид на эту дату</span>
@@ -195,7 +197,7 @@ export function TourBookingSlide({
               <div
                 key={g.id}
                 className={cn(
-                  "flex flex-wrap items-center justify-between gap-x-3 gap-y-1 overflow-hidden rounded-xl bg-primary/5 px-4 py-2.5 transition-colors",
+                  "flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl bg-primary/5 px-4 py-2.5 transition-colors",
                   g.id === guideId && "ring-1 ring-primary",
                 )}
               >
