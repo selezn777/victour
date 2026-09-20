@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
+import { useMemo, useRef, useState, type TouchEvent as ReactTouchEvent } from "react"
 import { sendGAEvent } from "@next/third-parties/google"
 import { CheckIcon, MinusIcon, PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -8,7 +8,6 @@ import { BookingCalendar } from "@/components/tour/booking-calendar"
 import { GuideProfileSheet } from "@/components/tour/guide-profile-sheet"
 import { formatUsd } from "@/lib/format"
 import { datesUsedByOtherItems, usePackage } from "@/hooks/use-package"
-import { useShrinkToFit } from "@/hooks/use-shrink-to-fit"
 import type { TourDetail, TourGuide } from "@/lib/site-data"
 import { cn } from "@/lib/utils"
 
@@ -35,6 +34,19 @@ function isGuideFreeOnDate(guide: TourGuide, date: string, durationDays: number)
 // теперь календарь блокирует дату, только если заняты ВСЕ гиды (см.
 // commonBookedDates), а конкретный гид выбирается уже после даты, из тех,
 // кто на неё свободен.
+//
+// Кнопка "Добавить в заявку" уезжала за экран после выбора даты (блок
+// "Гид на эту дату" добавляет высоты) — четыре попытки почини́ть это через
+// скролл/сжатие всего блока не дали стабильного результата на реальных
+// телефонах (то, что помещалось в моих тестах, не помещалось у Виктора —
+// разная высота вьюпорта/масштаб шрифта). Вместо очередной попытки
+// подогнать высоту — структурное решение: кнопка теперь в своём
+// отдельном, никогда не сжимаемом футере (shrink-0) ВНЕ прокручиваемой
+// области. Она физически не может уехать за экран, что бы ни показывалось
+// выше. Прокручиваемая часть (календарь/гид/гости/цена) — обычный
+// overflow-y-auto с touch-перехватом (тот же приём, что в
+// tour-faq-slide.tsx), чтобы редко, но при необходимости можно было
+// докрутить и её пальцем на телефоне.
 export function TourBookingSlide({
   tour,
   guides,
@@ -58,8 +70,23 @@ export function TourBookingSlide({
   const [profileGuide, setProfileGuide] = useState<{ id: string; name: string } | null>(null)
   const [profileSheetOpen, setProfileSheetOpen] = useState(false)
 
-  const containerRef = useRef<HTMLDivElement>(null)
-  const contentRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const startYRef = useRef(0)
+
+  function onTouchStart(e: ReactTouchEvent) {
+    startYRef.current = e.touches[0].clientY
+  }
+  function onTouchMove(e: ReactTouchEvent) {
+    const el = scrollRef.current
+    if (!el) return
+    const draggingDown = e.touches[0].clientY - startYRef.current > 0
+    const atTop = el.scrollTop <= 0
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
+    const releaseToSwiper = (atTop && draggingDown) || (atBottom && !draggingDown)
+    if (!releaseToSwiper) {
+      e.stopPropagation()
+    }
+  }
 
   const commonBookedDates = useMemo(() => {
     const otherItemDates = datesUsedByOtherItems(items, tour.slug)
@@ -76,15 +103,6 @@ export function TourBookingSlide({
     if (!selectedDate) return []
     return guides.filter((g) => isGuideFreeOnDate(g, selectedDate, tour.durationDays))
   }, [guides, selectedDate, tour.durationDays])
-
-  // Выбор даты добавляет блок "Гид на эту дату" — контент может стать
-  // выше экрана, и кнопка "Добавить в заявку" уезжает вниз. Сначала
-  // чинил как FAQ/отзывы (touch-перехват под overflow-y-auto) — Виктор
-  // всё равно был недоволен (та же позиция, что и по "Что входит": скролл
-  // внутри слайда — не то, что нужно). Тот же приём, что и там —
-  // useShrinkToFit сжимает весь блок целиком через zoom (не transform,
-  // см. use-shrink-to-fit.ts), если он не помещается в доступную высоту.
-  useShrinkToFit(containerRef, contentRef, [selectedDate, availableGuides.length])
 
   const guide = guides.find((g) => g.id === guideId) ?? null
 
@@ -141,9 +159,13 @@ export function TourBookingSlide({
   }
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-4 pb-4 sm:px-11 sm:pt-7">
-      <div ref={containerRef} className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
-      <div ref={contentRef} className="w-full max-w-md">
+    <div className="mx-auto flex h-full w-full max-w-md flex-col overflow-hidden px-4 pt-4 pb-4 sm:px-11 sm:pt-7">
+      <div
+        ref={scrollRef}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        className="no-scrollbar min-h-0 flex-1 overflow-y-auto"
+      >
         <h2 className="text-center font-heading text-xl leading-[1.15] font-semibold sm:text-3xl">
           Дата и бронь
         </h2>
@@ -257,7 +279,11 @@ export function TourBookingSlide({
           </div>
           <div className="text-xs text-muted-foreground">Итого за {guestCount}: {formatUsd(groupTotalUsd)}</div>
         </div>
+      </div>
 
+      {/* Футер вне прокручиваемой области — shrink-0 гарантирует, что
+          кнопка всегда в кадре, независимо от высоты контента выше. */}
+      <div className="shrink-0 pt-3">
         {/* После успешного добавления кнопка сама показывает, что нажимать
             второй раз не нужно (галочка + приглушённый secondary вместо
             яркого primary) — раньше под кнопкой ещё был текст-подтверждение
@@ -267,7 +293,7 @@ export function TourBookingSlide({
           type="button"
           size="lg"
           variant={addedToPackage ? "secondary" : "default"}
-          className="mt-3 w-full"
+          className="w-full"
           disabled={!guide || !selectedDate}
           onClick={handleSubmit}
         >
@@ -286,7 +312,6 @@ export function TourBookingSlide({
             {error}
           </p>
         )}
-      </div>
       </div>
 
       {profileGuide && (
