@@ -182,12 +182,12 @@ export function TourBookingSlide({
   }
 
   return (
-    <div className="h-full w-full overflow-hidden px-4 pt-4 pb-4 sm:px-11 sm:pt-7">
+    <div className="flex h-full w-full flex-col overflow-hidden px-4 pt-4 pb-4 sm:px-11 sm:pt-7">
       <div
         ref={scrollRef}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
-        className="no-scrollbar mx-auto h-full w-full max-w-md overflow-y-auto pb-4"
+        className="no-scrollbar mx-auto min-h-0 w-full max-w-md flex-1 overflow-y-auto pb-4"
       >
         <h2 className="text-center font-heading text-xl leading-[1.15] font-semibold sm:text-3xl">
           Дата и бронь
