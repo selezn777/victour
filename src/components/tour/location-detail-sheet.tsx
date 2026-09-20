@@ -59,7 +59,8 @@ export function LocationDetailSheet({
             невидим. */}
         {/* Виктор: "крестик надо сделать поярче" — явный белый цвет +
             тень для контраста на любом фото, вместо обычного (тусклого
-            на светлых фото) текста по умолчанию. */}
+            на светлых фото) текста по умолчанию. "Чуть побольше" — сама
+            иконка size-5 (была дефолтная size-4 у icon-sm). */}
         <DialogClose
           data-slot="dialog-close"
           render={
@@ -70,7 +71,7 @@ export function LocationDetailSheet({
             />
           }
         >
-          <XIcon />
+          <XIcon className="size-5" />
           <span className="sr-only">Закрыть</span>
         </DialogClose>
 
