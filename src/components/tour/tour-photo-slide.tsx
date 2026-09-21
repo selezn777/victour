@@ -19,6 +19,16 @@ import "swiper/css/pagination"
 // PhotoSlide на главной (advantages-section.tsx), без magic numbers
 // (раньше тут был фиксированный % + svh-потолок, подобранный вручную под
 // конкретные экраны — неустойчиво на других размерах).
+// Виктор: дефолтный центр object-cover обрезал водопад на фото 3 в галерее
+// тура "Далат" — сдвигаем кроп правее, чтобы падение было видно целиком.
+const PHOTO_CROP_POSITIONS: Record<string, string> = {
+  "articles/dalat/gallery-hero/6.jpg": "75% 50%",
+}
+
+function cropPositionFor(url: string) {
+  return Object.entries(PHOTO_CROP_POSITIONS).find(([key]) => url.includes(key))?.[1]
+}
+
 export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
   const [active, setActive] = useState(0)
   const swiperRef = useRef<SwiperType | null>(null)
@@ -45,7 +55,12 @@ export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
           >
             {photos.map((url, i) => (
               <SwiperSlide key={url} className="relative h-full w-full">
-                <PinchZoomPhoto src={url} alt={`${tour.title}, фото ${i + 1}`} priority={i === 0} />
+                <PinchZoomPhoto
+                  src={url}
+                  alt={`${tour.title}, фото ${i + 1}`}
+                  priority={i === 0}
+                  objectPosition={cropPositionFor(url)}
+                />
               </SwiperSlide>
             ))}
           </Swiper>

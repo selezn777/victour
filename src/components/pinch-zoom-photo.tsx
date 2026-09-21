@@ -11,16 +11,26 @@ export function PinchZoomPhoto({
   src,
   alt,
   priority,
+  objectPosition,
 }: {
   src: string
   alt: string
   priority?: boolean
+  objectPosition?: string
 }) {
   const pinch = usePinchZoom()
 
   return (
     <div className="relative h-full w-full overflow-hidden" {...pinch.handlers} style={pinch.style}>
-      <Image src={src} alt={alt} fill priority={priority} className="object-cover" sizes="100vw" />
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        priority={priority}
+        className="object-cover"
+        sizes="100vw"
+        style={objectPosition ? { objectPosition } : undefined}
+      />
     </div>
   )
 }
