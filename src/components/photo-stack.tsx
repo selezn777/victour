@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 
 // Три позиции в стопке: 0 — сверху (лицом), 1 — средняя, 2 — самая нижняя.
 // Каждое фото хранит СВОЮ текущую позицию (не индекс в массиве) — так CSS
@@ -19,86 +19,18 @@ const STACK_TRANSFORM = [
   "translate(18px, 20px) rotate(-5deg) scale(0.7)",
 ]
 
-// Откуда падает вся стопка. История: сначала пробовали по одной карточке
-// (по позиции, с paузами/стопками/быстрым каскадом — Виктор каждый раз
-// видел ОТДЕЛЬНЫЕ падения и просил либо ещё быстрее, либо совсем убрать
-// разделение). Финал — Виктор: "выпадение всей колоды делаем сразу всю и
-// за один раз, за одно падение, что она как стопка фоток, брошенная на
-// стол, и чуть из-под неё все фотки чуть начинают с разных сторон
-// вылазить". Т.е. ОДНА синхронная анимация без всякого stagger: все
-// карточки стартуют почти в одной точке (плотная стопка, ещё "в воздухе",
-// крупным масштабом — минимальный разброс x/rotate по позициям, только
-// чтобы стопка не выглядела идеально ровной пачкой) и одновременно летят
-// каждая в СВОЮ финальную позицию STACK_TRANSFORM — путь из общей точки в
-// разные стороны сам по себе читается как "фотки вылезают из-под стопки",
-// без отдельного второго этапа.
-const STACK_DROP_FROM = [
-  "translate(0px, -46px) rotate(0deg) scale(1.5)",
-  "translate(2px, -44px) rotate(-1deg) scale(1.5)",
-  "translate(-2px, -48px) rotate(1deg) scale(1.5)",
-  "translate(1px, -42px) rotate(-1deg) scale(1.5)",
-  "translate(-1px, -46px) rotate(1deg) scale(1.5)",
-  "translate(2px, -44px) rotate(-1deg) scale(1.5)",
-  "translate(-2px, -48px) rotate(1deg) scale(1.5)",
-  "translate(1px, -42px) rotate(-1deg) scale(1.5)",
-]
-
-// Пауза перед падением стопки — Виктор: "открытие фото делаем чуть
-// быстрее, особенно первой" (300 -> 150 -> 80 -> 50, тогда ещё относилось
-// к первой карточке отдельно; теперь стопка падает целиком, но пауза
-// перед стартом осталась той же).
-const DROP_INITIAL_DELAY_MS = 50
-// Длительность падения одной карточки — Виктор перепробовал 260 (быстрый
-// каскад), 420/750/1100 с ease-in без отскока, и в итоге вернул исходные
-// 610мс с исходной bounce-кривой (см. transitionTimingFunction ниже):
-// "переключение как раньше было хорошо, и выпадение как раньше было
-// когда 4 выпадения было тоже было хорошо, просто нужно ОДНО выпадение
-// оставить" — т.е. сам тайминг/кривая карточки не проблема, проблема была
-// только в 4 отдельных стадиях со стаггером (см. STACK_DROP_FROM и эффект
-// ниже — стаггер убран, все карточки летят одновременно).
-const DROP_ENTER_DURATION_MS = 610
-
 /**
- * Стопка фото "как будто бросили на стол" — при появлении вся стопка падает
- * и разлетается по своим местам одним синхронным движением (см.
- * STACK_DROP_FROM), а по тапу вся стопка подпрыгивает и перемешивается по
- * кругу: нижнее фото выходит на передний план, остальные опускаются на
- * одну позицию.
- *
- * Слайды в SlideDeck монтируются все сразу (Swiper не лениво их рендерит) —
- * первая версия запускала анимацию падения по монтированию компонента, то
- * есть сразу при загрузке страницы, пока показывался ПЕРВЫЙ слайд. К тому
- * моменту, как гость долистывал до этого слайда, падение уже давно
- * закончилось — Виктор его просто не видел. IntersectionObserver запускает
- * анимацию только когда слайд реально появляется в зоне видимости.
+ * Стопка фото "как будто бросили на стол" — сразу в конечном виде, БЕЗ
+ * анимации появления (была: падение всей стопкой/по карточкам/стопками —
+ * Виктор после нескольких раундов подбора тайминга решил, что падение в
+ * принципе не нужно: "уберём вообще падение, пусть при переключении
+ * сразу будут вот так в конечном виде"). По тапу стопка подпрыгивает и
+ * перемешивается по кругу: нижнее фото выходит на передний план, остальные
+ * опускаются на одну позицию — это единственная анимация, что осталась.
  */
 export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
-  const rootRef = useRef<HTMLButtonElement>(null)
-  const startedRef = useRef(false)
   const [positions, setPositions] = useState(() => photos.map((_, i) => i))
-  const [entered, setEntered] = useState(() => photos.map(() => false))
   const [lifted, setLifted] = useState(false)
-
-  useEffect(() => {
-    const el = rootRef.current
-    if (!el) return
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting || startedRef.current) return
-        startedRef.current = true
-        // Вся стопка падает и разлетается ОДНИМ синхронным движением — см.
-        // комментарий у STACK_DROP_FROM.
-        setTimeout(() => {
-          setEntered(photos.map(() => true))
-        }, DROP_INITIAL_DELAY_MS)
-      },
-      { threshold: 0.5 },
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-    // Разовый запуск при первом появлении в зоне видимости.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   function shuffle() {
     if (lifted) return
@@ -117,7 +49,6 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
 
   return (
     <button
-      ref={rootRef}
       type="button"
       onClick={() => {
         shuffle()
@@ -132,31 +63,22 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
           className="absolute inset-0 overflow-hidden shadow-xl"
           style={{
             zIndex: photos.length - positions[i],
-            opacity: entered[i] ? 1 : 0,
-            transitionProperty: "transform, opacity",
-            // DROP_ENTER_DURATION_MS — длительность самого падения, не
-            // lifted (та отдельная, для shuffle по тапу). Исходная
-            // bounce-кривая — Виктор подтвердил, что она сама по себе
-            // хорошая, проблема была только в стаггере (см. коммент выше).
-            transitionDuration: lifted ? "180ms" : `${DROP_ENTER_DURATION_MS}ms`,
-            transitionTimingFunction: lifted ? "ease-out" : "cubic-bezier(0.34, 1.56, 0.64, 1)",
-            transform: entered[i]
-              ? `${STACK_TRANSFORM[positions[i]]}${lifted ? " translateY(-26px) scale(1.02)" : ""}`
-              : STACK_DROP_FROM[positions[i]],
+            transitionProperty: "transform",
+            transitionDuration: "180ms",
+            transitionTimingFunction: "ease-out",
+            transform: `${STACK_TRANSFORM[positions[i]]}${lifted ? " translateY(-26px) scale(1.02)" : ""}`,
           }}
         >
           <Image src={src} alt={alt} fill className="object-cover" sizes="100vw" />
         </div>
       ))}
-      {!tapped && entered.every(Boolean) && (
-        // Виктор: "делаем поярче" (px-2.5/text-xs) не хватило — "почти не
-        // видно, надо побольше и ещё побольше" — заметно крупнее плашка и
-        // текст, плюс тот же мягкий пульс, что уже прижился на кнопке
-        // "Выбрать тур" (cta-invite-pulse) — приглашает тапнуть, а не
-        // просто маячит статично. Пропадает после первого тапа (см. tapped).
+      {!tapped && (
+        // Статичная плашка-подсказка, без пульса — Виктор: "кнопка нажми
+        // слишком навязчиво моргает, убираем ей моргание". Пропадает после
+        // первого тапа (см. tapped).
         <div
           aria-hidden
-          className="cta-invite-pulse pointer-events-none absolute top-[88%] left-1/2 z-30 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-5 py-2.5 text-base font-bold text-primary-foreground shadow-lg sm:px-6 sm:py-3 sm:text-lg"
+          className="pointer-events-none absolute top-[88%] left-1/2 z-30 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-5 py-2.5 text-base font-bold text-primary-foreground shadow-lg sm:px-6 sm:py-3 sm:text-lg"
         >
           нажми
         </div>
