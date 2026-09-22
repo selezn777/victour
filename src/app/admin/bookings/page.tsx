@@ -7,6 +7,7 @@ import { SignOutButton } from "@/components/sign-out-button"
 import { AdminNav } from "@/components/admin/admin-nav"
 import { BookingActions } from "@/components/admin/booking-actions"
 import { RescheduleBookingItem } from "@/components/admin/reschedule-booking-item"
+import { BookingItemNotes } from "@/components/admin/booking-item-notes"
 import { PaymentRequisites } from "@/components/admin/payment-requisites"
 import { LeadsList } from "@/components/admin/leads-list"
 import { ReviewsAdminList } from "@/components/admin/reviews-admin-list"
@@ -72,7 +73,7 @@ export default async function AdminBookingsPage() {
       supabase
         .from("bookings")
         .select(
-          "id, status, payment_status, guest_name, contact_channel, contact_value, hotel, notes, total_usd, prepayment_usd, created_at, booking_items(id, tour_id, guide_id, date, date_end, adults, children, tours(title, duration_days), guides(name))",
+          "id, status, payment_status, guest_name, contact_channel, contact_value, hotel, notes, total_usd, prepayment_usd, created_at, booking_items(id, tour_id, guide_id, date, date_end, adults, children, departure_time, guide_comment, tours(title, duration_days), guides(name))",
         )
         .order("created_at", { ascending: false }),
       supabase.from("settings").select("key, value"),
@@ -209,6 +210,11 @@ export default async function AdminBookingsPage() {
                       (item.tours as unknown as { duration_days: number } | null)?.duration_days === 2
                     }
                     guides={guides}
+                  />
+                  <BookingItemNotes
+                    itemId={item.id}
+                    currentDepartureTime={item.departure_time}
+                    currentGuideComment={item.guide_comment}
                   />
                 </li>
               ))}
