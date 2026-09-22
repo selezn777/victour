@@ -3,6 +3,10 @@
 import { StarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+// Виктор: "звёзды везде во всех отзывах всегда должны быть золотого
+// цвета" — раньше были в акцентном зелёном (fill-primary/text-primary),
+// сливались с остальными зелёными акцентами сайта. Золотой (amber) —
+// отдельный, не завязанный на --accent цвет, ожидаемый для рейтинга.
 export function StarRatingDisplay({ rating, className }: { rating: number; className?: string }) {
   return (
     <div className={cn("flex items-center gap-0.5", className)} aria-label={`${rating} из 5`}>
@@ -11,7 +15,7 @@ export function StarRatingDisplay({ rating, className }: { rating: number; class
           key={n}
           className={cn(
             "size-4",
-            n <= rating ? "fill-primary text-primary" : "fill-none text-muted-foreground/40",
+            n <= rating ? "fill-amber-400 text-amber-400" : "fill-none text-muted-foreground/40",
           )}
         />
       ))}
@@ -41,7 +45,7 @@ export function StarRatingInput({
           <StarIcon
             className={cn(
               "size-7 transition-colors",
-              n <= value ? "fill-primary text-primary" : "fill-none text-muted-foreground/40",
+              n <= value ? "fill-amber-400 text-amber-400" : "fill-none text-muted-foreground/40",
             )}
           />
         </button>
