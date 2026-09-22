@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef, useState, type TouchEvent as ReactTouchEvent } from "react"
+import { useEffect, useMemo, useRef, useState, type TouchEvent as ReactTouchEvent } from "react"
 import { useRouter } from "next/navigation"
 import { sendGAEvent } from "@next/third-parties/google"
 import { MinusIcon, PlusIcon } from "lucide-react"
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { BookingCalendar } from "@/components/tour/booking-calendar"
 import { GuideProfileSheet } from "@/components/tour/guide-profile-sheet"
 import { formatUsd } from "@/lib/format"
-import { datesUsedByOtherItems, usePackage } from "@/hooks/use-package"
+import { datesUsedByOtherItems, usePackage, type PackageItem } from "@/hooks/use-package"
 import type { TourDetail, TourGuide } from "@/lib/site-data"
 import { cn } from "@/lib/utils"
 
@@ -107,6 +107,7 @@ export function TourBookingSlide({
   guestCount,
   onGuestCountChange,
   onSubmitted,
+  initialItem,
 }: {
   tour: TourDetail
   guides: TourGuide[]
@@ -115,6 +116,10 @@ export function TourBookingSlide({
   /** Вызывается после успешного добавления в заявку — родитель может,
    * например, показать плашку/переключить слайд. */
   onSubmitted?: () => void
+  /** Тур уже полностью настроен в заявке (localStorage, см.
+   * tour-page-client.tsx) — дата/гид/кнопка должны отражать это сразу, а
+   * не сбрасываться в blank при перезагрузке страницы. */
+  initialItem: PackageItem | null
 }) {
   const router = useRouter()
   const { items, addItem } = usePackage()
@@ -124,6 +129,22 @@ export function TourBookingSlide({
   const [error, setError] = useState<string | null>(null)
   const [profileGuide, setProfileGuide] = useState<{ id: string; name: string } | null>(null)
   const [profileSheetOpen, setProfileSheetOpen] = useState(false)
+
+  // См. коммент у initialItem — гидратация через useEffect (не через
+  // useState-инициализатор): initialItem приходит из usePackage() в
+  // родителе, который на первом клиентском рендере отдаёт пустой
+  // server-snapshot и только следующим рендером — реальные данные
+  // localStorage (useSyncExternalStore, без этого была бы hydration
+  // mismatch). useState-инициализатор выполняется ровно один раз при
+  // монтировании и не увидел бы более поздний initialItem.
+  const hydratedRef = useRef(false)
+  useEffect(() => {
+    if (hydratedRef.current || !initialItem) return
+    hydratedRef.current = true
+    setSelectedDate(initialItem.date)
+    setGuideId(initialItem.guideId)
+    setAddedToPackage(true)
+  }, [initialItem])
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const startYRef = useRef(0)

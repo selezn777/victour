@@ -1,7 +1,8 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useBottomBarHeightVar } from "@/hooks/use-bottom-bar-height-var"
+import { usePackage } from "@/hooks/use-package"
 import { isRecentBackNavigation } from "@/lib/navigation"
 import type { Swiper as SwiperType } from "swiper/types"
 import { SlideDeck } from "@/components/slide-deck"
@@ -14,7 +15,6 @@ import { TourBookingSlide } from "@/components/tour/tour-booking-slide"
 import { TourFaqSlide } from "@/components/tour/tour-faq-slide"
 import { TourReviewsSlide } from "@/components/tour/tour-reviews-slide"
 import { TourBottomBar } from "@/components/tour/tour-bottom-bar"
-import { useFavorites } from "@/hooks/use-favorites"
 import type { SiteSettings, TourDetail, TourGuide } from "@/lib/site-data"
 import type { Review, TourOption } from "@/lib/reviews-data"
 import type { FaqItem } from "@/lib/faq-data"
@@ -39,7 +39,6 @@ export function TourPageClient({
   faq: FaqItem[]
   tours: TourOption[]
 }) {
-  const { toggle, isFavorite } = useFavorites()
   // По умолчанию — самая большая группа (обычно самая дешёвая цена за
   // человека, тарифы отсортированы по возрастанию guestCount): гость,
   // который просто листает страницу, должен сначала видеть младшую
@@ -50,6 +49,23 @@ export function TourPageClient({
   const primaryGuide = guides[0] ?? null
   const priceAdultUsd =
     tour.pricingTiers.find((t) => t.guestCount === guestCount)?.priceAdultUsd ?? 0
+
+  // Тур уже полностью настроен в заявке (localStorage) — гость перезагрузил
+  // страницу или вернулся позже. usePackage() на первом клиентском рендере
+  // отдаёт пустой server-snapshot (см. useSyncExternalStore), реальные
+  // данные приходят следующим рендером — поэтому гидратация тут через
+  // useEffect с once-гвардом, а не через useState-инициализатор (тот
+  // выполняется единожды при монтировании и не увидел бы более поздние
+  // данные). Виктор: "дата и количество человек должны запоминаться и
+  // отображаться даже после перезагрузки, сейчас у них конфликт".
+  const { items } = usePackage()
+  const existingItem = items.find((i) => i.tourSlug === tour.slug) ?? null
+  const hydratedGuestCountRef = useRef(false)
+  useEffect(() => {
+    if (hydratedGuestCountRef.current || !existingItem?.adults) return
+    hydratedGuestCountRef.current = true
+    setGuestCount(existingItem.adults)
+  }, [existingItem])
 
   const swiperRef = useRef<SwiperType | null>(null)
   const [activeSlideIndex, setActiveSlideIndex] = useState(0)
@@ -91,12 +107,7 @@ export function TourPageClient({
 
   return (
     <>
-      <TourHeader
-        settings={settings}
-        guide={primaryGuide}
-        isFavorite={isFavorite(tour.slug)}
-        onToggleFavorite={() => toggle(tour.slug)}
-      />
+      <TourHeader settings={settings} guide={primaryGuide} />
 
       {/* paginationPosition="none" — тот же "переплёт"-индикатор слева,
           который Виктор уже попросил убрать на главной, здесь тоже мешал. */}
@@ -143,6 +154,7 @@ export function TourPageClient({
             guides={guides}
             guestCount={guestCount}
             onGuestCountChange={setGuestCount}
+            initialItem={existingItem}
           />,
           <TourFaqSlide
             key="faq"
