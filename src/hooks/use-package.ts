@@ -102,14 +102,9 @@ export function usePackage() {
     return { ok: true }
   }, [])
 
-  const removeItem = useCallback((tourSlug: string) => {
-    ensureInitialized()
-    write(cache.filter((i) => i.tourSlug !== tourSlug))
-  }, [])
-
   const clear = useCallback(() => {
     write([])
   }, [])
 
-  return { items, addItem, removeItem, clear }
+  return { items, addItem, clear }
 }

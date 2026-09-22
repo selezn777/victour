@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { sendGAEvent } from "@next/third-parties/google"
-import { XIcon } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -60,19 +59,21 @@ type GuideInfo = { id: string; name: string; bookedDates: string[] }
 // пропадает из корзины" (убрал X из шторки корзины и галочку в каталоге,
 // см. cart-drawer.tsx/tour-card.tsx — редактирование и удаление теперь
 // только здесь).
+// Виктор: "возможность удалить тур из заявки убираем полностью" — ни
+// здесь, ни в шторке корзины (cart-drawer.tsx), ни в каталоге
+// (tour-card.tsx, там и не было никогда клика-удаления после более
+// ранней правки сегодня). Позицию можно только настроить (дата/гости).
 function ItemCard({
   item,
   info,
   guide,
   usedDates,
-  onRemove,
   onConfigure,
 }: {
   item: PackageItem
   info: TourPricingInfo | undefined
   guide: GuideInfo | null
   usedDates: Set<string>
-  onRemove: () => void
   onConfigure: (patch: { date: string; dateEnd: string | null; adults: number; priceAdultUsd: number }) => string | null
 }) {
   // Разворачиваем сразу только если позиция ещё не настроена (на
@@ -84,12 +85,7 @@ function ItemCard({
   if (!info || !guide) {
     return (
       <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div className="font-medium">{item.tourTitle}</div>
-          <Button type="button" variant="ghost" size="icon-sm" aria-label="Убрать тур из заявки" onClick={onRemove}>
-            <XIcon />
-          </Button>
-        </div>
+        <div className="font-medium">{item.tourTitle}</div>
         <p className="mt-2 text-sm text-muted-foreground">Загружаем даты и цены…</p>
       </div>
     )
@@ -109,9 +105,6 @@ function ItemCard({
           <Button type="button" variant="outline" size="sm" onClick={() => setEditing(true)}>
             Изменить
           </Button>
-          <Button type="button" variant="ghost" size="icon-sm" aria-label="Убрать тур из заявки" onClick={onRemove}>
-            <XIcon />
-          </Button>
         </div>
       </div>
     )
@@ -123,7 +116,6 @@ function ItemCard({
       info={info}
       guide={guide}
       usedDates={usedDates}
-      onRemove={onRemove}
       onConfigure={onConfigure}
       onDone={() => setEditing(false)}
       error={error}
@@ -137,7 +129,6 @@ function ItemEditForm({
   info,
   guide,
   usedDates,
-  onRemove,
   onConfigure,
   onDone,
   error,
@@ -147,7 +138,6 @@ function ItemEditForm({
   info: TourPricingInfo
   guide: GuideInfo
   usedDates: Set<string>
-  onRemove: () => void
   onConfigure: (patch: { date: string; dateEnd: string | null; adults: number; priceAdultUsd: number }) => string | null
   onDone: () => void
   error: string | null
@@ -180,14 +170,9 @@ function ItemEditForm({
     <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div className="font-medium">{item.tourTitle}</div>
-        <div className="flex items-center gap-2">
-          <Button type="button" size="sm" disabled={!selectedDate} onClick={onDone}>
-            Готово
-          </Button>
-          <Button type="button" variant="ghost" size="icon-sm" aria-label="Убрать тур из заявки" onClick={onRemove}>
-            <XIcon />
-          </Button>
-        </div>
+        <Button type="button" size="sm" disabled={!selectedDate} onClick={onDone}>
+          Готово
+        </Button>
       </div>
 
       <div className="mt-4 flex items-end justify-between gap-4">
@@ -253,7 +238,7 @@ export function RequestPageClient({
   settings: SiteSettings
   surcharges: Surcharge[]
 }) {
-  const { items, addItem, removeItem, clear } = usePackage()
+  const { items, addItem, clear } = usePackage()
   const [tourInfo, setTourInfo] = useState<Record<string, TourPricingInfo>>({})
   const [guide, setGuide] = useState<GuideInfo | null>(null)
   const [selectedSurcharges, setSelectedSurcharges] = useState<Set<string>>(new Set())
@@ -538,7 +523,6 @@ export function RequestPageClient({
                   info={tourInfo[item.tourSlug]}
                   guide={guide}
                   usedDates={datesUsedByOtherItems(items, item.tourSlug)}
-                  onRemove={() => removeItem(item.tourSlug)}
                   onConfigure={(patch) => {
                     if (!guide) return "Гид ещё загружается, подождите секунду."
                     const result = addItem({
