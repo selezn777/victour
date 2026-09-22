@@ -51,8 +51,12 @@ const DROP_INITIAL_DELAY_MS = 50
 // Длительность падения+разлёта всей стопки одним движением. История:
 // 610мс на карточку при стаггере → 260мс при быстром каскаде → 420мс на
 // всю стопку сразу ("за миллисекунду выпадает... надо спокойно, медленно")
-// → 750мс ("ещё медленнее").
-const DROP_ENTER_DURATION_MS = 1100
+// → 750 → 1100 ("ещё медленнее") — но 1100 с прежней ease-out-отскок
+// анимацией потеряло ощущение падения ("нету ощущения что упала как
+// будто на стол"). Сократил обратно и сменил кривую на ease-in без
+// отскока (см. transitionTimingFunction ниже) — резкая остановка сама
+// по себе читается как удар, длительность за это может быть короче.
+const DROP_ENTER_DURATION_MS = 650
 
 /**
  * Стопка фото "как будто бросили на стол" — при появлении вся стопка падает
@@ -131,9 +135,14 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
             opacity: entered[i] ? 1 : 0,
             transitionProperty: "transform, opacity",
             // DROP_ENTER_DURATION_MS — длительность самого падения/разлёта,
-            // не lifted (та отдельная, для shuffle по тапу).
+            // не lifted (та отдельная, для shuffle по тапу). Ease-out с
+            // отскоком (0.34, 1.56...) при удлинении до 1100мс читался как
+            // мягкое "всплытие в позицию", а не падение — Виктор: "нету
+            // ощущения что стопка упала как будто на стол". Ease-in без
+            // отскока (разгон и резкая остановка) физически ближе к
+            // свободному падению + удар о стол, чем плавный pop-in.
             transitionDuration: lifted ? "180ms" : `${DROP_ENTER_DURATION_MS}ms`,
-            transitionTimingFunction: lifted ? "ease-out" : "cubic-bezier(0.34, 1.56, 0.64, 1)",
+            transitionTimingFunction: lifted ? "ease-out" : "cubic-bezier(0.55, 0.06, 0.68, 0.19)",
             transform: entered[i]
               ? `${STACK_TRANSFORM[positions[i]]}${lifted ? " translateY(-26px) scale(1.02)" : ""}`
               : STACK_DROP_FROM[positions[i]],
