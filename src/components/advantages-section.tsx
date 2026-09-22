@@ -278,6 +278,11 @@ function useRevealCycle(bandIndex: number, measure: (idx: number) => Measurement
   const [target, setTarget] = useState(0)
   const [origin, setOrigin] = useState("50% 50%")
   const [closedScale, setClosedScale] = useState({ x: 0.15, y: 0.15 })
+  // forced — этот reveal запущен кликом гостя, а не автоциклом. Влияет
+  // только на визуал (см. isPriming в PhotoCollage — у forced нет
+  // tile-priming блика, Виктор: "убираем моргание перед открытием" для
+  // клика, но не для автоматического цикла).
+  const [forced, setForced] = useState(false)
   // Вызывается из onLoad самого band-<Image> (см. PhotoCollage) — сигнал, что
   // ИМЕННО тот файл, который реально покажется крупно (Next-оптимизированный
   // вариант конкретной ширины/качества у band, а не сырой файл), уже отрисован
@@ -289,58 +294,81 @@ function useRevealCycle(bandIndex: number, measure: (idx: number) => Measurement
     bandLoadResolveRef.current?.()
   }, [])
 
-  useEffect(() => {
-    // Не стартуем раскрытие, пока мозаика сама ещё не прогрузилась целиком —
-    // Виктор: одна плитка раскрывалась крупно поверх сетки, пока остальные
-    // плитки ещё были плейсхолдерами, выглядело как два конкурирующих слоя.
-    // Эффект просто перезапустится сам, когда ready станет true (см. deps).
-    if (!ready) return
-    let cancelled = false
-    let order: number[] = []
-    let step = 0
-    const timers: ReturnType<typeof setTimeout>[] = []
-    const after = (fn: () => void, ms: number) => {
-      timers.push(setTimeout(fn, ms))
-    }
-    const wait = (ms: number) => new Promise<void>((resolve) => after(resolve, ms))
+  // order/step/timers — в рефах, а не effect-local переменных: triggerOpen
+  // (клик гостя) должен уметь оборвать текущий таймер автоцикла и
+  // вклиниться со своей плиткой в любой момент, не дожидаясь его конца.
+  // generationRef — счётчик, инвалидирующий все ещё не сработавшие
+  // setTimeout/Promise предыдущего запуска (тот же приём, что раньше
+  // делал локальный `cancelled`, но переживает вызовы извне эффекта).
+  const orderRef = useRef<number[]>([])
+  const stepRef = useRef(0)
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
+  const generationRef = useRef(0)
+  const forcedTargetRef = useRef<number | null>(null)
 
-    // Пул плиток пересчитывается на лету по текущей ширине окна (тот же приём,
-    // что уже был для visibleCountForWidth) — если у этой полосы на текущем
-    // брейкпоинте вообще нет места (bandIndex >= число полос), цикл просто ждёт.
-    const currentPool = () => {
-      const width = window.innerWidth
-      const cols = gridColsForWidth(width)
-      const rows = visibleCountForWidth(width) / cols
-      const bandCount = bandCountForWidth(width)
-      if (bandIndex >= bandCount) return null
-      const [colStart, colEnd] = bandColumnRange(bandIndex, bandCount, cols)
-      const [rowStart, rowEnd] = bandRowRange(bandIndex, bandCount, cols, rows)
-      const visibleCount = cols * rows
-      // Фильтр и по колонке, и по строке — полоса раскрытия теперь квадрат,
-      // отцентрованный по вертикали (см. bandRowRange), а не вся высота
-      // сетки, так что раскрыться физически может только та плитка, что
-      // реально попадает в этот квадрат.
-      const pool = Array.from({ length: visibleCount }, (_, i) => i).filter((i) => {
-        const col = i % cols
-        const row = Math.floor(i / cols)
-        return col >= colStart && col < colEnd && row >= rowStart && row < rowEnd
-      })
-      return { pool }
-    }
+  const clearTimers = useCallback(() => {
+    timersRef.current.forEach(clearTimeout)
+    timersRef.current = []
+  }, [])
+  const after = useCallback(
+    (fn: () => void, ms: number) => {
+      timersRef.current.push(setTimeout(fn, ms))
+    },
+    [],
+  )
+  const wait = useCallback((ms: number) => new Promise<void>((resolve) => after(resolve, ms)), [after])
+  // Ref-индирекция для двух само-рекурсивных вызовов внутри runCycle ниже —
+  // ссылаться на `runCycle` из его же тела до завершения объявления const
+  // не даёт линтер (react-hooks/immutability), хотя рекурсия тут безопасна
+  // (реально вызывается только асинхронно, из setTimeout, когда const уже
+  // точно проинициализирован).
+  const runCycleRef = useRef<(generation: number) => void>(() => {})
 
-    const runCycle = () => {
-      if (cancelled) return
-      const ctx = currentPool()
-      if (!ctx || ctx.pool.length === 0) {
-        after(runCycle, GAP_MS)
-        return
+  // Пул плиток пересчитывается на лету по текущей ширине окна (тот же приём,
+  // что уже был для visibleCountForWidth) — если у этой полосы на текущем
+  // брейкпоинте вообще нет места (bandIndex >= число полос), цикл просто ждёт.
+  const currentPool = useCallback(() => {
+    const width = window.innerWidth
+    const cols = gridColsForWidth(width)
+    const rows = visibleCountForWidth(width) / cols
+    const bandCount = bandCountForWidth(width)
+    if (bandIndex >= bandCount) return null
+    const [colStart, colEnd] = bandColumnRange(bandIndex, bandCount, cols)
+    const [rowStart, rowEnd] = bandRowRange(bandIndex, bandCount, cols, rows)
+    const visibleCount = cols * rows
+    // Фильтр и по колонке, и по строке — полоса раскрытия теперь квадрат,
+    // отцентрованный по вертикали (см. bandRowRange), а не вся высота
+    // сетки, так что раскрыться физически может только та плитка, что
+    // реально попадает в этот квадрат.
+    const pool = Array.from({ length: visibleCount }, (_, i) => i).filter((i) => {
+      const col = i % cols
+      const row = Math.floor(i / cols)
+      return col >= colStart && col < colEnd && row >= rowStart && row < rowEnd
+    })
+    return { pool }
+  }, [bandIndex])
+
+  const runCycle = useCallback(
+    (generation: number) => {
+      if (generation !== generationRef.current) return
+      const forcedIdx = forcedTargetRef.current
+      forcedTargetRef.current = null
+      let idx: number
+      if (forcedIdx != null) {
+        idx = forcedIdx
+      } else {
+        const ctx = currentPool()
+        if (!ctx || ctx.pool.length === 0) {
+          after(() => runCycleRef.current(generation), GAP_MS)
+          return
+        }
+        if (stepRef.current >= orderRef.current.length) {
+          orderRef.current = shuffledIndices(ctx.pool.length).map((i) => ctx.pool[i])
+          stepRef.current = 0
+        }
+        idx = orderRef.current[stepRef.current]
+        stepRef.current += 1
       }
-      if (step >= order.length) {
-        order = shuffledIndices(ctx.pool.length).map((i) => ctx.pool[i])
-        step = 0
-      }
-      const idx = order[step]
-      step += 1
       const m = measure(idx)
       // Слушатель ставим ДО setTarget — src у band-<Image> меняется этим же
       // рендером, событие onLoad может прийти очень быстро (или из кэша
@@ -351,6 +379,7 @@ function useRevealCycle(bandIndex: number, measure: (idx: number) => Measurement
       setTarget(idx)
       setOrigin(m.origin)
       setClosedScale({ x: m.scaleX, y: m.scaleY })
+      setForced(forcedIdx != null)
       setPhase("priming")
       // Ждём РЕАЛЬНУЮ загрузку того файла, который покажет band (см. onLoad на
       // band-<Image> в PhotoCollage) — раньше ждали preloadImage(сырой файл),
@@ -364,19 +393,53 @@ function useRevealCycle(bandIndex: number, measure: (idx: number) => Measurement
       // перетасовки), src не меняется, onLoad повторно не придёт вообще.
       const bandLoadedOrTimeout = Promise.race([bandLoaded, wait(3000)])
       Promise.all([bandLoadedOrTimeout, wait(PRIME_MS)]).then(() => {
-        if (cancelled) return
+        if (generation !== generationRef.current) return
         setPhase("open")
         after(() => {
-          if (cancelled) return
+          if (generation !== generationRef.current) return
           setPhase("closing")
           after(() => {
-            if (cancelled) return
+            if (generation !== generationRef.current) return
             setPhase("idle")
-            after(runCycle, GAP_MS)
+            setForced(false)
+            after(() => runCycleRef.current(generation), GAP_MS)
           }, TRANSITION_MS)
         }, HOLD_MS)
       })
-    }
+    },
+    [after, currentPool, measure, wait],
+  )
+  useEffect(() => {
+    runCycleRef.current = runCycle
+  }, [runCycle])
+
+  // Клик гостя по плитке (см. PhotoCollage) — обрывает всё, что сейчас
+  // запланировано у этой полосы (новое поколение делает старые таймеры
+  // no-op), и сразу же раскрывает выбранную плитку, без блика (forced).
+  // После закрытия runCycle сам продолжит обычный автоцикл — вызывающая
+  // сторона больше ничего делать не должна.
+  const triggerOpen = useCallback(
+    (idx: number) => {
+      clearTimers()
+      generationRef.current += 1
+      const generation = generationRef.current
+      forcedTargetRef.current = idx
+      runCycle(generation)
+    },
+    [clearTimers, runCycle],
+  )
+
+  useEffect(() => {
+    // Не стартуем раскрытие, пока мозаика сама ещё не прогрузилась целиком —
+    // Виктор: одна плитка раскрывалась крупно поверх сетки, пока остальные
+    // плитки ещё были плейсхолдерами, выглядело как два конкурирующих слоя.
+    // Эффект просто перезапустится сам, когда ready станет true (см. deps).
+    if (!ready) return
+    clearTimers()
+    generationRef.current += 1
+    const generation = generationRef.current
+    orderRef.current = []
+    stepRef.current = 0
 
     // Полосы стартуют со сдвигом по фазе (треть полного цикла на каждую) —
     // без этого все bandIndex запускают свой самый первый runCycle через
@@ -390,14 +453,14 @@ function useRevealCycle(bandIndex: number, measure: (idx: number) => Measurement
     // них моргают" — на самом деле все три моргали и раскрывались синхронно).
     const CYCLE_MS = PRIME_MS + HOLD_MS + TRANSITION_MS + GAP_MS
     const phaseOffset = (bandIndex * CYCLE_MS) / 3
-    after(runCycle, INITIAL_GAP_MS + phaseOffset)
+    after(() => runCycle(generation), INITIAL_GAP_MS + phaseOffset)
     return () => {
-      cancelled = true
-      timers.forEach(clearTimeout)
+      generationRef.current += 1
+      clearTimers()
     }
-  }, [bandIndex, measure, ready])
+  }, [after, bandIndex, clearTimers, ready, runCycle])
 
-  return { phase, target, origin, closedScale, notifyBandLoaded }
+  return { phase, target, origin, closedScale, forced, notifyBandLoaded, triggerOpen }
 }
 
 // Плитки грузятся строго по порядку слева направо/сверху вниз, если просто
@@ -476,7 +539,7 @@ function PhotoCollage({ size }: { size: number }) {
   // Реальные DOM-узлы плиток и полос — источник истины для origin (см.
   // makeGetOrigin ниже). tileRefs держит саму map между рендерами (не влияет на
   // рендер сам по себе, поэтому обычный useRef, а не state).
-  const tileRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+  const tileRefs = useRef<Map<number, HTMLButtonElement>>(new Map())
   const bandRefs = [
     useRef<HTMLDivElement>(null),
     useRef<HTMLDivElement>(null),
@@ -528,6 +591,41 @@ function PhotoCollage({ size }: { size: number }) {
   ]
   const activeByTile = new Map(reveals.filter((r) => r.phase !== "idle").map((r) => [r.target, r]))
 
+  // Какой полосе принадлежит плитка при ТЕКУЩЕЙ ширине окна — та же логика,
+  // что currentPool внутри useRevealCycle (см. там комментарий про квадрат
+  // полосы). На мобиле полоса всегда одна и покрывает всю сетку 8×8, так
+  // что там это работает для любой плитки; на sm/lg часть плиток может не
+  // попасть ни в одну полосу (углы сетки) — клик по ним просто ничего не
+  // раскрывает, кроме press-эффекта на самой плитке.
+  function bandForTile(i: number): number | null {
+    const width = window.innerWidth
+    const cols = gridColsForWidth(width)
+    const rows = visibleCountForWidth(width) / cols
+    const bandCount = bandCountForWidth(width)
+    const col = i % cols
+    const row = Math.floor(i / cols)
+    for (let b = 0; b < bandCount; b++) {
+      const [colStart, colEnd] = bandColumnRange(b, bandCount, cols)
+      const [rowStart, rowEnd] = bandRowRange(b, bandCount, cols, rows)
+      if (col >= colStart && col < colEnd && row >= rowStart && row < rowEnd) return b
+    }
+    return null
+  }
+
+  // Виктор: "если человек захочет нажать на фото, то отключаем
+  // автоматическое открытие и открываем то фото, которое выбирает
+  // пользователь" — автоцикл полосы прерывается и сразу раскрывает
+  // кликнутую плитку (см. triggerOpen); "пока анимация не закончится
+  // повторное нажатие не разрешаем" — игнорируем клик, если полоса уже
+  // занята (idle — единственная фаза, когда можно кликнуть).
+  function handleTileClick(i: number) {
+    const b = bandForTile(i)
+    if (b == null) return
+    const reveal = reveals[b]
+    if (reveal.phase !== "idle") return
+    reveal.triggerOpen(i)
+  }
+
   return (
     // Раньше высота на sm+ была захардкожена в svh (подобрана вручную под
     // конкретные экраны Виктора) — неустойчиво: то кнопка "Выбрать тур" под
@@ -543,15 +641,20 @@ function PhotoCollage({ size }: { size: number }) {
     <div className="relative overflow-hidden" style={{ width: size, height: size }}>
       <div className="grid w-full grid-cols-8">
         {COLLAGE_PHOTOS.map((src, i) => {
-          const isPriming = activeByTile.get(i)?.phase === "priming"
+          const active = activeByTile.get(i)
+          // forced (клик гостя) — без блика (см. комментарий у triggerOpen).
+          const isPriming = active?.phase === "priming" && !active.forced
           return (
-            <div
+            <button
               key={src}
+              type="button"
+              aria-label="Открыть фото"
+              onClick={() => handleTileClick(i)}
               ref={(el) => {
                 if (el) tileRefs.current.set(i, el)
                 else tileRefs.current.delete(i)
               }}
-              className={`relative aspect-square overflow-hidden ${tileVisibilityClass(i)} ${
+              className={`relative aspect-square overflow-hidden transition-transform duration-100 active:scale-90 ${tileVisibilityClass(i)} ${
                 isPriming ? "tile-priming" : ""
               } ${loadedTiles.has(i) ? "" : "animate-pulse bg-white/15"}`}
             >
@@ -566,7 +669,7 @@ function PhotoCollage({ size }: { size: number }) {
                   transition: `opacity ${TILE_FADE_MS}ms ease-out`,
                 }}
               />
-            </div>
+            </button>
           )
         })}
       </div>
