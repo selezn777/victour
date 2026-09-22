@@ -85,7 +85,7 @@ function ItemCard({
 
   if (!info || !guide) {
     return (
-      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <div className="p-4 sm:p-5">
         <div className="font-medium">{item.tourTitle}</div>
         <p className="mt-2 text-sm text-muted-foreground">Загружаем даты и цены…</p>
       </div>
@@ -94,7 +94,7 @@ function ItemCard({
 
   if (!editing) {
     return (
-      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <div className="p-4 sm:p-5">
         <div className="font-medium">{item.tourTitle}</div>
         <div className="mt-0.5 text-sm text-muted-foreground">
           {formatDate(item.date!)} · {item.guideName} · {item.adults} гостей
@@ -171,7 +171,7 @@ function ItemEditForm({
   }, [selectedDate, guestCount])
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+    <div className="p-4 sm:p-5">
       <div className="font-medium">{item.tourTitle}</div>
 
       {/* Тот же вид, что на странице тура (tour-booking-slide.tsx) —
@@ -530,7 +530,15 @@ export function RequestPageClient({
           <>
             <h1 className="text-center font-heading text-2xl font-semibold sm:text-3xl">Ваша заявка</h1>
 
-            <section className="mt-6 flex flex-col gap-3">
+            {/* Виктор: "сумма не выглядит как один общий чек, нужно всё
+                объединить в один контейнер" — раньше каждая позиция и
+                итог были отдельными карточками (свой border/rounded/
+                shadow + отступ между ними). Один внешний контейнер,
+                divide-y вместо отдельных рамок — читается как один чек,
+                а не набор разрозненных блоков. Позиции внутри по-прежнему
+                разворачиваются в форму редактирования (см. ItemCard) —
+                просто без собственной рамки, разделитель общий. */}
+            <section className="mt-6 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-sm">
               {items.map((item) => (
                 <ItemCard
                   key={item.tourSlug}
@@ -552,6 +560,57 @@ export function RequestPageClient({
                   }}
                 />
               ))}
+
+              {surcharges.length > 0 && (
+                <div className="p-4 sm:p-5">
+                  <span className="text-sm font-medium">Доплаты</span>
+                  <div className="mt-2 flex flex-col gap-2">
+                    {surcharges.map((s) => (
+                      // min-w-0 на левой части + shrink-0 на цене — без этого
+                      // длинное название доплаты не переносилось, а толкало
+                      // всю строку вправо за край экрана (Виктор с телефона:
+                      // "всё смещено вправо, приходится вытягивать").
+                      <label key={s.code} className="flex items-start justify-between gap-3 text-sm">
+                        <span className="flex min-w-0 items-start gap-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedSurcharges.has(s.code)}
+                            onChange={() => toggleSurcharge(s.code)}
+                            className="mt-0.5 size-4 shrink-0 rounded border-input"
+                          />
+                          <span>{s.name}</span>
+                        </span>
+                        <span className="shrink-0 text-right text-muted-foreground">{formatVnd(s.amountVnd)}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="p-4 sm:p-5">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Сумма туров</span>
+                  <span>{formatUsd(totals.subtotalUsd)}</span>
+                </div>
+                {totals.surchargeUsd > 0 && (
+                  <div className="mt-1 flex justify-between text-sm">
+                    <span className="text-muted-foreground">Доплаты</span>
+                    <span>+{formatUsd(totals.surchargeUsd)}</span>
+                  </div>
+                )}
+                <div className="mt-3 flex items-baseline justify-between border-t border-border pt-3">
+                  <span className="font-medium">Итого</span>
+                  <div className="text-right">
+                    <div className="font-heading text-xl font-semibold text-primary">
+                      {formatUsd(totals.totalUsd)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {formatVndFromUsd(totals.totalUsd, settings.usdVndRate)} ·{" "}
+                      {formatRubFromUsd(totals.totalUsd, settings.usdRubRate, settings.rubMarkupPct)}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </section>
 
             {!allConfigured && (
@@ -559,57 +618,6 @@ export function RequestPageClient({
                 Выберите дату и число гостей для каждого тура — тогда можно будет продолжить оформление.
               </p>
             )}
-
-            {surcharges.length > 0 && (
-              <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
-                <span className="text-sm font-medium">Доплаты</span>
-                <div className="mt-2 flex flex-col gap-2">
-                  {surcharges.map((s) => (
-                    // min-w-0 на левой части + shrink-0 на цене — без этого
-                    // длинное название доплаты не переносилось, а толкало
-                    // всю строку вправо за край экрана (Виктор с телефона:
-                    // "всё смещено вправо, приходится вытягивать").
-                    <label key={s.code} className="flex items-start justify-between gap-3 text-sm">
-                      <span className="flex min-w-0 items-start gap-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedSurcharges.has(s.code)}
-                          onChange={() => toggleSurcharge(s.code)}
-                          className="mt-0.5 size-4 shrink-0 rounded border-input"
-                        />
-                        <span>{s.name}</span>
-                      </span>
-                      <span className="shrink-0 text-right text-muted-foreground">{formatVnd(s.amountVnd)}</span>
-                    </label>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Сумма туров</span>
-                <span>{formatUsd(totals.subtotalUsd)}</span>
-              </div>
-              {totals.surchargeUsd > 0 && (
-                <div className="mt-1 flex justify-between text-sm">
-                  <span className="text-muted-foreground">Доплаты</span>
-                  <span>+{formatUsd(totals.surchargeUsd)}</span>
-                </div>
-              )}
-              <div className="mt-3 flex items-baseline justify-between border-t border-border pt-3">
-                <span className="font-medium">Итого</span>
-                <div className="text-right">
-                  <div className="font-heading text-xl font-semibold text-primary">
-                    {formatUsd(totals.totalUsd)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {formatVndFromUsd(totals.totalUsd, settings.usdVndRate)} ·{" "}
-                    {formatRubFromUsd(totals.totalUsd, settings.usdRubRate, settings.rubMarkupPct)}
-                  </div>
-                </div>
-              </div>
-            </section>
 
             {allConfigured && !orderConfirmed && (
               <Button type="button" size="lg" className="mt-6 w-full" onClick={() => setOrderConfirmed(true)}>
