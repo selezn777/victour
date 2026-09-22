@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { CheckIcon, PlusIcon } from "lucide-react"
+import { CheckIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatUsd } from "@/lib/format"
@@ -18,20 +18,12 @@ export function TourCard({
    * использования внутри слайда с уже заданной высотой (см. TourCatalog). */
   fill?: boolean
 }) {
-  // Раньше тут было "избранное" — Виктор попросил заменить на быстрое
-  // добавление в заявку прямо из каталога: можно за пару тапов набрать
-  // 2-3 тура, а дату/гостей донастроить потом на странице заявки.
-  const { items, addPendingTour, removeItem } = usePackage()
+  // Раньше тут было быстрое добавление в заявку прямо из каталога (тур
+  // без даты, донастройка потом) — Виктор убрал: добавить в заявку теперь
+  // можно только со страницы тура, с обязательной датой. Галочка тут —
+  // только статус "уже в заявке" + снять с заявки, без добавления.
+  const { items, removeItem } = usePackage()
   const inPackage = items.some((i) => i.tourSlug === tour.slug)
-  const atLimit = items.length >= 4 && !inPackage
-
-  function toggle() {
-    if (inPackage) {
-      removeItem(tour.slug)
-    } else if (!atLimit) {
-      addPendingTour({ tourId: tour.id, tourSlug: tour.slug, tourTitle: tour.title })
-    }
-  }
 
   return (
     <article
@@ -112,20 +104,21 @@ export function TourCard({
         </div>
       </div>
 
-      <Button
-        variant="secondary"
-        size="icon-sm"
-        aria-label={inPackage ? "Убрать тур из заявки" : "Добавить тур в заявку"}
-        aria-pressed={inPackage}
-        disabled={atLimit}
-        onClick={toggle}
-        className={cn(
-          "absolute top-3 right-3 z-10 backdrop-blur-sm",
-          inPackage ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-background/70 hover:bg-background",
-        )}
-      >
-        {inPackage ? <CheckIcon /> : <PlusIcon />}
-      </Button>
+      {inPackage && (
+        <Button
+          variant="secondary"
+          size="icon-sm"
+          aria-label="Убрать тур из заявки"
+          aria-pressed
+          onClick={() => removeItem(tour.slug)}
+          className={cn(
+            "absolute top-3 right-3 z-10 backdrop-blur-sm",
+            "bg-primary text-primary-foreground hover:bg-primary/90",
+          )}
+        >
+          <CheckIcon />
+        </Button>
+      )}
     </article>
   )
 }

@@ -135,8 +135,22 @@ export function TourBookingSlide({
     }
   }
 
+  const otherItemDates = useMemo(() => datesUsedByOtherItems(items, tour.slug), [items, tour.slug])
+
+  // Дата → title тура из этой же заявки, который её занял — Виктор:
+  // "подсвечивать какие даты уже выбраны и добавлять описание на какую
+  // дату какой тур уже забронирован" (см. booking-calendar.tsx).
+  const packageOwnerByDate = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const item of items) {
+      if (item.tourSlug === tour.slug) continue
+      if (item.date) map.set(item.date, item.tourTitle)
+      if (item.dateEnd) map.set(item.dateEnd, item.tourTitle)
+    }
+    return map
+  }, [items, tour.slug])
+
   const commonBookedDates = useMemo(() => {
-    const otherItemDates = datesUsedByOtherItems(items, tour.slug)
     if (guides.length === 0) return otherItemDates
     const dates = new Set<string>()
     for (const d of guides[0].bookedDates) {
@@ -144,7 +158,7 @@ export function TourBookingSlide({
     }
     for (const d of otherItemDates) dates.add(d)
     return dates
-  }, [guides, items, tour.slug])
+  }, [guides, otherItemDates])
 
   const availableGuides = useMemo(() => {
     if (!selectedDate) return []
@@ -221,6 +235,7 @@ export function TourBookingSlide({
         <div className="mt-3">
           <BookingCalendar
             bookedDates={commonBookedDates}
+            packageOwnerByDate={packageOwnerByDate}
             durationDays={tour.durationDays}
             selectedDate={selectedDate}
             onSelectDate={handleSelectDate}

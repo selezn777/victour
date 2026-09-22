@@ -42,12 +42,17 @@ function buildMonthGrid(year: number, month: number): (Date | null)[][] {
 
 export function BookingCalendar({
   bookedDates,
+  packageOwnerByDate,
   durationDays,
   selectedDate,
   onSelectDate,
   large = false,
 }: {
   bookedDates: Set<string>
+  /** Даты, занятые ДРУГИМИ турами в текущей заявке гостя (title тура по
+   * дате) — подмножество bookedDates, но помечается отдельно: это не
+   * "гид занят", а "вы сами уже забронировали этот день другим туром". */
+  packageOwnerByDate?: Map<string, string>
   durationDays: number
   selectedDate: string | null
   onSelectDate: (date: string) => void
@@ -76,6 +81,20 @@ export function BookingCalendar({
     }
     return false
   }
+
+  function packageOwner(date: Date): string | null {
+    if (!packageOwnerByDate) return null
+    for (let i = 0; i < durationDays; i++) {
+      const owner = packageOwnerByDate.get(toIsoDate(addDays(date, i)))
+      if (owner) return owner
+    }
+    return null
+  }
+
+  const legendEntries = useMemo(() => {
+    if (!packageOwnerByDate) return []
+    return [...packageOwnerByDate.entries()].sort(([a], [b]) => a.localeCompare(b))
+  }, [packageOwnerByDate])
 
   function isSelected(date: Date): boolean {
     if (!selectedDate) return false
@@ -126,22 +145,30 @@ export function BookingCalendar({
             if (!date) return <div key={`${wi}-${di}`} />
             const disabled = isDisabled(date)
             const selected = isSelected(date)
+            const owner = packageOwner(date)
             return (
               <button
                 key={`${wi}-${di}`}
                 type="button"
                 disabled={disabled}
                 aria-pressed={selected}
+                aria-label={owner ? `${date.getDate()} — уже занято туром «${owner}» в вашей заявке` : undefined}
                 onClick={() => onSelectDate(toIsoDate(date))}
                 className={cn(
-                  "flex items-center justify-center rounded-lg text-sm transition-colors",
+                  "relative flex items-center justify-center rounded-lg text-sm transition-colors",
                   large ? "h-10 sm:h-12 sm:text-base" : "h-9",
                   disabled && "cursor-not-allowed text-muted-foreground/40 line-through",
+                  // Занято своим же туром из заявки — отдельная пометка
+                  // поверх обычного disabled-стиля, не просто "гид занят".
+                  owner && "bg-primary/10 text-primary/70 line-through decoration-primary/40",
                   !disabled && !selected && "hover:bg-muted",
                   selected && "bg-primary text-primary-foreground",
                 )}
               >
                 {date.getDate()}
+                {owner && (
+                  <span className="absolute right-1 bottom-1 size-1.5 rounded-full bg-primary" aria-hidden />
+                )}
               </button>
             )
           }),
@@ -153,6 +180,25 @@ export function BookingCalendar({
           Тур на два дня — вторая дата бронируется автоматически следующим днём.
         </p>
       )}
+
+      {/* Подпись, каким туром из ЭТОЙ ЖЕ заявки занята дата — Виктор:
+          "добавлять описание на какую дату какой тур уже забронирован"
+          (актуально, когда в заявке уже несколько туров). */}
+      {legendEntries.length > 0 && (
+        <ul className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+          {legendEntries.map(([iso, title]) => (
+            <li key={iso} className="flex items-center gap-1.5">
+              <span className="size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+              {formatShortDate(iso)} — занято туром «{title}»
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
+}
+
+function formatShortDate(iso: string): string {
+  const d = new Date(`${iso}T00:00:00`)
+  return `${d.getDate()} ${MONTH_NAMES[d.getMonth()].slice(0, 3).toLowerCase()}`
 }

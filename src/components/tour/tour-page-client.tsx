@@ -172,7 +172,7 @@ export function TourPageClient({
         barRef={bottomBarRef}
         hidden={bottomBarHidden}
         priceAdultUsd={priceAdultUsd}
-        ctaLabel="Подробнее"
+        ctaLabel="Выбрать дату"
         onCtaClick={() => swiperRef.current?.slideTo(bookingSlideIndex)}
       />
     </>

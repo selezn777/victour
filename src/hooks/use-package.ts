@@ -6,9 +6,10 @@ const STORAGE_KEY = "victour:package"
 const MAX_ITEMS = 4
 const listeners = new Set<() => void>()
 
-// Гость сначала быстро отмечает 2-3 интересных тура прямо в каталоге (без
-// выбора даты/гида на каждом), а потом донастраивает каждый на странице
-// заявки — поэтому дата/гид/гости/цена необязательны в момент добавления.
+// Тур попадает в заявку только полностью настроенным (дата+гид+гости) —
+// добавление без даты убрали (Виктор: без даты в корзину нельзя). Поля
+// остаются nullable в типе ради обратной совместимости с уже сохранённым
+// в localStorage у гостей.
 export type PackageItem = {
   tourId: string
   tourSlug: string
@@ -78,36 +79,6 @@ export function datesUsedByOtherItems(items: PackageItem[], excludeTourSlug: str
 export function usePackage() {
   const items = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
-  // Быстрое добавление из каталога — только опознание тура, без даты/гида/
-  // гостей. Если тур уже в заявке (в любом состоянии) — ничего не делает.
-  const addPendingTour = useCallback(
-    (tour: { tourId: string; tourSlug: string; tourTitle: string }): { ok: true } | { ok: false; error: string } => {
-      ensureInitialized()
-      if (cache.some((i) => i.tourSlug === tour.tourSlug)) {
-        return { ok: true }
-      }
-      if (cache.length >= MAX_ITEMS) {
-        return { ok: false, error: `В пакете можно собрать максимум ${MAX_ITEMS} тура.` }
-      }
-      write([
-        ...cache,
-        {
-          tourId: tour.tourId,
-          tourSlug: tour.tourSlug,
-          tourTitle: tour.tourTitle,
-          guideId: null,
-          guideName: null,
-          date: null,
-          dateEnd: null,
-          adults: null,
-          priceAdultUsd: null,
-        },
-      ])
-      return { ok: true }
-    },
-    [],
-  )
-
   // Полное добавление/донастройка (со страницы тура или конфигуратора в
   // заявке) — если позиция с таким туром уже есть (например, добавлена
   // быстрым способом из каталога), обновляет её на месте вместо отказа.
@@ -140,5 +111,5 @@ export function usePackage() {
     write([])
   }, [])
 
-  return { items, addItem, addPendingTour, removeItem, clear }
+  return { items, addItem, removeItem, clear }
 }
