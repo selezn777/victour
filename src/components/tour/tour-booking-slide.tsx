@@ -1,8 +1,9 @@
 "use client"
 
 import { useMemo, useRef, useState, type TouchEvent as ReactTouchEvent } from "react"
+import Link from "next/link"
 import { sendGAEvent } from "@next/third-parties/google"
-import { CheckIcon, MinusIcon, PlusIcon } from "lucide-react"
+import { MinusIcon, PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BookingCalendar } from "@/components/tour/booking-calendar"
 import { GuideProfileSheet } from "@/components/tour/guide-profile-sheet"
@@ -33,32 +34,46 @@ function flyToCart(buttonEl: HTMLElement) {
       ball.setAttribute("aria-hidden", "true")
       ball.style.cssText = `
         position: fixed;
-        left: ${from.left + from.width / 2 - 15}px;
-        top: ${from.top + from.height / 2 - 15}px;
-        width: 30px;
-        height: 30px;
+        left: ${from.left + from.width / 2 - 19}px;
+        top: ${from.top + from.height / 2 - 19}px;
+        width: 38px;
+        height: 38px;
         border-radius: 9999px;
         background: var(--color-primary);
         color: var(--color-primary-foreground);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 13px;
-        font-weight: 600;
+        font-size: 15px;
+        font-weight: 700;
         font-family: inherit;
         z-index: 100;
         pointer-events: none;
         will-change: transform, opacity;
-        transition: transform 700ms cubic-bezier(0.34, 0.8, 0.6, 1), opacity 700ms ease-in 250ms;
+        box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5);
+        transform: scale(0);
+        opacity: 0;
+        transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 180ms ease-out;
       `
       document.body.appendChild(ball)
       const dx = to.left + to.width / 2 - (from.left + from.width / 2)
       const dy = to.top + to.height / 2 - (from.top + from.height / 2)
+      // Виктор: "делаем более очевидным и не таким мгновенным" — раньше
+      // шарик сразу улетал одним 700мс движением, почти незаметно. Теперь
+      // два отдельных движения: сначала крупный "поп" прямо на месте
+      // кнопки (глаз успевает его заметить), с паузой, и только потом
+      // сам перелёт к корзине — заметно дольше и разборчивее.
       requestAnimationFrame(() => {
+        ball.style.transform = "scale(1)"
+        ball.style.opacity = "1"
+      })
+      const FLIGHT_MS = 900
+      setTimeout(() => {
+        ball.style.transition = `transform ${FLIGHT_MS}ms cubic-bezier(0.34, 0.8, 0.6, 1), opacity ${FLIGHT_MS}ms ease-in 400ms`
         ball.style.transform = `translate(${dx}px, ${dy}px) scale(0.15)`
         ball.style.opacity = "0"
-      })
-      setTimeout(() => ball.remove(), 750)
+      }, 380)
+      setTimeout(() => ball.remove(), 380 + FLIGHT_MS)
     })
   })
 }
@@ -359,28 +374,32 @@ export function TourBookingSlide({
           <div className="text-xs text-muted-foreground">Итого за {guestCount}: {formatUsd(groupTotalUsd)}</div>
         </div>
 
-        {/* После успешного добавления кнопка сама показывает, что нажимать
-            второй раз не нужно (галочка + приглушённый secondary вместо
-            яркого primary) — раньше под кнопкой ещё был текст-подтверждение
-            "Добавлено в заявку: ...", Виктор попросил убрать текст и сделать
-            понятным через саму кнопку. */}
-        <Button
-          type="button"
-          size="lg"
-          variant={addedToPackage ? "secondary" : "default"}
-          className="mt-3 w-full"
-          disabled={!guide || !selectedDate}
-          onClick={(e) => handleSubmit(e.currentTarget)}
-        >
-          {addedToPackage ? (
-            <span className="flex items-center gap-2">
-              <CheckIcon className="size-5" />
-              Добавлено в заявку
-            </span>
-          ) : (
-            "Добавить в заявку"
-          )}
-        </Button>
+        {/* После успешного добавления — Виктор: "не совсем понятно куда
+            надо тыкнуть" (галочка + приглушённый secondary раньше просто
+            подтверждали факт добавления, дальше гость терялся). Кнопка
+            теперь сама становится следующим шагом: яркий оранжевый цвет
+            (отличается и от primary, и от secondary — заметно как призыв
+            к действию) и ведёт прямо на /request. */}
+        {addedToPackage ? (
+          <Button
+            size="lg"
+            className="mt-3 w-full bg-orange-500 text-white shadow-sm hover:bg-orange-600 hover:shadow-md"
+            nativeButton={false}
+            render={<Link href="/request" />}
+          >
+            Перейти в заявку
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            size="lg"
+            className="mt-3 w-full"
+            disabled={!guide || !selectedDate}
+            onClick={(e) => handleSubmit(e.currentTarget)}
+          >
+            Добавить в заявку
+          </Button>
+        )}
 
         {error && (
           <p className="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">

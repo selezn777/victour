@@ -218,6 +218,11 @@ export function RequestPageClient({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submittedBookingId, setSubmittedBookingId] = useState<string | null>(null)
   const [step, setStep] = useState<1 | 2 | 3>(1)
+  // Виктор: "не нравится, что надо сразу вводить номер, сначала надо всё
+  // увидеть и потом уже пользователь сам нажмёт и введёт номер" — форма
+  // (шаги 1-3, начинается с контакта) теперь раскрывается только по явному
+  // тапу на кнопку в итоговой сводке, а не сразу вместе с ней.
+  const [orderConfirmed, setOrderConfirmed] = useState(false)
   const lastCapturedLead = useRef<string | null>(null)
 
   // Позиции, добавленные "в один тап" из каталога, приходят без гида/даты/
@@ -325,14 +330,8 @@ export function RequestPageClient({
   }, [surcharges, selectedSurcharges, settings.usdVndRate])
 
   const totals = useMemo(
-    () =>
-      calculatePackageTotal({
-        itemsSubtotalUsd,
-        tourCount: items.length,
-        discounts: settings.packageDiscounts,
-        surchargeUsd,
-      }),
-    [itemsSubtotalUsd, items.length, settings.packageDiscounts, surchargeUsd],
+    () => calculatePackageTotal({ itemsSubtotalUsd, surchargeUsd }),
+    [itemsSubtotalUsd, surchargeUsd],
   )
 
   const prepaymentUsd = calculatePrepayment(settings.depositUsd)
@@ -383,7 +382,7 @@ export function RequestPageClient({
         notes: notes.trim() || null,
         currency: "USD",
         subtotal_usd: totals.subtotalUsd,
-        discount_pct: totals.discountPct,
+        discount_pct: 0,
         surcharge_usd: totals.surchargeUsd,
         total_usd: totals.totalUsd,
         prepayment_usd: prepaymentUsd,
@@ -535,7 +534,7 @@ export function RequestPageClient({
 
             {surcharges.length > 0 && (
               <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
-                <span className="text-sm font-medium">Доплаты (не входят в пакетную скидку)</span>
+                <span className="text-sm font-medium">Доплаты</span>
                 <div className="mt-2 flex flex-col gap-2">
                   {surcharges.map((s) => (
                     // min-w-0 на левой части + shrink-0 на цене — без этого
@@ -564,12 +563,6 @@ export function RequestPageClient({
                 <span className="text-muted-foreground">Сумма туров</span>
                 <span>{formatUsd(totals.subtotalUsd)}</span>
               </div>
-              {totals.discountPct > 0 && (
-                <div className="mt-1 flex justify-between text-sm text-primary">
-                  <span>Пакетная скидка {totals.discountPct}%</span>
-                  <span>−{formatUsd(totals.discountUsd)}</span>
-                </div>
-              )}
               {totals.surchargeUsd > 0 && (
                 <div className="mt-1 flex justify-between text-sm">
                   <span className="text-muted-foreground">Доплаты</span>
@@ -590,7 +583,13 @@ export function RequestPageClient({
               </div>
             </section>
 
-            {allConfigured && (
+            {allConfigured && !orderConfirmed && (
+              <Button type="button" size="lg" className="mt-6 w-full" onClick={() => setOrderConfirmed(true)}>
+                Оформить заявку
+              </Button>
+            )}
+
+            {allConfigured && orderConfirmed && (
               <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
                 <div className="flex items-center justify-center gap-2">
                   {[1, 2, 3].map((s) => (

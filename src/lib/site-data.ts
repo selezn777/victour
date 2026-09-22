@@ -22,7 +22,6 @@ export type SiteSettings = {
   usdVndRate: number
   usdRubRate: number
   rubMarkupPct: number
-  packageDiscounts: Record<string, number>
   depositUsd: number
 }
 
@@ -196,11 +195,6 @@ export async function getTourPageData(slug: string): Promise<{
     usdVndRate: (byKey.get("usd_vnd_rate")?.rate as number) ?? 26000,
     usdRubRate: (byKey.get("usd_rub_rate")?.rate as number) ?? 82,
     rubMarkupPct: (byKey.get("rub_markup_pct")?.pct as number) ?? 8,
-    packageDiscounts: (byKey.get("package_discounts") as Record<string, number>) ?? {
-      "2": 5,
-      "3": 10,
-      "4": 15,
-    },
     depositUsd: (byKey.get("deposit_usd")?.amount as number) ?? 80,
   }
 
@@ -233,11 +227,6 @@ export async function getRequestPageData(): Promise<{
     usdVndRate: (byKey.get("usd_vnd_rate")?.rate as number) ?? 26000,
     usdRubRate: (byKey.get("usd_rub_rate")?.rate as number) ?? 82,
     rubMarkupPct: (byKey.get("rub_markup_pct")?.pct as number) ?? 8,
-    packageDiscounts: (byKey.get("package_discounts") as Record<string, number>) ?? {
-      "2": 5,
-      "3": 10,
-      "4": 15,
-    },
     depositUsd: (byKey.get("deposit_usd")?.amount as number) ?? 80,
   }
 
@@ -302,11 +291,6 @@ export async function getHomepageData(): Promise<{
     usdVndRate: (byKey.get("usd_vnd_rate")?.rate as number) ?? 26000,
     usdRubRate: (byKey.get("usd_rub_rate")?.rate as number) ?? 82,
     rubMarkupPct: (byKey.get("rub_markup_pct")?.pct as number) ?? 8,
-    packageDiscounts: (byKey.get("package_discounts") as Record<string, number>) ?? {
-      "2": 5,
-      "3": 10,
-      "4": 15,
-    },
     depositUsd: (byKey.get("deposit_usd")?.amount as number) ?? 80,
   }
 
