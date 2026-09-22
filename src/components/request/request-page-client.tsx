@@ -51,11 +51,16 @@ type TourPricingInfo = {
 
 type GuideInfo = { id: string; name: string; bookedDates: string[] }
 
-// Тур, добавленный из каталога "в один тап" (без гида/даты/гостей) — эта
-// карточка донастраивает его на месте: гость выбирает гостей и дату, и
-// позиция сама становится полноценной (тот же addItem, что и со страницы
-// тура, просто вызванный отсюда).
-function PendingItemCard({
+// Карточка позиции заявки — два режима. Свёрнутый (по умолчанию для уже
+// настроенных позиций): сводка + кнопка "Изменить" + удаление. Разво-
+// рачивается в форму (гости + календарь, предзаполненную текущими
+// значениями) по кнопке — Виктор: "внутри оформления заявки можно
+// внести изменения по дате и количеству человек по специальной кнопке
+// и тут же можно удалить заявку — только так бронирование тура
+// пропадает из корзины" (убрал X из шторки корзины и галочку в каталоге,
+// см. cart-drawer.tsx/tour-card.tsx — редактирование и удаление теперь
+// только здесь).
+function ItemCard({
   item,
   info,
   guide,
@@ -70,6 +75,10 @@ function PendingItemCard({
   onRemove: () => void
   onConfigure: (patch: { date: string; dateEnd: string | null; adults: number; priceAdultUsd: number }) => string | null
 }) {
+  // Разворачиваем сразу только если позиция ещё не настроена (на
+  // практике такого больше не бывает — быстрое добавление без даты
+  // убрано, — но код остаётся корректным и для этого случая).
+  const [editing, setEditing] = useState(!isConfigured(item))
   const [error, setError] = useState<string | null>(null)
 
   if (!info || !guide) {
@@ -86,16 +95,51 @@ function PendingItemCard({
     )
   }
 
-  return <PendingItemForm item={item} info={info} guide={guide} usedDates={usedDates} onRemove={onRemove} onConfigure={onConfigure} error={error} setError={setError} />
+  if (!editing) {
+    return (
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-5 shadow-sm">
+        <div>
+          <div className="font-medium">{item.tourTitle}</div>
+          <div className="mt-0.5 text-sm text-muted-foreground">
+            {formatDate(item.date!)} · {item.guideName} · {item.adults} гостей
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="font-heading font-semibold text-primary">{formatUsd(itemGroupTotalUsd(item))}</span>
+          <Button type="button" variant="outline" size="sm" onClick={() => setEditing(true)}>
+            Изменить
+          </Button>
+          <Button type="button" variant="ghost" size="icon-sm" aria-label="Убрать тур из заявки" onClick={onRemove}>
+            <XIcon />
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <ItemEditForm
+      item={item}
+      info={info}
+      guide={guide}
+      usedDates={usedDates}
+      onRemove={onRemove}
+      onConfigure={onConfigure}
+      onDone={() => setEditing(false)}
+      error={error}
+      setError={setError}
+    />
+  )
 }
 
-function PendingItemForm({
+function ItemEditForm({
   item,
   info,
   guide,
   usedDates,
   onRemove,
   onConfigure,
+  onDone,
   error,
   setError,
 }: {
@@ -105,14 +149,15 @@ function PendingItemForm({
   usedDates: Set<string>
   onRemove: () => void
   onConfigure: (patch: { date: string; dateEnd: string | null; adults: number; priceAdultUsd: number }) => string | null
+  onDone: () => void
   error: string | null
   setError: (e: string | null) => void
 }) {
   const minGuests = info.pricingTiers[0]?.guestCount ?? 2
   const maxGuests = info.pricingTiers[info.pricingTiers.length - 1]?.guestCount ?? 9
   const cheapestTier = info.pricingTiers[info.pricingTiers.length - 1]
-  const [guestCount, setGuestCount] = useState(cheapestTier?.guestCount ?? minGuests)
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [guestCount, setGuestCount] = useState(item.adults ?? cheapestTier?.guestCount ?? minGuests)
+  const [selectedDate, setSelectedDate] = useState<string | null>(item.date)
 
   const priceAdultUsd = info.pricingTiers.find((t) => t.guestCount === guestCount)?.priceAdultUsd ?? 0
   const bookedDates = useMemo(() => new Set([...guide.bookedDates, ...usedDates]), [guide, usedDates])
@@ -135,9 +180,14 @@ function PendingItemForm({
     <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div className="font-medium">{item.tourTitle}</div>
-        <Button type="button" variant="ghost" size="icon-sm" aria-label="Убрать тур из заявки" onClick={onRemove}>
-          <XIcon />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button type="button" size="sm" disabled={!selectedDate} onClick={onDone}>
+            Готово
+          </Button>
+          <Button type="button" variant="ghost" size="icon-sm" aria-label="Убрать тур из заявки" onClick={onRemove}>
+            <XIcon />
+          </Button>
+        </div>
       </div>
 
       <div className="mt-4 flex items-end justify-between gap-4">
@@ -228,10 +278,17 @@ export function RequestPageClient({
   // Позиции, добавленные "в один тап" из каталога, приходят без гида/даты/
   // цены — подтягиваем то, чего не хватает для донастройки (тарифы и
   // длительность тура, доступность гида), один раз на нужные слаги.
+  // Тарифы тура и данные гида нужны для КАЖДОЙ позиции, не только для ещё
+  // не настроенных — ItemCard (см. выше) теперь позволяет редактировать
+  // дату/гостей и у уже настроенных позиций тоже (раньше тут был фильтр
+  // isConfigured, из-за которого после сегодняшнего удаления быстрого
+  // добавления без даты — все позиции стали "уже настроены" — этот эффект
+  // просто никогда не запускался, и карточки навсегда зависали на
+  // "Загружаем даты и цены…").
   useEffect(() => {
-    const pendingSlugs = items.filter((i) => !isConfigured(i)).map((i) => i.tourSlug)
-    if (pendingSlugs.length === 0) return
-    const missingSlugs = pendingSlugs.filter((s) => !tourInfo[s])
+    const allSlugs = items.map((i) => i.tourSlug)
+    if (allSlugs.length === 0) return
+    const missingSlugs = allSlugs.filter((s) => !tourInfo[s])
     if (missingSlugs.length === 0 && guide) return
 
     let cancelled = false
@@ -474,56 +531,28 @@ export function RequestPageClient({
             <h1 className="text-center font-heading text-2xl font-semibold sm:text-3xl">Ваша заявка</h1>
 
             <section className="mt-6 flex flex-col gap-3">
-              {items.map((item) =>
-                isConfigured(item) ? (
-                  <div
-                    key={item.tourSlug}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-5 shadow-sm"
-                  >
-                    <div>
-                      <div className="font-medium">{item.tourTitle}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {formatDate(item.date!)} · {item.guideName} · {item.adults} гостей
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-heading font-semibold text-primary">
-                        {formatUsd(itemGroupTotalUsd(item))}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="Убрать тур из заявки"
-                        onClick={() => removeItem(item.tourSlug)}
-                      >
-                        <XIcon />
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <PendingItemCard
-                    key={item.tourSlug}
-                    item={item}
-                    info={tourInfo[item.tourSlug]}
-                    guide={guide}
-                    usedDates={datesUsedByOtherItems(items, item.tourSlug)}
-                    onRemove={() => removeItem(item.tourSlug)}
-                    onConfigure={(patch) => {
-                      if (!guide) return "Гид ещё загружается, подождите секунду."
-                      const result = addItem({
-                        tourId: item.tourId,
-                        tourSlug: item.tourSlug,
-                        tourTitle: item.tourTitle,
-                        guideId: guide.id,
-                        guideName: guide.name,
-                        ...patch,
-                      })
-                      return result.ok ? null : result.error
-                    }}
-                  />
-                ),
-              )}
+              {items.map((item) => (
+                <ItemCard
+                  key={item.tourSlug}
+                  item={item}
+                  info={tourInfo[item.tourSlug]}
+                  guide={guide}
+                  usedDates={datesUsedByOtherItems(items, item.tourSlug)}
+                  onRemove={() => removeItem(item.tourSlug)}
+                  onConfigure={(patch) => {
+                    if (!guide) return "Гид ещё загружается, подождите секунду."
+                    const result = addItem({
+                      tourId: item.tourId,
+                      tourSlug: item.tourSlug,
+                      tourTitle: item.tourTitle,
+                      guideId: guide.id,
+                      guideName: guide.name,
+                      ...patch,
+                    })
+                    return result.ok ? null : result.error
+                  }}
+                />
+              ))}
             </section>
 
             {!allConfigured && (

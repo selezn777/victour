@@ -3,7 +3,6 @@
 import Image from "next/image"
 import Link from "next/link"
 import { CheckIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatUsd } from "@/lib/format"
 import { usePackage } from "@/hooks/use-package"
@@ -21,8 +20,10 @@ export function TourCard({
   // Раньше тут было быстрое добавление в заявку прямо из каталога (тур
   // без даты, донастройка потом) — Виктор убрал: добавить в заявку теперь
   // можно только со страницы тура, с обязательной датой. Галочка тут —
-  // только статус "уже в заявке" + снять с заявки, без добавления.
-  const { items, removeItem } = usePackage()
+  // ЧИСТЫЙ статус "уже в заявке", не кнопка: Виктор — "если на неё
+  // нажать, она пропадает, а не должна, она не связана с добавлением
+  // тура" — убрать из заявки теперь можно только на /request.
+  const { items } = usePackage()
   const inPackage = items.some((i) => i.tourSlug === tour.slug)
 
   return (
@@ -105,19 +106,13 @@ export function TourCard({
       </div>
 
       {inPackage && (
-        <Button
-          variant="secondary"
-          size="icon-sm"
-          aria-label="Убрать тур из заявки"
-          aria-pressed
-          onClick={() => removeItem(tour.slug)}
-          className={cn(
-            "absolute top-3 right-3 z-10 backdrop-blur-sm",
-            "bg-primary text-primary-foreground hover:bg-primary/90",
-          )}
+        <div
+          role="status"
+          aria-label="Тур уже в заявке"
+          className="absolute top-3 right-3 z-10 flex size-9 items-center justify-center rounded-md bg-primary text-primary-foreground backdrop-blur-sm"
         >
-          <CheckIcon />
-        </Button>
+          <CheckIcon className="size-4" />
+        </div>
       )}
     </article>
   )

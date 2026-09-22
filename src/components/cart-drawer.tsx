@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ShoppingBagIcon, XIcon } from "lucide-react"
+import { ShoppingBagIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { isConfigured, usePackage } from "@/hooks/use-package"
@@ -15,9 +15,10 @@ function formatDate(iso: string): string {
 // экрана (PackageBar) — Виктор увидел её на странице тура (там уже есть
 // своя нижняя плашка цены) и попросил убрать: "смотрится плохо", вместо
 // неё — иконка корзины СЛЕВА от "ВикТур" в шапке, открывающая список.
-// Донастройка (дата/гости по каждому туру, доплаты, форма) остаётся на
-// /request — там это уже полноценно сделано; здесь только быстрый обзор +
-// удаление позиции, чтобы не дублировать календарь внутри шторки.
+// Донастройка (дата/гости) и удаление позиции — только на /request:
+// Виктор — "корзину сейчас слишком легко отчистить, убираем оттуда
+// крестик, удалить бронирование можно только внутри оформления заявки".
+// Здесь — чистый быстрый обзор, без действий.
 //
 // data-cart-trigger — Виктор: "не совсем очевидно куда нажимать дальше"
 // после "Добавить в заявку", нужно анимацией показать, куда смотреть.
@@ -26,7 +27,7 @@ function formatDate(iso: string): string {
 // (разные части шапки/страницы тура), общий стейт под одноразовую
 // анимацию заводить избыточно.
 export function CartDrawer() {
-  const { items, removeItem } = usePackage()
+  const { items } = usePackage()
 
   if (items.length === 0) return null
 
@@ -70,15 +71,6 @@ export function CartDrawer() {
                   <div className="mt-0.5 text-xs text-muted-foreground">Дата и гости не выбраны</div>
                 )}
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Убрать тур из заявки"
-                onClick={() => removeItem(item.tourSlug)}
-              >
-                <XIcon />
-              </Button>
             </div>
           ))}
         </div>
