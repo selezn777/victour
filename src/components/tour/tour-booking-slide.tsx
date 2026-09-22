@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useRef, useState, type TouchEvent as ReactTouchEvent } from "react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { sendGAEvent } from "@next/third-parties/google"
 import { MinusIcon, PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,15 @@ import { cn } from "@/lib/utils"
 // тур в заявке, иконка корзины ДО этого клика не существовала в DOM
 // (CartDrawer рендерит null при пустой заявке) и появляется только
 // после ре-рендера шапки, которому нужен хотя бы один кадр.
+//
+// Одна CSS @keyframes-анимация (fly-to-cart, см. globals.css), а не
+// ручное переключение ball.style.transition/transform из JS — та версия
+// меняла transition И transform в одном синхронном тике без forced
+// reflow/rAF между шагами, из-за чего браузер не всегда подхватывал
+// новую длительность для второй фазы (перелёт срабатывал рывком без
+// плавности — Виктор: "стало быстро и непонятно"). Координаты клика
+// передаются через CSS custom properties, а сама последовательность фаз
+// (поп → пауза → перелёт → исчезновение) целиком в keyframes.
 function flyToCart(buttonEl: HTMLElement) {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -29,6 +38,8 @@ function flyToCart(buttonEl: HTMLElement) {
       if (!cartEl) return
       const from = buttonEl.getBoundingClientRect()
       const to = cartEl.getBoundingClientRect()
+      const dx = to.left + to.width / 2 - (from.left + from.width / 2)
+      const dy = to.top + to.height / 2 - (from.top + from.height / 2)
       const ball = document.createElement("div")
       ball.textContent = "+1"
       ball.setAttribute("aria-hidden", "true")
@@ -49,31 +60,12 @@ function flyToCart(buttonEl: HTMLElement) {
         font-family: inherit;
         z-index: 100;
         pointer-events: none;
-        will-change: transform, opacity;
-        box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5);
-        transform: scale(0);
-        opacity: 0;
-        transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 180ms ease-out;
+        --fly-dx: ${dx}px;
+        --fly-dy: ${dy}px;
+        animation: fly-to-cart 1200ms ease-in-out forwards;
       `
       document.body.appendChild(ball)
-      const dx = to.left + to.width / 2 - (from.left + from.width / 2)
-      const dy = to.top + to.height / 2 - (from.top + from.height / 2)
-      // Виктор: "делаем более очевидным и не таким мгновенным" — раньше
-      // шарик сразу улетал одним 700мс движением, почти незаметно. Теперь
-      // два отдельных движения: сначала крупный "поп" прямо на месте
-      // кнопки (глаз успевает его заметить), с паузой, и только потом
-      // сам перелёт к корзине — заметно дольше и разборчивее.
-      requestAnimationFrame(() => {
-        ball.style.transform = "scale(1)"
-        ball.style.opacity = "1"
-      })
-      const FLIGHT_MS = 900
-      setTimeout(() => {
-        ball.style.transition = `transform ${FLIGHT_MS}ms cubic-bezier(0.34, 0.8, 0.6, 1), opacity ${FLIGHT_MS}ms ease-in 400ms`
-        ball.style.transform = `translate(${dx}px, ${dy}px) scale(0.15)`
-        ball.style.opacity = "0"
-      }, 380)
-      setTimeout(() => ball.remove(), 380 + FLIGHT_MS)
+      setTimeout(() => ball.remove(), 1250)
     })
   })
 }
@@ -124,6 +116,7 @@ export function TourBookingSlide({
    * например, показать плашку/переключить слайд. */
   onSubmitted?: () => void
 }) {
+  const router = useRouter()
   const { items, addItem } = usePackage()
   const [guideId, setGuideId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -379,27 +372,45 @@ export function TourBookingSlide({
             подтверждали факт добавления, дальше гость терялся). Кнопка
             теперь сама становится следующим шагом: яркий оранжевый цвет
             (отличается и от primary, и от secondary — заметно как призыв
-            к действию) и ведёт прямо на /request. */}
-        {addedToPackage ? (
-          <Button
-            size="lg"
-            className="mt-3 w-full bg-orange-500 text-white shadow-sm hover:bg-orange-600 hover:shadow-md"
-            nativeButton={false}
-            render={<Link href="/request" />}
-          >
-            Перейти в заявку
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            size="lg"
-            className="mt-3 w-full"
-            disabled={!guide || !selectedDate}
-            onClick={(e) => handleSubmit(e.currentTarget)}
-          >
-            Добавить в заявку
-          </Button>
-        )}
+            к действию) и ведёт прямо на /request.
+            ОДИН стабильный <button> на оба состояния, а не условный рендер
+            двух разных элементов — Виктор: "смена кнопок должна
+            происходить с анимацией". Два элемента = remount DOM-узла при
+            переключении, поперёк которого CSS-переход физически не может
+            сработать (мгновенный "снап" вместо анимации). На одном узле
+            меняется только className (цвет — подхватывает уже имеющийся
+            у Button transition-all) и текст (crossfade наложенными span).
+            Клик ведёт на /request через router.push, а не обычный Link —
+            иначе снова были бы два разных типа элемента (button/a). */}
+        <Button
+          type="button"
+          size="lg"
+          className={cn(
+            "relative mt-3 w-full overflow-hidden",
+            addedToPackage && "bg-orange-500 text-white shadow-sm hover:bg-orange-600 hover:shadow-md",
+          )}
+          disabled={!addedToPackage && (!guide || !selectedDate)}
+          onClick={(e) => (addedToPackage ? router.push("/request") : handleSubmit(e.currentTarget))}
+        >
+          <span className="relative block">
+            <span
+              className={cn(
+                "block transition-opacity duration-300",
+                addedToPackage && "opacity-0",
+              )}
+            >
+              Добавить в заявку
+            </span>
+            <span
+              className={cn(
+                "absolute inset-0 flex items-center justify-center transition-opacity duration-300",
+                !addedToPackage && "opacity-0",
+              )}
+            >
+              Перейти в заявку
+            </span>
+          </span>
+        </Button>
 
         {error && (
           <p className="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
