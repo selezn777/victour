@@ -28,6 +28,10 @@ const STACK_TRANSFORM = [
  * перемешивается по кругу: нижнее фото выходит на передний план, остальные
  * опускаются на одну позицию — это единственная анимация, что осталась.
  */
+// Длительность переключения по тапу — Виктор: "процентов на 10 быстрее"
+// (было 180мс).
+const SHUFFLE_MS = 160
+
 export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
   const [positions, setPositions] = useState(() => photos.map((_, i) => i))
   const [lifted, setLifted] = useState(false)
@@ -38,7 +42,7 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
     setTimeout(() => {
       setPositions((prev) => prev.map((pos) => (pos + 1) % photos.length))
       setLifted(false)
-    }, 180)
+    }, SHUFFLE_MS)
   }
 
   // Тихая статичная текстовая подсказка (не мигает и не торопит) — Виктор:
@@ -64,7 +68,7 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
           style={{
             zIndex: photos.length - positions[i],
             transitionProperty: "transform",
-            transitionDuration: "180ms",
+            transitionDuration: `${SHUFFLE_MS}ms`,
             transitionTimingFunction: "ease-out",
             transform: `${STACK_TRANSFORM[positions[i]]}${lifted ? " translateY(-26px) scale(1.02)" : ""}`,
           }}
