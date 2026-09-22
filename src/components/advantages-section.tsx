@@ -273,7 +273,17 @@ function preloadImage(src: string) {
 // напрямую из уже отрисованного макета.
 type Measurement = { origin: string; scaleX: number; scaleY: number }
 
-function useRevealCycle(bandIndex: number, measure: (idx: number) => Measurement, ready: boolean) {
+function useRevealCycle(
+  bandIndex: number,
+  measure: (idx: number) => Measurement,
+  ready: boolean,
+  // Общий на ВСЕ полосы реф (не на эту одну) — Виктор: после первого клика
+  // гостя по любой плитке автоцикл должен насовсем остановиться "не
+  // перебивая его выбор" — если бы останавливалась только полоса с
+  // кликнутой плиткой, остальные продолжали бы сами мигать/раскрываться и
+  // всё равно отвлекали. См. handleTileClick в PhotoCollage.
+  userTookOverRef: RefObject<boolean>,
+) {
   const [phase, setPhase] = useState<Phase>("idle")
   const [target, setTarget] = useState(0)
   const [origin, setOrigin] = useState("50% 50%")
@@ -353,6 +363,10 @@ function useRevealCycle(bandIndex: number, measure: (idx: number) => Measurement
       if (generation !== generationRef.current) return
       const forcedIdx = forcedTargetRef.current
       forcedTargetRef.current = null
+      // Гость уже взял управление кликом раньше — автоцикл (не forced)
+      // больше не планирует новых раскрытий, полоса просто замирает в
+      // idle до следующего клика (который всегда идёт через forced).
+      if (forcedIdx == null && userTookOverRef.current) return
       let idx: number
       if (forcedIdx != null) {
         idx = forcedIdx
@@ -407,7 +421,7 @@ function useRevealCycle(bandIndex: number, measure: (idx: number) => Measurement
         }, HOLD_MS)
       })
     },
-    [after, currentPool, measure, wait],
+    [after, currentPool, measure, wait, userTookOverRef],
   )
   useEffect(() => {
     runCycleRef.current = runCycle
@@ -580,14 +594,20 @@ function PhotoCollage({ size }: { size: number }) {
   const measure1 = useCallback((idx: number) => measureOrigin(1, idx), [measureOrigin])
   const measure2 = useCallback((idx: number) => measureOrigin(2, idx), [measureOrigin])
 
+  // Виктор: "если пользователь один раз тыкнул, отключаем автоматическое
+  // открытие... не перебивая его выбор нашим алгоритмом" — общий на весь
+  // коллаж флаг (не per-полоса, см. комментарий у useRevealCycle), взводится
+  // в handleTileClick при первом клике, дальше все 3 полосы замирают в idle.
+  const userTookOverRef = useRef(false)
+
   // Три параллельных цикла (по числу полос на самом широком брейкпоинте — lg),
   // каждый на своём брейкпоинте либо активен (своя полоса колонок), либо просто
   // ждёт (bandIndex >= bandCountForWidth). Хуков всегда ровно 3 — иначе нарушится
   // React Rules of Hooks при смене ширины окна.
   const reveals = [
-    useRevealCycle(0, measure0, gridReady),
-    useRevealCycle(1, measure1, gridReady),
-    useRevealCycle(2, measure2, gridReady),
+    useRevealCycle(0, measure0, gridReady, userTookOverRef),
+    useRevealCycle(1, measure1, gridReady, userTookOverRef),
+    useRevealCycle(2, measure2, gridReady, userTookOverRef),
   ]
   const activeByTile = new Map(reveals.filter((r) => r.phase !== "idle").map((r) => [r.target, r]))
 
@@ -623,6 +643,7 @@ function PhotoCollage({ size }: { size: number }) {
     if (b == null) return
     const reveal = reveals[b]
     if (reveal.phase !== "idle") return
+    userTookOverRef.current = true
     reveal.triggerOpen(i)
   }
 
