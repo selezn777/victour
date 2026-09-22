@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { sendGAEvent } from "@next/third-parties/google"
+import { MinusIcon, PlusIcon } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -93,16 +94,19 @@ function ItemCard({
 
   if (!editing) {
     return (
-      <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-5 shadow-sm">
-        <div>
-          <div className="font-medium">{item.tourTitle}</div>
-          <div className="mt-0.5 text-sm text-muted-foreground">
-            {formatDate(item.date!)} · {item.guideName} · {item.adults} гостей
-          </div>
+      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <div className="font-medium">{item.tourTitle}</div>
+        <div className="mt-0.5 text-sm text-muted-foreground">
+          {formatDate(item.date!)} · {item.guideName} · {item.adults} гостей
         </div>
-        <div className="flex items-center gap-2">
-          <span className="font-heading font-semibold text-primary">{formatUsd(itemGroupTotalUsd(item))}</span>
-          <Button type="button" variant="outline" size="sm" onClick={() => setEditing(true)}>
+        {/* Виктор: "кнопку изменить тоже делаем больше" — своя строка на
+            всю ширину, чтобы крупная кнопка не толкалась с ценой/
+            названием на узком экране. */}
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <span className="font-heading text-lg font-semibold text-primary">
+            {formatUsd(itemGroupTotalUsd(item))}
+          </span>
+          <Button type="button" variant="outline" size="lg" onClick={() => setEditing(true)}>
             Изменить
           </Button>
         </div>
@@ -168,49 +172,52 @@ function ItemEditForm({
 
   return (
     <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-      <div className="flex items-center justify-between gap-3">
-        <div className="font-medium">{item.tourTitle}</div>
-        <Button type="button" size="sm" disabled={!selectedDate} onClick={onDone}>
-          Готово
-        </Button>
+      <div className="font-medium">{item.tourTitle}</div>
+
+      {/* Тот же вид, что на странице тура (tour-booking-slide.tsx) —
+          Виктор: интерфейс тут выглядел иначе и было "не очевидно, как
+          цена меняется при этом действии". Крупный степпер + цена сразу
+          под ним тем же макетом — гость уже видел эту связку раньше,
+          узнаёт её здесь. "Гостей" → "Количество человек" (тот же ярлык,
+          что на странице тура). */}
+      <div className="mt-4">
+        <span className="px-1 text-sm font-medium text-muted-foreground">Количество человек</span>
+        <div className="mt-1.5 flex items-center gap-3">
+          <button
+            type="button"
+            aria-label="Меньше гостей"
+            disabled={guestCount <= minGuests}
+            onClick={() => setGuestCount((c) => Math.max(minGuests, c - 1))}
+            className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/70 disabled:pointer-events-none disabled:opacity-30"
+          >
+            <MinusIcon className="size-5" />
+          </button>
+          <span className="flex-1 text-center text-3xl font-semibold tabular-nums">{guestCount}</span>
+          <button
+            type="button"
+            aria-label="Больше гостей"
+            disabled={guestCount >= maxGuests}
+            onClick={() => setGuestCount((c) => Math.min(maxGuests, c + 1))}
+            className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/70 disabled:pointer-events-none disabled:opacity-30"
+          >
+            <PlusIcon className="size-5" />
+          </button>
+        </div>
       </div>
 
-      <div className="mt-4 flex items-end justify-between gap-4">
-        <div>
-          <span className="text-sm font-medium">Гостей</span>
-          <div className="mt-1.5 flex items-center gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              disabled={guestCount <= minGuests}
-              onClick={() => setGuestCount((c) => Math.max(minGuests, c - 1))}
-              aria-label="Меньше гостей"
-            >
-              −
-            </Button>
-            <span className="w-6 text-center text-sm font-medium">{guestCount}</span>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              disabled={guestCount >= maxGuests}
-              onClick={() => setGuestCount((c) => Math.min(maxGuests, c + 1))}
-              aria-label="Больше гостей"
-            >
-              +
-            </Button>
+      {selectedDate && (
+        <div className="mt-3 flex items-baseline justify-between px-1">
+          <div>
+            <span className="font-heading text-2xl font-semibold text-primary">
+              {formatUsd(priceAdultUsd)}
+            </span>
+            <span className="ml-1 text-sm text-muted-foreground">за человека</span>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Итого за {guestCount}: {formatUsd(priceAdultUsd * guestCount)}
           </div>
         </div>
-        {selectedDate && (
-          <div className="text-right">
-            <div className="font-heading text-lg font-semibold text-primary">
-              {formatUsd(priceAdultUsd * guestCount)}
-            </div>
-            <div className="text-xs text-muted-foreground">{formatUsd(priceAdultUsd)} за человека</div>
-          </div>
-        )}
-      </div>
+      )}
 
       <div className="mt-4">
         <span className="text-sm font-medium">Дата</span>
@@ -227,6 +234,14 @@ function ItemEditForm({
       {error && (
         <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
       )}
+
+      {/* Виктор: "кнопку готово меняем на сохранить и делаем принципиально
+          больше" — маленькая кнопка в углу заголовка терялась. На всю
+          ширину внизу формы, тем же стилем, что "Добавить в заявку" на
+          странице тура — уже знакомый гостю акцент на главном действии. */}
+      <Button type="button" size="lg" className="mt-4 w-full" disabled={!selectedDate} onClick={onDone}>
+        Сохранить
+      </Button>
     </div>
   )
 }
