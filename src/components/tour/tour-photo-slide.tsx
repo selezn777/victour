@@ -50,7 +50,7 @@ export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
             loop={photos.length > 1}
             onSwiper={(swiper: SwiperType) => (swiperRef.current = swiper)}
             onSlideChange={(swiper: SwiperType) => setActive(swiper.realIndex)}
-            allowTouchMove={false}
+            nested
             className="h-full w-full"
           >
             {photos.map((url, i) => (
@@ -66,8 +66,8 @@ export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
           </Swiper>
           {photos.length > 1 && (
             <>
-              {/* Виктор: "убираем свайп, добавляем аккуратные стрелочки по
-                  бокам" — листание теперь только кнопками. */}
+              {/* Стрелки — вместе со свайпом (nested на Swiper выше, чтобы
+                  вертикальная колода не перехватывала горизонтальный жест). */}
               <button
                 type="button"
                 aria-label="Предыдущее фото"
