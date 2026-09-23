@@ -48,6 +48,7 @@ export function BookingCalendar({
   onSelectDate,
   large = false,
   dense = false,
+  fill = false,
 }: {
   bookedDates: Set<string>
   /** Даты, занятые ДРУГИМИ турами в текущей заявке гостя (title тура по
@@ -65,6 +66,11 @@ export function BookingCalendar({
    * другие туры (подписи "занято туром" + подсказка 2-дневного тура), и
    * кнопка "Добавить в заявку" уезжала за экран телефона (Виктор). */
   dense?: boolean
+  /** Растянуться на всю высоту родителя (flex-колонка): строки дат делят
+   * свободное место между собой — слайд брони занимает весь экран, без
+   * пустоты снизу (Виктор: "подстраивалось под высоту страницы"). Чистый
+   * CSS (grid-template-rows minmax), без измерений из JS. */
+  fill?: boolean
 }) {
   const today = useMemo(() => {
     const d = new Date()
@@ -112,7 +118,7 @@ export function BookingCalendar({
   }
 
   return (
-    <div className={cn("rounded-xl border border-border", dense ? "p-2.5 sm:p-4" : "p-3", large && !dense && "sm:p-5")}>
+    <div className={cn("rounded-xl border border-border", fill && "flex flex-1 flex-col", dense ? "p-2.5 sm:p-4" : "p-3", large && !dense && "sm:p-5")}>
       <div className="flex items-center justify-between">
         <span className={cn("text-sm font-medium", large && "sm:text-base")}>
           {MONTH_NAMES[cursor.getMonth()]} {cursor.getFullYear()}
@@ -144,7 +150,12 @@ export function BookingCalendar({
         ))}
       </div>
 
-      <div className={cn("mt-1 grid grid-cols-7", dense ? "gap-0.5 sm:gap-1" : "gap-1", large && !dense && "sm:gap-1.5")}>
+      <div
+        // Строки 1fr (а не minmax(2rem, 3.5rem)): с фиксированным максимумом
+        // min-content календаря считался по 3.5rem и на низком экране строки
+        // не сжимались. Потолок высоты — на самой кнопке (max-h-14).
+        style={fill ? { gridTemplateRows: `repeat(${weeks.length}, minmax(2rem, 1fr))` } : undefined}
+        className={cn("mt-1 grid grid-cols-7", fill && "flex-1", dense ? "gap-0.5 sm:gap-1" : "gap-1", large && !dense && "sm:gap-1.5")}>
         {weeks.flatMap((week, wi) =>
           week.map((date, di) => {
             if (!date) return <div key={`${wi}-${di}`} />
@@ -161,7 +172,7 @@ export function BookingCalendar({
                 onClick={() => onSelectDate(toIsoDate(date))}
                 className={cn(
                   "relative flex items-center justify-center rounded-lg text-sm transition-colors",
-                  dense ? "h-8 sm:h-10" : large ? "h-10 sm:h-12 sm:text-base" : "h-9",
+                  fill ? "h-full max-h-14 self-center sm:text-base" : dense ? "h-8 sm:h-10" : large ? "h-10 sm:h-12 sm:text-base" : "h-9",
                   disabled && "cursor-not-allowed text-muted-foreground/40 line-through",
                   // Занято своим же туром из заявки — отдельная пометка
                   // поверх обычного disabled-стиля, не просто "гид занят".

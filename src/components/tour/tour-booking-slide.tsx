@@ -260,13 +260,16 @@ export function TourBookingSlide({
         ref={scrollRef}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
-        className="no-scrollbar mx-auto min-h-0 w-full max-w-md flex-1 overflow-y-auto"
+        className="no-scrollbar mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col overflow-y-auto"
       >
         <h2 className={cn("text-center font-heading leading-[1.15] font-semibold sm:text-3xl", dense ? "text-lg" : "text-xl")}>
           Дата и бронь
         </h2>
 
-        <div className={dense ? "mt-2" : "mt-3"}>
+        {/* flex-1 + fill: календарь забирает всю свободную высоту слайда
+            (строки дат растут до 3.5rem), остальные секции — по контенту.
+            Если экран низкий — строки сжимаются до 2rem, дальше скролл. */}
+        <div className={cn("flex flex-1 flex-col", dense ? "mt-2" : "mt-3")}>
           <BookingCalendar
             bookedDates={commonBookedDates}
             packageOwnerByDate={packageOwnerByDate}
@@ -275,6 +278,7 @@ export function TourBookingSlide({
             onSelectDate={handleSelectDate}
             large
             dense={dense}
+            fill
           />
         </div>
 
