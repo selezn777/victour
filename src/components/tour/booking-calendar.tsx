@@ -47,6 +47,7 @@ export function BookingCalendar({
   selectedDate,
   onSelectDate,
   large = false,
+  dense = false,
 }: {
   bookedDates: Set<string>
   /** Даты, занятые ДРУГИМИ турами в текущей заявке гостя (title тура по
@@ -60,6 +61,10 @@ export function BookingCalendar({
    * Виктор увидел стандартный размер на телефоне и попросил кнопки даты
    * покрупнее, "удобнее". Остальные места (форма заявки) остаются как были. */
   large?: boolean
+  /** Ужать календарь по высоте — на слайде брони, когда в заявке уже есть
+   * другие туры (подписи "занято туром" + подсказка 2-дневного тура), и
+   * кнопка "Добавить в заявку" уезжала за экран телефона (Виктор). */
+  dense?: boolean
 }) {
   const today = useMemo(() => {
     const d = new Date()
@@ -107,7 +112,7 @@ export function BookingCalendar({
   }
 
   return (
-    <div className={cn("rounded-xl border border-border p-3", large && "sm:p-5")}>
+    <div className={cn("rounded-xl border border-border", dense ? "p-2.5 sm:p-4" : "p-3", large && !dense && "sm:p-5")}>
       <div className="flex items-center justify-between">
         <span className={cn("text-sm font-medium", large && "sm:text-base")}>
           {MONTH_NAMES[cursor.getMonth()]} {cursor.getFullYear()}
@@ -133,13 +138,13 @@ export function BookingCalendar({
         </div>
       </div>
 
-      <div className={cn("mt-2 grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground", large && "sm:text-sm")}>
+      <div className={cn(dense ? "mt-1" : "mt-2", "grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground", large && "sm:text-sm")}>
         {WEEKDAYS.map((w) => (
           <div key={w}>{w}</div>
         ))}
       </div>
 
-      <div className={cn("mt-1 grid grid-cols-7 gap-1", large && "sm:gap-1.5")}>
+      <div className={cn("mt-1 grid grid-cols-7", dense ? "gap-0.5 sm:gap-1" : "gap-1", large && !dense && "sm:gap-1.5")}>
         {weeks.flatMap((week, wi) =>
           week.map((date, di) => {
             if (!date) return <div key={`${wi}-${di}`} />
@@ -156,7 +161,7 @@ export function BookingCalendar({
                 onClick={() => onSelectDate(toIsoDate(date))}
                 className={cn(
                   "relative flex items-center justify-center rounded-lg text-sm transition-colors",
-                  large ? "h-10 sm:h-12 sm:text-base" : "h-9",
+                  dense ? "h-8 sm:h-10" : large ? "h-10 sm:h-12 sm:text-base" : "h-9",
                   disabled && "cursor-not-allowed text-muted-foreground/40 line-through",
                   // Занято своим же туром из заявки — отдельная пометка
                   // поверх обычного disabled-стиля, не просто "гид занят".
@@ -176,7 +181,7 @@ export function BookingCalendar({
       </div>
 
       {durationDays === 2 && (
-        <p className="mt-2 text-xs text-muted-foreground">
+        <p className={cn("text-xs text-muted-foreground", dense ? "mt-1.5 leading-snug" : "mt-2")}>
           Тур на два дня — вторая дата бронируется автоматически следующим днём.
         </p>
       )}
@@ -185,7 +190,7 @@ export function BookingCalendar({
           "добавлять описание на какую дату какой тур уже забронирован"
           (актуально, когда в заявке уже несколько туров). */}
       {legendEntries.length > 0 && (
-        <ul className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+        <ul className={cn("space-y-0.5 text-xs leading-snug text-muted-foreground", dense ? "mt-1" : "mt-2")}>
           {legendEntries.map(([iso, title]) => (
             <li key={iso} className="flex items-center gap-1.5">
               <span className="size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />

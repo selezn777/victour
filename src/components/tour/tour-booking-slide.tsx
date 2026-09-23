@@ -179,6 +179,11 @@ export function TourBookingSlide({
     return map
   }, [items, tour.slug])
 
+  // В заявке уже есть другие туры — под календарём появляются подписи
+  // "занято туром …", и на телефоне кнопка "Добавить в заявку" уезжала за
+  // экран (Виктор: "надо всё немного уменьшить, чтобы всё влезло").
+  const dense = packageOwnerByDate.size > 0
+
   const commonBookedDates = useMemo(() => {
     if (guides.length === 0) return otherItemDates
     const dates = new Set<string>()
@@ -257,11 +262,11 @@ export function TourBookingSlide({
         onTouchMove={onTouchMove}
         className="no-scrollbar mx-auto min-h-0 w-full max-w-md flex-1 overflow-y-auto"
       >
-        <h2 className="text-center font-heading text-xl leading-[1.15] font-semibold sm:text-3xl">
+        <h2 className={cn("text-center font-heading leading-[1.15] font-semibold sm:text-3xl", dense ? "text-lg" : "text-xl")}>
           Дата и бронь
         </h2>
 
-        <div className="mt-3">
+        <div className={dense ? "mt-2" : "mt-3"}>
           <BookingCalendar
             bookedDates={commonBookedDates}
             packageOwnerByDate={packageOwnerByDate}
@@ -269,6 +274,7 @@ export function TourBookingSlide({
             selectedDate={selectedDate}
             onSelectDate={handleSelectDate}
             large
+            dense={dense}
           />
         </div>
 
@@ -293,13 +299,14 @@ export function TourBookingSlide({
             в разметке (не только когда выбран) — иначе граница появлялась
             бы ПОСЛЕ рендера и на миг сдвигала бы контент на 2px. */}
         {selectedDate && (
-          <div className="mt-3 space-y-2">
+          <div className={cn(dense ? "mt-2 space-y-1" : "mt-3 space-y-2")}>
             <span className="text-sm font-medium text-muted-foreground">Гид на эту дату</span>
             {availableGuides.map((g) => (
               <div
                 key={g.id}
                 className={cn(
-                  "flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl border-2 border-transparent bg-primary/5 px-4 py-2.5 transition-colors",
+                  "flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl border-2 border-transparent bg-primary/5 px-4 transition-colors",
+                  dense ? "py-1.5" : "py-2.5",
                   g.id === guideId && "border-primary",
                 )}
               >
@@ -335,9 +342,9 @@ export function TourBookingSlide({
             крошечные кнопки сбоку от узкого чипа). Шаг идёт по реальным
             тарифным ступеням тура (обычно 2..9 подряд), а не произвольным
             +1/-1 — на случай, если когда-нибудь ступени не подряд. */}
-        <div className="mt-3">
+        <div className={dense ? "mt-2" : "mt-3"}>
           <span className="px-1 text-sm font-medium text-muted-foreground">Количество человек</span>
-          <div className="mt-1.5 flex items-center gap-3">
+          <div className={cn("flex items-center gap-3", dense ? "mt-1" : "mt-1.5")}>
             <button
               type="button"
               aria-label="Меньше гостей"
@@ -349,11 +356,11 @@ export function TourBookingSlide({
                 })
                 setAddedToPackage(false)
               }}
-              className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/70 disabled:pointer-events-none disabled:opacity-30"
+              className={cn("flex shrink-0 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/70 disabled:pointer-events-none disabled:opacity-30", dense ? "size-10" : "size-12")}
             >
               <MinusIcon className="size-5" />
             </button>
-            <span className="flex-1 text-center text-3xl font-semibold tabular-nums">
+            <span className={cn("flex-1 text-center font-semibold tabular-nums", dense ? "text-2xl" : "text-3xl")}>
               {guestCount}
             </span>
             <button
@@ -367,7 +374,7 @@ export function TourBookingSlide({
                 })
                 setAddedToPackage(false)
               }}
-              className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/70 disabled:pointer-events-none disabled:opacity-30"
+              className={cn("flex shrink-0 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/70 disabled:pointer-events-none disabled:opacity-30", dense ? "size-10" : "size-12")}
             >
               <PlusIcon className="size-5" />
             </button>
@@ -378,9 +385,9 @@ export function TourBookingSlide({
             гость сравнивает между турами), итог за группу — мельче и
             приглушённо (Виктор: "общая сумма должна быть меньше, чем сумма
             за человека" — раньше было наоборот, итог был крупным зелёным). */}
-        <div className="mt-3 flex items-baseline justify-between px-1">
+        <div className={cn("flex items-baseline justify-between px-1", dense ? "mt-2" : "mt-3")}>
           <div>
-            <span className="font-heading text-2xl font-semibold text-primary">
+            <span className={cn("font-heading font-semibold text-primary", dense ? "text-xl" : "text-2xl")}>
               {formatUsd(priceAdultUsd)}
             </span>
             <span className="ml-1 text-sm text-muted-foreground">за человека</span>
@@ -407,7 +414,8 @@ export function TourBookingSlide({
           type="button"
           size="lg"
           className={cn(
-            "relative mt-3 w-full overflow-hidden",
+            "relative w-full overflow-hidden",
+            dense ? "mt-2" : "mt-3",
             addedToPackage && "bg-orange-500 text-white shadow-sm hover:bg-orange-600 hover:shadow-md",
           )}
           disabled={!addedToPackage && (!guide || !selectedDate)}
