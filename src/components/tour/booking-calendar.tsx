@@ -78,7 +78,12 @@ export function BookingCalendar({
     return d
   }, [])
 
-  const [cursor, setCursor] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
+  // Открываемся на месяце уже выбранной даты (редактирование позиции в
+  // заявке) — иначе гость видит пустой текущий месяц и не находит свою бронь.
+  const [cursor, setCursor] = useState(() => {
+    const base = selectedDate ? new Date(`${selectedDate}T00:00:00`) : today
+    return new Date(base.getFullYear(), base.getMonth(), 1)
+  })
 
   const weeks = useMemo(() => buildMonthGrid(cursor.getFullYear(), cursor.getMonth()), [cursor])
 

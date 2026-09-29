@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { PhoneInput } from "@/components/ui/phone-input"
 import { AccountMenu } from "@/components/account-menu"
 import { BookingCalendar } from "@/components/tour/booking-calendar"
-import { datesUsedByOtherItems, isConfigured, usePackage, type PackageItem } from "@/hooks/use-package"
+import { isConfigured, usePackage, type PackageItem } from "@/hooks/use-package"
 import { calculatePackageTotal, calculatePrepayment } from "@/lib/pricing"
 import { formatRubFromUsd, formatUsd, formatVnd, formatVndFromUsd } from "@/lib/format"
 import type { SiteSettings, Surcharge } from "@/lib/site-data"
@@ -51,6 +51,18 @@ type TourPricingInfo = {
 
 type GuideInfo = { id: string; name: string; bookedDates: string[] }
 
+// Какой другой тур заявки занимает дату — для подписей "занято туром …"
+// в календаре (как на странице тура, tour-booking-slide.tsx).
+function ownersOfOtherItems(items: PackageItem[], excludeTourSlug: string): Map<string, string> {
+  const map = new Map<string, string>()
+  for (const item of items) {
+    if (item.tourSlug === excludeTourSlug) continue
+    if (item.date) map.set(item.date, item.tourTitle)
+    if (item.dateEnd) map.set(item.dateEnd, item.tourTitle)
+  }
+  return map
+}
+
 // Карточка позиции заявки — два режима. Свёрнутый (по умолчанию для уже
 // настроенных позиций): сводка + кнопка "Изменить" + удаление. Разво-
 // рачивается в форму (гости + календарь, предзаполненную текущими
@@ -74,7 +86,7 @@ function ItemCard({
   item: PackageItem
   info: TourPricingInfo | undefined
   guide: GuideInfo | null
-  usedDates: Set<string>
+  usedDates: Map<string, string>
   onConfigure: (patch: { date: string; dateEnd: string | null; adults: number; priceAdultUsd: number }) => string | null
 }) {
   // Разворачиваем сразу только если позиция ещё не настроена (на
@@ -96,17 +108,17 @@ function ItemCard({
     return (
       <div className="p-4 sm:p-5">
         <div className="font-medium">{item.tourTitle}</div>
-        <div className="mt-0.5 text-sm text-muted-foreground">
-          {formatDate(item.date!)} · {item.guideName} · {item.adults} гостей
+        {/* Виктор: дата и число человек крупнее (главное, что гость
+            проверяет), "Изменить" — компактнее, чтобы не спорила с ценой. */}
+        <div className="mt-1 text-base font-medium">
+          {formatDate(item.date!)} · {item.adults} чел.
         </div>
-        {/* Виктор: "кнопку изменить тоже делаем больше" — своя строка на
-            всю ширину, чтобы крупная кнопка не толкалась с ценой/
-            названием на узком экране. */}
+        <div className="text-sm text-muted-foreground">Гид: {item.guideName}</div>
         <div className="mt-3 flex items-center justify-between gap-3">
           <span className="font-heading text-lg font-semibold text-primary">
             {formatUsd(itemGroupTotalUsd(item))}
           </span>
-          <Button type="button" variant="outline" size="lg" onClick={() => setEditing(true)}>
+          <Button type="button" variant="outline" size="sm" onClick={() => setEditing(true)}>
             Изменить
           </Button>
         </div>
@@ -141,7 +153,7 @@ function ItemEditForm({
   item: PackageItem
   info: TourPricingInfo
   guide: GuideInfo
-  usedDates: Set<string>
+  usedDates: Map<string, string>
   onConfigure: (patch: { date: string; dateEnd: string | null; adults: number; priceAdultUsd: number }) => string | null
   onDone: () => void
   error: string | null
@@ -154,7 +166,7 @@ function ItemEditForm({
   const [selectedDate, setSelectedDate] = useState<string | null>(item.date)
 
   const priceAdultUsd = info.pricingTiers.find((t) => t.guestCount === guestCount)?.priceAdultUsd ?? 0
-  const bookedDates = useMemo(() => new Set([...guide.bookedDates, ...usedDates]), [guide, usedDates])
+  const bookedDates = useMemo(() => new Set([...guide.bookedDates, ...usedDates.keys()]), [guide, usedDates])
 
   useEffect(() => {
     if (!selectedDate) return
@@ -182,7 +194,7 @@ function ItemEditForm({
           что на странице тура). */}
       <div className="mt-4">
         <span className="px-1 text-sm font-medium text-muted-foreground">Количество человек</span>
-        <div className="mt-1.5 flex items-center gap-3">
+        <div className="mt-1.5 flex items-center justify-center gap-5">
           <button
             type="button"
             aria-label="Меньше гостей"
@@ -192,7 +204,7 @@ function ItemEditForm({
           >
             <MinusIcon className="size-5" />
           </button>
-          <span className="flex-1 text-center text-3xl font-semibold tabular-nums">{guestCount}</span>
+          <span className="min-w-12 text-center text-3xl font-semibold tabular-nums">{guestCount}</span>
           <button
             type="button"
             aria-label="Больше гостей"
@@ -224,6 +236,7 @@ function ItemEditForm({
         <div className="mt-1.5">
           <BookingCalendar
             bookedDates={bookedDates}
+            packageOwnerByDate={usedDates}
             durationDays={info.durationDays}
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
@@ -545,7 +558,7 @@ export function RequestPageClient({
                   item={item}
                   info={tourInfo[item.tourSlug]}
                   guide={guide}
-                  usedDates={datesUsedByOtherItems(items, item.tourSlug)}
+                  usedDates={ownersOfOtherItems(items, item.tourSlug)}
                   onConfigure={(patch) => {
                     if (!guide) return "Гид ещё загружается, подождите секунду."
                     const result = addItem({

@@ -341,14 +341,14 @@ export function TourBookingSlide({
         )}
 
         {/* Гости — было: ряд чипов-кружков по числу гостей. Виктор много
-            раз недоволен и чипами, и до того +/-. Финал: степпер на всю
-            ширину экрана — крупная цифра по центру, +/- по краям (не
-            крошечные кнопки сбоку от узкого чипа). Шаг идёт по реальным
+            раз недоволен и чипами, и до того +/-. Финал: степпер — крупная
+            цифра по центру, +/- рядом с ней (не по краям экрана — Виктор:
+            "ближе к цифрам, удобнее нажимать"). Шаг идёт по реальным
             тарифным ступеням тура (обычно 2..9 подряд), а не произвольным
             +1/-1 — на случай, если когда-нибудь ступени не подряд. */}
         <div className={dense ? "mt-2" : "mt-3"}>
           <span className="px-1 text-sm font-medium text-muted-foreground">Количество человек</span>
-          <div className={cn("flex items-center gap-3", dense ? "mt-1" : "mt-1.5")}>
+          <div className={cn("flex items-center justify-center gap-5", dense ? "mt-1" : "mt-1.5")}>
             <button
               type="button"
               aria-label="Меньше гостей"
@@ -364,7 +364,7 @@ export function TourBookingSlide({
             >
               <MinusIcon className="size-5" />
             </button>
-            <span className={cn("flex-1 text-center font-semibold tabular-nums", dense ? "text-2xl" : "text-3xl")}>
+            <span className={cn("min-w-12 text-center font-semibold tabular-nums", dense ? "text-2xl" : "text-3xl")}>
               {guestCount}
             </span>
             <button
