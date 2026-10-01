@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react"
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -23,6 +23,7 @@ import {
   type ExtraOption,
 } from "./park-config"
 import { bookingSummaryRu } from "./park-texts"
+import { ADD_EXTRA_EVENT } from "./seawalking-cta"
 import { WhatsAppIcon } from "./whatsapp-icon"
 
 type Status = "idle" | "sending" | "success" | "failed" | "rate_limited"
@@ -75,6 +76,22 @@ export function BookingSection({ destination }: { destination: DestinationId }) 
   const [phone, setPhone] = useState("")
   const [telegramHandle, setTelegramHandle] = useState("")
   const [extras, setExtras] = useState<Record<string, number>>({})
+  const guestsRef = useRef(guests)
+  useEffect(() => {
+    guestsRef.current = guests
+  }, [guests])
+
+  // «Забронировать с Seawalking» из блока акции: отмечаем его на всех гостей с билетом
+  useEffect(() => {
+    const onAdd = (e: Event) => {
+      const key = (e as CustomEvent<string>).detail
+      if (!dest.extras.some((x) => x.key === key)) return
+      const people = dest.payingGuests.reduce((n, k) => n + (guestsRef.current[k] ?? 0), 0)
+      setExtras((x) => ({ ...x, [key]: Math.max(x[key] ?? 0, people, 1) }))
+    }
+    window.addEventListener(ADD_EXTRA_EVENT, onAdd)
+    return () => window.removeEventListener(ADD_EXTRA_EVENT, onAdd)
+  }, [dest])
   const [website, setWebsite] = useState("") // honeypot
   const [errors, setErrors] = useState<Partial<Record<BookingField, string>>>({})
   const [status, setStatus] = useState<Status>("idle")

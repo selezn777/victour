@@ -2,6 +2,7 @@ import Image from "next/image"
 import honTam from "../../../public/images/tours/hon-tam.jpg"
 import boat from "../../../public/park/hontam-boat.jpg"
 import { DESTINATIONS, HONTAM_PROMO } from "./park-config"
+import { SeawalkingCta } from "./seawalking-cta"
 import { BookingConditions, CARD, Hero, HeroTitle, SERIF, SectionTitle, TicketCard } from "./ui"
 
 const hontam = DESTINATIONS.hontam
@@ -21,6 +22,7 @@ export function HonTamContent() {
         alt="Остров Хон Там"
         pills={["НЯЧАНГ", "ТРАНСФЕР ВКЛЮЧЁН"]}
         objectPosition="center 55%"
+        ctaHref="#seawalking"
       >
         <HeroTitle>
           Остров
@@ -48,6 +50,80 @@ export function HonTamContent() {
           <div className="mt-3.5 rounded-2xl bg-white/12 px-3.5 py-3 text-[14px] leading-snug">
             🚤 Катер в <b className="text-(--c-on-primary)">8:00, 9:00, 10:00 или 12:00</b> —
             выезжаем от отеля за 40 минут до катера. На острове — до 16:20.
+          </div>
+        </section>
+
+        <section
+          id="seawalking"
+          className="scroll-mt-16 overflow-hidden rounded-[24px] bg-white shadow-(--c-shadow-primary)"
+        >
+          {HONTAM_PROMO.videoSrc && (
+            <video
+              src={HONTAM_PROMO.videoSrc}
+              poster={HONTAM_PROMO.posterSrc ?? undefined}
+              autoPlay
+              muted
+              loop
+              playsInline
+              controls
+              preload="metadata"
+              className="aspect-video w-full bg-black object-cover"
+            />
+          )}
+          <div className="p-4">
+            <span className="inline-block rounded-full bg-(--c-accent) px-2.5 py-1 text-[11px] font-bold tracking-wider text-white uppercase">
+              🤿 Акция
+            </span>
+            <h3 className="mt-2 text-[18px] leading-tight font-extrabold text-balance text-(--c-primary)">
+              {HONTAM_PROMO.title}
+            </h3>
+            <div className="mt-2 flex items-baseline gap-2.5">
+              <s className="text-[18px] text-(--c-muted)">{HONTAM_PROMO.oldPrice}</s>
+              <b className={`${SERIF} text-[34px] leading-none text-(--c-primary)`}>
+                {HONTAM_PROMO.price}
+              </b>
+            </div>
+            <p className="mt-2 text-[14px] leading-snug font-semibold">{HONTAM_PROMO.text}</p>
+
+            <ul className="mt-4 space-y-3 border-t border-(--c-bg-2) pt-4 text-[14px] leading-snug">
+              <li className="flex gap-3">
+                <span className="text-[22px] leading-none">🪶</span>
+                <span>
+                  <b className="text-(--c-primary)">Чувство невесомости.</b> Вы идёте по дну моря,
+                  как космонавт, — лёгкость, которую невозможно забыть.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-[22px] leading-none">🎥</span>
+                <span>
+                  <b className="text-(--c-primary)">Невероятное видео на память</b> — вы среди
+                  стай рыб и кораллов. Такого ролика нет ни у кого из друзей.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-[22px] leading-none">👓</span>
+                <span>
+                  <b className="text-(--c-primary)">Можно прямо в очках.</b> Шлем не касается
+                  лица — погружаетесь в своих очках и видите всё в первом ряду.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-[22px] leading-none">🛡️</span>
+                <span>
+                  <b className="text-(--c-primary)">Супер безопасно.</b> В шлеме дышите как
+                  обычно — уметь плавать и нырять не нужно.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-[22px] leading-none">🪸</span>
+                <span>
+                  <b className="text-(--c-primary)">Настоящий живой коралл, как на Красном море.</b>{" "}
+                  Такое почти нигде в мире не встречается.
+                </span>
+              </li>
+            </ul>
+
+            <SeawalkingCta />
           </div>
         </section>
 
@@ -84,37 +160,7 @@ export function HonTamContent() {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[24px] bg-white shadow-(--c-shadow-primary)">
-          {HONTAM_PROMO.videoSrc && (
-            <video
-              src={HONTAM_PROMO.videoSrc}
-              poster={HONTAM_PROMO.posterSrc ?? undefined}
-              autoPlay
-              muted
-              loop
-              playsInline
-              controls
-              preload="metadata"
-              className="aspect-video w-full bg-black object-cover"
-            />
-          )}
-          <div className="p-4">
-            <span className="inline-block rounded-full bg-(--c-accent) px-2.5 py-1 text-[11px] font-bold tracking-wider text-white uppercase">
-              🤿 Акция
-            </span>
-            <h3 className="mt-2 text-[17px] leading-tight font-extrabold text-balance text-(--c-primary)">
-              {HONTAM_PROMO.title}
-            </h3>
-            <div className="mt-2 flex items-baseline gap-2.5">
-              <s className="text-[18px] text-(--c-muted)">{HONTAM_PROMO.oldPrice}</s>
-              <b className={`${SERIF} text-[32px] leading-none text-(--c-primary)`}>
-                {HONTAM_PROMO.price}
-              </b>
-            </div>
-            <p className="mt-2 text-[14px] leading-snug font-semibold">{HONTAM_PROMO.text}</p>
-            <p className="mt-1 text-[12.5px] text-(--c-muted)">Отметьте Seawalking в форме бронирования.</p>
-          </div>
-        </section>
+
 
         <section>
           <SectionTitle>Варианты и цены билетов · до 31.12.2026</SectionTitle>
