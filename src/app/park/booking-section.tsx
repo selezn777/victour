@@ -75,7 +75,6 @@ export function BookingSection({ destination }: { destination: DestinationId }) 
   const [phone, setPhone] = useState("")
   const [telegramHandle, setTelegramHandle] = useState("")
   const [extras, setExtras] = useState<Record<string, number>>({})
-  const [comment, setComment] = useState("")
   const [website, setWebsite] = useState("") // honeypot
   const [errors, setErrors] = useState<Partial<Record<BookingField, string>>>({})
   const [status, setStatus] = useState<Status>("idle")
@@ -101,7 +100,7 @@ export function BookingSection({ destination }: { destination: DestinationId }) 
       contactChannel,
       contact,
       extras: Object.fromEntries(dest.extras.map((x) => [x.key, extras[x.key] ?? 0])),
-      comment,
+      comment: "",
     }
     const check = validateParkBooking(payload)
     if (!check.ok) {
@@ -443,20 +442,6 @@ export function BookingSection({ destination }: { destination: DestinationId }) 
           </details>
         )}
 
-        <div>
-          <label htmlFor="park-comment" className={LABEL}>
-            Комментарий <span className="font-normal text-(--c-muted)">(необязательно)</span>
-          </label>
-          <textarea
-            id="park-comment"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            rows={3}
-            maxLength={1000}
-            placeholder="Например: с нами коляска"
-            className={`${INPUT} h-auto resize-none py-3`}
-          />
-        </div>
 
         {status === "failed" && (
           <SendProblem text="Не получилось отправить заявку. Напишите нам в WhatsApp — забронируем вручную." />
