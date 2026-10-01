@@ -1,6 +1,6 @@
 "use client"
 
-import { useSyncExternalStore } from "react"
+import { useEffect, useSyncExternalStore } from "react"
 import { BookingSection } from "./booking-section"
 import { DESTINATIONS, DESTINATION_ORDER, PARK_WHATSAPP, type DestinationId } from "./park-config"
 import { THEMES } from "./ui"
@@ -38,6 +38,15 @@ export function Landing({
   content: Record<DestinationId, React.ReactNode>
 }) {
   const destination = useSyncExternalStore(subscribe, readDestination, () => "park" as const)
+
+  // Прямая ссылка на раздел (/park?t=hontam#seawalking): страница пререндерится
+  // с парком, нужный блок появляется только после гидрации — докручиваем сами.
+  useEffect(() => {
+    const id = decodeURIComponent(window.location.hash.slice(1))
+    if (!id) return
+    const t = setTimeout(() => document.getElementById(id)?.scrollIntoView(), 50)
+    return () => clearTimeout(t)
+  }, [destination])
 
   return (
     <div
