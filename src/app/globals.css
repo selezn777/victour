@@ -462,3 +462,21 @@
   color: var(--color-muted-foreground);
   opacity: 1;
 }
+/* /park: кнопка «Отправить заявку в WhatsApp» на экране успеха — мягкая
+   периодическая пульсация зелёным свечением (как .cta-invite-pulse, но в цвет WhatsApp) */
+@keyframes park-wa-pulse {
+  0%,
+  50%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgb(37 211 102 / 0.6);
+  }
+  25% {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 12px rgb(37 211 102 / 0);
+  }
+}
+
+.park-wa-pulse {
+  animation: park-wa-pulse 2.2s ease-in-out infinite;
+}
