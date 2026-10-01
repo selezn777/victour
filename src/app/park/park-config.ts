@@ -440,12 +440,14 @@ export function validateParkBooking(
 // видео — когда задан videoSrc (файл положить в public/park/ или Vercel Blob).
 export const HONTAM_PROMO: {
   videoSrc: string | null
+  posterSrc: string | null
   title: string
   oldPrice: string
   price: string
   text: string
 } = {
-  videoSrc: null,
+  videoSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/park/seawalking.mp4",
+  posterSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/park/seawalking-poster.jpg",
   title: "Seawalking — прогулка по дну моря",
   oldPrice: "$50",
   price: "$42",

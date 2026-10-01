@@ -88,13 +88,14 @@ export function HonTamContent() {
           {HONTAM_PROMO.videoSrc && (
             <video
               src={HONTAM_PROMO.videoSrc}
+              poster={HONTAM_PROMO.posterSrc ?? undefined}
               autoPlay
               muted
               loop
               playsInline
               controls
               preload="metadata"
-              className="aspect-[9/16] max-h-[70vh] w-full bg-black object-cover"
+              className="aspect-video w-full bg-black object-cover"
             />
           )}
           <div className="p-4">
