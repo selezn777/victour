@@ -76,7 +76,10 @@ export function Landing({
             ВикТур
           </Link>
           <div className="justify-self-end">
-            <SiteMenu triggerClassName="text-white hover:bg-white/15 hover:text-white" />
+            <SiteMenu
+              triggerClassName="text-white hover:bg-white/15 hover:text-white"
+              accent={THEMES[destination]["--c-primary"]}
+            />
           </div>
         </div>
       </header>

@@ -16,10 +16,14 @@ export function SiteMenu({
   settings,
   guide,
   triggerClassName,
+  accent,
 }: {
   settings?: SiteSettings
   guide?: PrimaryGuide | null
   triggerClassName?: string
+  /** Фон панели в цвет раздела (/park): меню рендерится в портал вне
+   *  страницы, поэтому цвет передаём явно и перекрашиваем токены темы. */
+  accent?: string
 }) {
   return (
     <Sheet>
@@ -30,7 +34,21 @@ export function SiteMenu({
       >
         <MenuIcon />
       </SheetTrigger>
-      <SheetContent side="right">
+      <SheetContent
+        side="right"
+        style={
+          accent
+            ? ({
+                "--popover": accent,
+                "--popover-foreground": "#fff",
+                "--muted": "rgb(255 255 255 / 0.14)",
+                "--muted-foreground": "rgb(255 255 255 / 0.75)",
+                "--border": "rgb(255 255 255 / 0.22)",
+                "--primary": "#ffe1a8",
+              } as React.CSSProperties)
+            : undefined
+        }
+      >
         <SheetHeader>
           <SheetTitle className="font-heading text-lg tracking-[0.02em]">ВикТур</SheetTitle>
         </SheetHeader>
