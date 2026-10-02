@@ -53,6 +53,31 @@ export function HonTamContent() {
           </div>
         </section>
 
+        <section className="grid grid-cols-2 gap-3">
+          <div className="flex items-center gap-2.5 rounded-[20px] bg-(--c-bg-2) p-3.5">
+            <span className="text-[24px] leading-none">🚤</span>
+            <div>
+              <b className="block text-[13.5px] leading-tight font-extrabold text-(--c-primary)">
+                Катер туда и обратно
+              </b>
+              <span className="block text-[12px] leading-tight text-(--c-muted)">
+                уже входит в билет
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 rounded-[20px] bg-(--c-bg-2) p-3.5">
+            <span className="text-[24px] leading-none">🕓</span>
+            <div>
+              <b className="block text-[13.5px] leading-tight font-extrabold whitespace-nowrap text-(--c-primary)">
+                До 16:20
+              </b>
+              <span className="block text-[12px] leading-tight text-(--c-muted)">
+                последний катер обратно
+              </span>
+            </div>
+          </div>
+        </section>
+
         <section
           id="seawalking"
           className="scroll-mt-16 overflow-hidden rounded-[24px] bg-white shadow-(--c-shadow-primary)"
