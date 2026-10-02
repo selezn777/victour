@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useState, useSyncExternalStore } from "react"
 import { BookingSection } from "./booking-section"
 import { DESTINATIONS, DESTINATION_ORDER, PARK_WHATSAPP, type DestinationId } from "./park-config"
@@ -66,41 +67,47 @@ export function Landing({
       style={THEMES[destination] as React.CSSProperties}
       className="flex-1 bg-(--c-bg) font-(family-name:--font-park-sans) text-(--c-ink) transition-colors duration-500"
     >
+      {/* Хедер ВикТур в цвет раздела — ссылка на главный сайт */}
+      <header className="sticky top-0 z-30 bg-(--c-primary) pt-[env(safe-area-inset-top)] transition-colors duration-500">
+        <Link
+          href="/"
+          className="mx-auto flex h-11 max-w-[560px] items-center justify-center font-heading text-xl font-medium text-white"
+        >
+          ВикТур
+        </Link>
+      </header>
+
+      {/* Переключатель направлений: экран пополам, без рамок и скруглений */}
       <nav
         aria-label="Направление"
-        className={`fixed inset-x-0 bottom-0 z-30 border-t border-(--c-border) bg-(--c-bg)/92 px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+8px)] backdrop-blur transition-[transform,background-color] duration-300 ${
+        className={`fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 shadow-[0_-4px_16px_rgb(0_0_0/0.12)] transition-transform duration-300 ${
           keyboardOpen ? "translate-y-full" : ""
         }`}
       >
-        {/* Две равноправные карточки: неактивная тоже явно кнопка, а не подпись */}
-        <div className="mx-auto grid max-w-[528px] grid-cols-2 gap-2">
-          {DESTINATION_ORDER.map((id) => {
-            const active = id === destination
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => !active && setDestination(id)}
-                aria-pressed={active}
-                className={`relative flex flex-col items-center justify-center rounded-2xl border-2 px-2 py-1.5 leading-tight transition-colors active:scale-[0.98] ${
-                  active
-                    ? "border-(--c-primary) bg-(--c-primary) text-white shadow-(--c-shadow-primary)"
-                    : "border-(--c-primary)/35 bg-white text-(--c-primary) shadow-[0_4px_12px_rgb(0_0_0/0.08)]"
-                }`}
+        {DESTINATION_ORDER.map((id) => {
+          const active = id === destination
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => !active && setDestination(id)}
+              aria-pressed={active}
+              className={`flex min-h-16 flex-col items-center justify-center px-2 pt-2 pb-[calc(env(safe-area-inset-bottom)+8px)] leading-tight transition-colors ${
+                active ? "bg-(--c-primary) text-white" : "bg-white text-(--c-primary) active:bg-(--c-bg-2)"
+              }`}
+            >
+              <span className="text-[15px] font-extrabold whitespace-nowrap">
+                {DESTINATIONS[id].tabLabel}
+              </span>
+              <span
+                className={`mt-0.5 text-[12px] font-semibold ${active ? "text-(--c-on-primary)" : "text-(--c-muted)"}`}
               >
-                <span className="text-[14.5px] font-extrabold whitespace-nowrap">
-                  {DESTINATIONS[id].tabLabel}
-                </span>
-                <span
-                  className={`text-[11.5px] font-semibold ${active ? "text-(--c-on-primary)" : "text-(--c-muted)"}`}
-                >
-                  {active ? "✓ " : ""}
-                  {DESTINATIONS[id].tabNote}
-                </span>
-              </button>
-            )
-          })}
-        </div>
+                {active ? "✓ " : ""}
+                {DESTINATIONS[id].tabNote}
+              </span>
+            </button>
+          )
+        })}
       </nav>
 
       <main className="mx-auto max-w-[560px] pb-28">
