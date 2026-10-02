@@ -48,20 +48,17 @@ export function Landing({
     return () => clearTimeout(t)
   }, [destination])
 
-  // Пока турист печатает в форме, нижняя панель прячется — иначе на телефоне
-  // она всплывает над клавиатурой и закрывает поле
-  const [typing, setTyping] = useState(false)
+  // Пока открыта клавиатура, нижняя панель прячется — иначе она всплывает над
+  // клавиатурой и закрывает поле. Смотрим на саму клавиатуру (visualViewport
+  // заметно ниже окна), а не на фокус: на Android клавиатуру закрывают кнопкой
+  // «назад», поле остаётся в фокусе — и панель не возвращалась.
+  const [keyboardOpen, setKeyboardOpen] = useState(false)
   useEffect(() => {
-    const isField = (t: EventTarget | null) =>
-      t instanceof HTMLElement && t.matches("input:not([type=time]):not([type=date]), textarea, select")
-    const onIn = (e: FocusEvent) => isField(e.target) && setTyping(true)
-    const onOut = () => setTyping(false)
-    document.addEventListener("focusin", onIn)
-    document.addEventListener("focusout", onOut)
-    return () => {
-      document.removeEventListener("focusin", onIn)
-      document.removeEventListener("focusout", onOut)
-    }
+    const vv = window.visualViewport
+    if (!vv) return
+    const update = () => setKeyboardOpen(window.innerHeight - vv.height > 150)
+    vv.addEventListener("resize", update)
+    return () => vv.removeEventListener("resize", update)
   }, [])
 
   return (
@@ -72,7 +69,7 @@ export function Landing({
       <nav
         aria-label="Направление"
         className={`fixed inset-x-0 bottom-0 z-30 border-t border-(--c-border) bg-(--c-bg)/92 px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+8px)] backdrop-blur transition-[transform,background-color] duration-300 ${
-          typing ? "translate-y-full" : ""
+          keyboardOpen ? "translate-y-full" : ""
         }`}
       >
         {/* Две равноправные карточки: неактивная тоже явно кнопка, а не подпись */}
