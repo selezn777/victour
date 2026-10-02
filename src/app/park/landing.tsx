@@ -21,13 +21,15 @@ function subscribe(cb: () => void) {
   }
 }
 
-// Нижний переключатель появляется, только когда турист начал листать:
-// первый экран — просто шапка с предложением, без лишних кнопок.
+// Хедер ВикТур и нижний переключатель появляются при первой прокрутке и
+// дальше остаются (даже если вернуться наверх): первый экран — только
+// предложение, без лишних плашек.
 const subscribeScroll = (cb: () => void) => {
   window.addEventListener("scroll", cb, { passive: true })
   return () => window.removeEventListener("scroll", cb)
 }
-const readScrolled = () => window.scrollY > 40
+let everScrolled = false
+const readScrolled = () => (everScrolled ||= window.scrollY > 40)
 
 const readDestination = (): DestinationId =>
   new URLSearchParams(window.location.search).get("t") === "hontam" ? "hontam" : "park"
@@ -78,7 +80,11 @@ export function Landing({
       className="flex-1 bg-(--c-bg) font-(family-name:--font-park-sans) text-(--c-ink) transition-colors duration-500"
     >
       {/* Хедер ВикТур в цвет раздела + бургер-меню основного сайта */}
-      <header className="sticky top-0 z-30 bg-(--c-primary) pt-[env(safe-area-inset-top)] transition-colors duration-500">
+      <header
+        className={`fixed inset-x-0 top-0 z-30 bg-(--c-primary) pt-[env(safe-area-inset-top)] shadow-[0_4px_16px_rgb(0_0_0/0.15)] transition-[transform,background-color] duration-300 ${
+          scrolled ? "" : "-translate-y-full"
+        }`}
+      >
         <div className="mx-auto grid h-13 max-w-[560px] grid-cols-[1fr_auto_1fr] items-center px-3">
           <span />
           <Link href="/" className="font-heading text-[22px] font-medium text-white">
