@@ -192,8 +192,9 @@ export function HonTamContent() {
                 туда и обратно уже входит в любой билет.
               </li>
               <li>
-                <b className="text-(--c-primary)">3.</b> Обратно — тоже катером, последний
-                отправляется с острова в 16:20.
+                <b className="text-(--c-primary)">3.</b> Обратно — тоже катером, они ходят по
+                расписанию: <b className="text-(--c-primary)">12:30, 13:30</b> и дальше, последний — в{" "}
+                <b className="text-(--c-primary)">16:20</b>. Когда возвращаться, решаете сами.
               </li>
             </ol>
           </div>
