@@ -37,47 +37,6 @@ function useContainedSquareSize(containerRef: RefObject<HTMLDivElement | null>) 
   return size
 }
 
-// hint — только на последнем слайде (QuoteSlide): кнопка периодически
-// мягко "моргает" (2 коротких пульса, потом пауза), приглашая нажать —
-// после того как стрелки-подсказки не прижились, Виктор попросил вернуть
-// кнопку к обычному виду и обойтись только этим морганием.
-function TourCtaButton({
-  hint = false,
-  spacious = false,
-  large = false,
-}: {
-  hint?: boolean
-  spacious?: boolean
-  large?: boolean
-}) {
-  return (
-    // Полностью full-width смотрелась плоской полосой, а узкий inline-fit
-    // pill (прошлая правка) — наоборот мелко и невесомо (Виктор: "теперь
-    // слишком узкая... верни почти по всей ширине и сделай жирнее"). w-[88%]
-    // с max-w — компромисс: почти во всю ширину, но не край-в-край,
-    // font-bold — визуально жирнее без роста высоты. py/text-size на sm+ НЕ
-    // увеличивал (см. комментарий у IntroSlide про svh-бюджет без скролла) —
-    // ширина и жирность шрифта дают "больше" без цены по высоте. w-full на
-    // обёртке ОБЯЗАТЕЛЕН: родитель — flex-col с items-center (не stretch),
-    // без явной ширины у обёртки её собственная ширина зависит от контента
-    // (Link), а Link.width:88% — от ширины обёртки; проценты внутри
-    // auto-sized контейнера резолвятся в auto (по спеке CSS), кнопка
-    // схлопывалась до текста и переносилась на 2 строки.
-    <div className={cn("relative flex w-full justify-center", spacious ? "mt-8 sm:mt-10" : "mt-4 sm:mt-6")}>
-      <Link
-        href="/tours"
-        className={cn(
-          "flex w-[88%] max-w-sm items-center justify-center rounded-2xl bg-primary px-8 py-4 text-lg font-bold text-primary-foreground shadow-[0_10px_40px_-8px] shadow-primary/35 ring-1 ring-primary-foreground/10 transition-all hover:scale-[1.02] hover:bg-primary/90 hover:shadow-primary/50 active:scale-[0.98] sm:max-w-lg sm:py-6 sm:text-xl",
-          large && "max-w-md py-5 text-xl sm:max-w-xl sm:py-7 sm:text-2xl",
-          hint && "cta-invite-pulse",
-        )}
-      >
-        Выбрать тур
-      </Link>
-    </div>
-  )
-}
-
 const COLLAGE_PHOTO_COUNT = 67
 // Бампнуть при любой замене/переименовании файлов в public/images/collage —
 // имена файлов НЕ меняются при замене содержимого (collage-05.jpg остаётся
@@ -812,7 +771,6 @@ function IntroSlide() {
           Премиальные авто и вожатый (гид), которому по-настоящему можно доверять. Маршрут
           продуман и безопасен от начала до конца - эта поездка только для вас.
         </p>
-        <TourCtaButton />
       </div>
     </div>
   )
@@ -891,7 +849,6 @@ function PhotoSlide({
         <p className="mt-2 max-w-full text-base leading-snug text-muted-foreground sm:max-w-xl sm:text-xl sm:leading-relaxed">
           {body}
         </p>
-        <TourCtaButton />
       </div>
     </div>
   )
@@ -1092,7 +1049,6 @@ function ValuesSlide({
             ))}
           </div>
         </div>
-        <TourCtaButton />
       </div>
     </div>
   )
@@ -1279,7 +1235,6 @@ function ToursSlide() {
           Авторские маршруты, выверенные до мелочей! Всего 4 программы, потому что они безопасные,
           интересные и при этом глубокие.
         </p>
-        <TourCtaButton spacious />
       </div>
     </div>
   )
@@ -1506,65 +1461,76 @@ function QuoteSlide({
 
         <QuoteCarousel quotes={quotes} />
 
-        <TourCtaButton hint large />
       </div>
     </div>
   )
 }
 
 export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
+  // «Выбрать тур» — одна общая плашка во всю ширину под декой, а не своя
+  // кнопка на каждом слайде (Виктор: «как будто 5 кнопок, а должна быть одна»).
+  // Дека занимает остаток высоты экрана над плашкой (flex-1 min-h-0).
   return (
-    <SlideDeck
-      paginationPosition="none"
-      slides={[
-        <IntroSlide key="intro" />,
-        <PhotoSlide
-          key="transport"
-          title="Трансфер, после которого не нужно восстанавливаться"
-          body="Ни тесноты, ни духоты, ни нервотрёпки за рулём. Кожаные кресла с массажем, климат-контроль и просто аккуратный, спокойный водитель."
-          imageSrc="/images/hero/premium-van-interior.jpg"
-          imageAlt="Салон премиального минивэна с кожаными креслами"
-          imagePosition="30% 50%"
-          stackImages={[
-            "/images/hero/premium-van-exterior.jpg",
-            "/images/hero/premium-van-interior-5.jpg",
-            "/images/hero/premium-van-interior-6.jpg",
-            "/images/hero/premium-van-interior-7.jpg",
-            "/images/hero/premium-van-interior-8.jpg",
-            "/images/hero/premium-van-exterior-2.jpg",
-            "/images/hero/premium-van-exterior-3.jpg",
-            "/images/hero/premium-van-interior-9.jpg",
-          ]}
-        />,
-        <ToursSlide key="tours" />,
-        <ValuesSlide
-          key="values"
-          title="Ваша поездка - под вас, а не под группу"
-          points={[
-            {
-              title: "Только вы - и больше никого",
-              body: "Никого не ждём и ни под кого не подстраиваемся",
-            },
-            {
-              title: "Без туристических ловушек",
-              body: "Никаких магазинов с нудными лекциями и завышенными ценами - туда мы просто не заезжаем",
-            },
-            {
-              // Виктор попросил вставить почти дословно свою формулировку
-              // голосовым: "никаких грязных столовых, только рестораны",
-              // ниже объяснить почему (групповые туры экономят на еде).
-              // Позже попросил убрать слово "грязных".
-              title: "Никаких столовых",
-              body: "На групповом туре еда обычно самая дешёвая, за 2-3$, и есть её невозможно — мы даём выбор из нормальных ресторанов, где вы заказываете по меню и едите то, что любите",
-            },
-          ]}
-        />,
-        <QuoteSlide
-          key="guide"
-          title="Что говорят гости, которые уже были с нами"
-          quotes={heroQuotes.map(reviewToQuote)}
-        />,
-      ]}
-    />
+    <div className="flex h-[calc(100dvh-var(--site-header-h))] flex-col">
+      <SlideDeck
+        className="min-h-0 w-full flex-1"
+        paginationPosition="none"
+        slides={[
+          <IntroSlide key="intro" />,
+          <PhotoSlide
+            key="transport"
+            title="Трансфер, после которого не нужно восстанавливаться"
+            body="Ни тесноты, ни духоты, ни нервотрёпки за рулём. Кожаные кресла с массажем, климат-контроль и просто аккуратный, спокойный водитель."
+            imageSrc="/images/hero/premium-van-interior.jpg"
+            imageAlt="Салон премиального минивэна с кожаными креслами"
+            imagePosition="30% 50%"
+            stackImages={[
+              "/images/hero/premium-van-exterior.jpg",
+              "/images/hero/premium-van-interior-5.jpg",
+              "/images/hero/premium-van-interior-6.jpg",
+              "/images/hero/premium-van-interior-7.jpg",
+              "/images/hero/premium-van-interior-8.jpg",
+              "/images/hero/premium-van-exterior-2.jpg",
+              "/images/hero/premium-van-exterior-3.jpg",
+              "/images/hero/premium-van-interior-9.jpg",
+            ]}
+          />,
+          <ToursSlide key="tours" />,
+          <ValuesSlide
+            key="values"
+            title="Ваша поездка - под вас, а не под группу"
+            points={[
+              {
+                title: "Только вы - и больше никого",
+                body: "Никого не ждём и ни под кого не подстраиваемся",
+              },
+              {
+                title: "Без туристических ловушек",
+                body: "Никаких магазинов с нудными лекциями и завышенными ценами - туда мы просто не заезжаем",
+              },
+              {
+                // Виктор попросил вставить почти дословно свою формулировку
+                // голосовым: "никаких грязных столовых, только рестораны",
+                // ниже объяснить почему (групповые туры экономят на еде).
+                // Позже попросил убрать слово "грязных".
+                title: "Никаких столовых",
+                body: "На групповом туре еда обычно самая дешёвая, за 2-3$, и есть её невозможно — мы даём выбор из нормальных ресторанов, где вы заказываете по меню и едите то, что любите",
+              },
+            ]}
+          />,
+          <QuoteSlide
+            key="guide"
+            title="Что говорят гости, которые уже были с нами"
+            quotes={heroQuotes.map(reviewToQuote)}
+          />,
+        ]}
+      />
+      <Link
+        href="/tours"
+        className="flex shrink-0 items-center justify-center bg-primary pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] text-lg font-bold text-primary-foreground transition-colors hover:bg-primary/90 active:bg-primary/85 sm:text-xl"
+      >
+        Выбрать тур
+      </Link>
+    </div>
   )
 }
