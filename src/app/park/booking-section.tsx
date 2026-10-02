@@ -323,7 +323,7 @@ function BookingForm({
                     <span
                       className={`block text-[11.5px] whitespace-nowrap ${active ? "text-white/80" : "text-(--c-muted)"}`}
                     >
-                      дети и 60+ — {p.childPrice}
+                      {dest.childPriceLabel} — {p.childPrice}
                     </span>
                   )}
                 </button>

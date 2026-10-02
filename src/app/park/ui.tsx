@@ -138,17 +138,19 @@ export function BookingConditions() {
   )
 }
 
-// Карточка тарифа: метка всегда на 2 строки, цена и цена дети/60+ — на одной
+// Карточка тарифа: метка всегда на 2 строки, цена и льготная цена — на одной
 // линии у соседних карточек, доп. плашки прижаты вниз (карточки в ряду равной высоты).
 export function TicketCard({
   label,
   price,
   secondary,
+  secondaryLabel = "дети и 60+",
   children,
 }: {
   label: string
   price: string
   secondary?: string
+  secondaryLabel?: string
   children?: React.ReactNode
 }) {
   return (
@@ -164,7 +166,7 @@ export function TicketCard({
       <div className="mt-1.5 text-[11.5px] leading-tight whitespace-nowrap text-(--c-muted)">
         {secondary ? (
           <>
-            дети и 60+ — <b className="text-(--c-ink)">{secondary}</b>
+            {secondaryLabel} — <b className="text-(--c-ink)">{secondary}</b>
           </>
         ) : (
           "\u00a0"

@@ -72,6 +72,7 @@ export type Destination = {
   id: DestinationId
   tabLabel: string
   english: string
+  childPriceLabel: string // подпись к childPrice: у парка скидка и детям, и 60+
   packages: PackageOption[]
   guests: GuestOption[]
   // хотя бы один из этих гостей должен быть в заявке (дети до 1 м одни не едут)
@@ -88,6 +89,7 @@ export const DESTINATIONS: Record<DestinationId, Destination> = {
     id: "park",
     tabLabel: "🚡 VinWonders",
     english: "VINWONDERS (cable car)",
+    childPriceLabel: "дети и 60+",
     // price — взрослый, childPrice — ребёнок 100–139 см и пенсионер 60+
     packages: [
       {
@@ -164,34 +166,35 @@ export const DESTINATIONS: Record<DestinationId, Destination> = {
     id: "hontam",
     tabLabel: "🏝 Остров Хон Там",
     english: "HON TAM ISLAND",
+    childPriceLabel: "дети",
     packages: [
       {
         id: "basic",
         title: "Базовый",
         price: "430K ₫",
         childPrice: "340K ₫",
-        english: "Basic: speedboat + beach (adult 430K / child & senior 340K VND)",
+        english: "Basic: speedboat + beach (adult 430K / child 340K VND)",
       },
       {
         id: "mud",
         title: "С грязевыми ваннами",
         price: "540K ₫",
         childPrice: "430K ₫",
-        english: "Speedboat + mud bath + beach (adult 540K / child & senior 430K VND)",
+        english: "Speedboat + mud bath + beach (adult 540K / child 430K VND)",
       },
       {
         id: "lunch",
         title: "С обедом",
         price: "740K ₫",
         childPrice: "560K ₫",
-        english: "Speedboat + beach + buffet lunch (adult 740K / child & senior 560K VND)",
+        english: "Speedboat + beach + buffet lunch (adult 740K / child 560K VND)",
       },
       {
         id: "lunch_mud",
         title: "Обед + грязевые ванны",
         price: "855K ₫",
         childPrice: "585K ₫",
-        english: "Speedboat + mud bath + beach + lunch (adult 855K / child & senior 585K VND)",
+        english: "Speedboat + mud bath + beach + lunch (adult 855K / child 585K VND)",
       },
     ],
     guests: [
@@ -220,16 +223,8 @@ export const DESTINATIONS: Record<DestinationId, Destination> = {
         formLabel: "Взрослые",
         english: "Adults",
       },
-      {
-        key: "seniors",
-        emoji: "👵",
-        title: "Пенсионеры 60+",
-        note: "от 340K ₫",
-        formLabel: "Пенсионеры 60+",
-        english: "Seniors 60+",
-      },
     ],
-    payingGuests: ["adults", "children", "seniors"],
+    payingGuests: ["adults", "children"],
     departureTimes: [
       { boat: "8:00", pickup: "7:20" },
       { boat: "9:00", pickup: "8:20" },

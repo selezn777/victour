@@ -181,7 +181,13 @@ export function HonTamContent() {
           <SectionTitle>Варианты и цены билетов · до 31.12.2026</SectionTitle>
           <div className="grid grid-cols-2 gap-3">
             {hontam.packages.map((p) => (
-              <TicketCard key={p.id} label={p.title} price={p.price} secondary={p.childPrice}>
+              <TicketCard
+                key={p.id}
+                label={p.title}
+                price={p.price}
+                secondary={p.childPrice}
+                secondaryLabel={hontam.childPriceLabel}
+              >
                 <p className="text-(--c-muted)">{PACKAGE_NOTES[p.id]}</p>
               </TicketCard>
             ))}
