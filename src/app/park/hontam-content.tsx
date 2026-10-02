@@ -1,5 +1,5 @@
 import Image from "next/image"
-import honTam from "../../../public/images/tours/hon-tam.jpg"
+import honTam from "../../../public/park/hontam-hero.jpg"
 import boat from "../../../public/park/hontam-boat.jpg"
 import { DESTINATIONS, HONTAM_PROMO } from "./park-config"
 import { SeawalkingCta } from "./seawalking-cta"
@@ -21,7 +21,7 @@ export function HonTamContent() {
         image={honTam}
         alt="Остров Хон Там"
         pills={["НЯЧАНГ", "ТРАНСФЕР ВКЛЮЧЁН"]}
-        objectPosition="center 55%"
+        objectPosition="45% center"
         ctaHref="#seawalking"
       >
         <HeroTitle>
