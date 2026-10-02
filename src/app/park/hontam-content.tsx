@@ -77,11 +77,26 @@ export function HonTamContent() {
             <h3 className="mt-2 text-[18px] leading-tight font-extrabold text-balance text-(--c-primary)">
               {HONTAM_PROMO.title}
             </h3>
-            <div className="mt-2 flex items-baseline gap-2.5">
-              <s className="text-[18px] text-(--c-muted)">{HONTAM_PROMO.oldPrice}</s>
-              <b className={`${SERIF} text-[34px] leading-none text-(--c-primary)`}>
-                {HONTAM_PROMO.price}
-              </b>
+            <div className="mt-3 flex items-end gap-4">
+              <div>
+                <span className="block text-[11px] font-bold tracking-wider text-(--c-muted) uppercase">
+                  Обычная цена
+                </span>
+                <s
+                  className={`${SERIF} text-[30px] leading-none font-bold text-[#b3402a] decoration-[3px]`}
+                >
+                  {HONTAM_PROMO.oldPrice}
+                </s>
+              </div>
+              <span className="pb-1 text-[22px] text-(--c-muted)">→</span>
+              <div>
+                <span className="block text-[11px] font-bold tracking-wider text-(--c-accent) uppercase">
+                  Только у нас
+                </span>
+                <b className={`${SERIF} text-[40px] leading-none text-(--c-primary)`}>
+                  {HONTAM_PROMO.price}
+                </b>
+              </div>
             </div>
             <p className="mt-2 text-[14px] leading-snug font-semibold">{HONTAM_PROMO.text}</p>
 
