@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
+import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import PhoneNumberInput from "react-phone-number-input/input"
 import type { Country } from "react-phone-number-input"
-import { HOTEL_STORAGE_KEY, HotelPicker, type HotelValue } from "./hotel-picker"
+import { HotelPicker, type HotelValue } from "./hotel-picker"
 import {
   CONTACT_CHANNELS,
   DESTINATIONS,
@@ -34,43 +34,18 @@ const INPUT =
 const LABEL = "mb-1.5 block text-[13px] font-bold text-(--c-primary)"
 
 const noopSubscribe = () => () => {}
-const storageSubscribe = (cb: () => void) => {
-  window.addEventListener("storage", cb)
-  return () => window.removeEventListener("storage", cb)
-}
-const readSavedHotel = () => {
-  try {
-    return localStorage.getItem(HOTEL_STORAGE_KEY) ?? ""
-  } catch {
-    return ""
-  }
-}
-
-function parseSavedHotel(raw: string): HotelValue | null {
-  if (!raw) return null
-  try {
-    const v = JSON.parse(raw) as HotelValue
-    return typeof v?.name === "string" && v.name ? { name: v.name, place: v.place ?? null } : null
-  } catch {
-    return null
-  }
-}
-
 export function BookingSection({ destination }: { destination: DestinationId }) {
   const dest = DESTINATIONS[destination]
 
   // "Сегодня" считаем по Нячангу и только на клиенте — страница статическая,
   // дата сборки тут не годится.
   const minDate = useSyncExternalStore(noopSubscribe, todayInNhaTrang, () => "")
-  // Отель, выбранный в прошлый раз, подставляется сам — турист не вводит его заново
-  const savedHotelRaw = useSyncExternalStore(storageSubscribe, readSavedHotel, () => "")
-  const savedHotel = useMemo(() => parseSavedHotel(savedHotelRaw), [savedHotelRaw])
 
   const [date, setDate] = useState("")
   const [packageByDest, setPackageByDest] = useState<Partial<Record<DestinationId, string>>>({})
   const [departureByDest, setDepartureByDest] = useState<Partial<Record<DestinationId, string>>>({})
   const [guests, setGuests] = useState<Record<string, number>>({ adults: 2 })
-  const [hotelState, setHotelState] = useState<HotelValue | null>(null)
+  const [hotel, setHotel] = useState<HotelValue>({ name: "", place: null })
   const [name, setName] = useState("")
   const [contactChannel, setContactChannel] = useState<ContactChannel>("whatsapp")
   const [phoneCountry, setPhoneCountry] = useState<Country | undefined>("RU")
@@ -101,7 +76,6 @@ export function BookingSection({ destination }: { destination: DestinationId }) 
   const packageId = packageByDest[destination] ?? null
   const departureTime = departureByDest[destination] ?? null
   const setDepartureTime = (t: string) => setDepartureByDest((s) => ({ ...s, [destination]: t }))
-  const hotel = hotelState ?? savedHotel ?? { name: "", place: null }
   const contact = contactChannel === "telegram" && telegramHandle ? telegramHandle : phone
 
   async function handleSubmit(e: React.FormEvent) {
@@ -365,7 +339,7 @@ export function BookingSection({ destination }: { destination: DestinationId }) 
           <label htmlFor="park-hotel" className={LABEL}>
             Отель, откуда забрать
           </label>
-          <HotelPicker value={hotel} onChange={setHotelState} inputClassName={INPUT} />
+          <HotelPicker value={hotel} onChange={setHotel} inputClassName={INPUT} />
           <FieldError text={errors.hotel} />
         </div>
 

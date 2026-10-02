@@ -9,7 +9,6 @@ import type { HotelPlace } from "./park-config"
 // Без ключа кнопка карты не показывается — остаётся обычное поле.
 const MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 const NHA_TRANG = { lat: 12.2388, lng: 109.1967 }
-export const HOTEL_STORAGE_KEY = "victour:park-hotel"
 
 export type HotelValue = { name: string; place: HotelPlace | null }
 
@@ -46,13 +45,6 @@ export function HotelPicker({
 }) {
   const [mapOpen, setMapOpen] = useState(false)
 
-  const choose = (v: HotelValue) => {
-    onChange(v)
-    try {
-      localStorage.setItem(HOTEL_STORAGE_KEY, JSON.stringify(v))
-    } catch {}
-  }
-
   return (
     <div>
       {value.place ? (
@@ -79,7 +71,6 @@ export function HotelPicker({
           id="park-hotel"
           value={value.name}
           onChange={(e) => onChange({ name: e.target.value, place: null })}
-          onBlur={() => value.name.trim().length >= 2 && choose(value)}
           placeholder="Название отеля"
           autoComplete="off"
           maxLength={200}
@@ -102,7 +93,7 @@ export function HotelPicker({
           initialQuery={value.place ? "" : value.name}
           onClose={() => setMapOpen(false)}
           onSelect={(v) => {
-            choose(v)
+            onChange(v)
             setMapOpen(false)
           }}
         />
