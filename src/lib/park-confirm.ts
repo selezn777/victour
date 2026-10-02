@@ -1,4 +1,5 @@
-import { createHmac, timingSafeEqual } from "node:crypto"
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto"
+import { createClient } from "@supabase/supabase-js"
 import { DESTINATIONS, findSlot, type DestinationId, type ParkBooking } from "@/app/park/park-config"
 
 // Подтверждение выезда без базы: всё, что нужно показать туристу и прислать
@@ -85,4 +86,44 @@ export function confirmSummaryRu(data: ConfirmData): string {
   }).format(new Date(`${data.date}T00:00:00Z`))
   const place = data.dest === "hontam" ? "Остров Хон Там" : "VinWonders"
   return [place, pkg?.title, date].filter(Boolean).join(" · ")
+}
+
+// ---------- Короткие ссылки: /c/<id> ----------
+// Длинный токен лежит файлом в приватном bucket Supabase Storage, в ссылке —
+// только случайный id. Не получилось сохранить — отдаём длинную ссылку.
+
+const LINKS_BUCKET = "park-links"
+const SHORT_ID = /^[A-Za-z0-9]{7}$/
+
+function storage() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return null
+  return createClient(url, key, { auth: { persistSession: false } }).storage.from(LINKS_BUCKET)
+}
+
+function randomId(): string {
+  const abc = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789"
+  return Array.from(randomBytes(7), (b) => abc[b % abc.length]).join("")
+}
+
+/** Сохраняет токен и возвращает короткий id, или null, если хранилище недоступно. */
+export async function createShortId(token: string): Promise<string | null> {
+  const bucket = storage()
+  if (!bucket) return null
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const id = randomId()
+    const { error } = await bucket.upload(id, token, { contentType: "text/plain", upsert: false })
+    if (!error) return id
+  }
+  console.error("park-confirm: short link upload failed")
+  return null
+}
+
+/** Параметр ссылки (короткий id или сам токен) → длинный токен. */
+export async function resolveLinkParam(param: string): Promise<string | null> {
+  const value = decodeURIComponent(param)
+  if (!SHORT_ID.test(value)) return value
+  const { data } = (await storage()?.download(value)) ?? {}
+  return data ? (await data.text()).trim() : null
 }

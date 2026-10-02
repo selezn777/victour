@@ -222,13 +222,14 @@ function BookingForm({
         error?: string
         errors?: Partial<Record<BookingField, string>>
         confirmToken?: string | null
+        confirmUrl?: string | null
       }
       if (res.ok && data.ok) {
         const token = data.confirmToken ?? null
         setSuccess({
           waText: bookingSummaryRu(
             check.data,
-            token ? `${window.location.origin}/park/confirm/${token}` : null,
+            data.confirmUrl ?? null,
           ),
           token,
         })

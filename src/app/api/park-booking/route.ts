@@ -1,6 +1,6 @@
 import { validateParkBooking } from "@/app/park/park-config"
 import { buildParkBookingMessage } from "@/lib/park-booking-message"
-import { confirmDataFromBooking, createConfirmToken } from "@/lib/park-confirm"
+import { confirmDataFromBooking, createConfirmToken, createShortId } from "@/lib/park-confirm"
 
 // Простое ограничение частоты: не больше RATE_LIMIT заявок с одного IP за
 // RATE_WINDOW_MS. Память живёт в рамках одного инстанса функции — от
@@ -60,8 +60,14 @@ export async function POST(request: Request) {
 
   const token = createConfirmToken(confirmDataFromBooking(booking))
   const origin = new URL(request.url).origin
-  const confirmUrl = token ? `${origin}/park/confirm/${token}` : null
-  const text = await buildParkBookingMessage(booking, confirmUrl)
+  const shortId = token ? await createShortId(token) : null
+  const links = token
+    ? {
+        confirm: shortId ? `${origin}/c/${shortId}` : `${origin}/park/confirm/${token}`,
+        remind: `${origin}/park/remind/${shortId ?? token}`,
+      }
+    : null
+  const text = await buildParkBookingMessage(booking, links)
 
   try {
     const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
@@ -92,5 +98,5 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: "telegram_failed" }, { status: 502 })
   }
 
-  return Response.json({ ok: true, confirmToken: token })
+  return Response.json({ ok: true, confirmToken: token, confirmUrl: links?.confirm ?? null })
 }

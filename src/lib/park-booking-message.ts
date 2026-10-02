@@ -131,7 +131,7 @@ function formatHotel(booking: ParkBooking): string[] {
 
 export async function buildParkBookingMessage(
   booking: ParkBooking,
-  confirmUrl: string | null,
+  links: { confirm: string; remind: string } | null,
   now = new Date(),
 ) {
   const dest = DESTINATIONS[booking.destination]
@@ -165,15 +165,14 @@ export async function buildParkBookingMessage(
   for (const e of extras) lines.push(`• ${e.english} × <b>${booking.extras[e.key]}</b>`)
   if (booking.comment) lines.push(`💬 Comment: ${await translateComment(booking.comment)}`)
   lines.push(`🕒 Sent: ${formatSentAt(now)}`)
-  if (confirmUrl) {
-    lines.push("", `🔗 Guest's pick-up confirmation link: ${escapeHtml(confirmUrl)}`)
+  if (links) {
+    lines.push("", `🔗 Guest's pick-up confirmation link: ${escapeHtml(links.confirm)}`)
   }
   // Напоминание туристу по-русски — открывается в WhatsApp Виктора одним тапом
   // (короткая ссылка на наш редирект, текст собирается из подписанного токена)
   const guestPhone = parsePhoneNumberFromString(booking.contact)
-  if (confirmUrl && guestPhone?.isValid()) {
-    const remindUrl = confirmUrl.replace("/park/confirm/", "/park/remind/")
-    lines.push(`📲 <a href="${escapeHtml(remindUrl)}">Send guest the RU reminder via WhatsApp</a>`)
+  if (links && guestPhone?.isValid()) {
+    lines.push(`📲 <a href="${escapeHtml(links.remind)}">Send guest the RU reminder via WhatsApp</a>`)
   }
   return lines.join("\n")
 }
