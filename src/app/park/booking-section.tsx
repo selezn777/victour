@@ -34,24 +34,127 @@ const INPUT =
 const LABEL = "mb-1.5 block text-[13px] font-bold text-(--c-primary)"
 
 const noopSubscribe = () => () => {}
+
+// Черновик формы: турист отвлёкся, свернул браузер, страница перезагрузилась —
+// заполненное не пропадает. Живёт 12 часов, после отправки стирается.
+const DRAFT_KEY = "victour:park-draft"
+const DRAFT_TTL_MS = 12 * 60 * 60 * 1000
+
+type Draft = {
+  savedAt: number
+  date: string
+  packageByDest: Partial<Record<DestinationId, string>>
+  departureByDest: Partial<Record<DestinationId, string>>
+  guests: Record<string, number>
+  hotel: HotelValue
+  name: string
+  contactChannel: ContactChannel
+  phoneCountry: Country | null
+  phone: string
+  telegramHandle: string
+  extras: Record<string, number>
+}
+
+function readDraft(): Draft | null {
+  try {
+    const d = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? "null") as Draft | null
+    if (d && Date.now() - d.savedAt < DRAFT_TTL_MS) return d
+    localStorage.removeItem(DRAFT_KEY)
+  } catch {}
+  return null
+}
+
+const clearDraft = () => {
+  try {
+    localStorage.removeItem(DRAFT_KEY)
+  } catch {}
+}
+
 export function BookingSection({ destination }: { destination: DestinationId }) {
+  // Страница статическая: сервер рендерит пустую форму, на клиенте она
+  // пересоздаётся уже с черновиком из localStorage
+  const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false)
+  return (
+    <BookingForm
+      key={hydrated ? "client" : "server"}
+      destination={destination}
+      draft={hydrated ? readDraft() : null}
+      persist={hydrated}
+    />
+  )
+}
+
+function BookingForm({
+  destination,
+  draft,
+  persist,
+}: {
+  destination: DestinationId
+  draft: Draft | null
+  persist: boolean
+}) {
   const dest = DESTINATIONS[destination]
 
   // "Сегодня" считаем по Нячангу и только на клиенте — страница статическая,
   // дата сборки тут не годится.
   const minDate = useSyncExternalStore(noopSubscribe, todayInNhaTrang, () => "")
 
-  const [date, setDate] = useState("")
-  const [packageByDest, setPackageByDest] = useState<Partial<Record<DestinationId, string>>>({})
-  const [departureByDest, setDepartureByDest] = useState<Partial<Record<DestinationId, string>>>({})
-  const [guests, setGuests] = useState<Record<string, number>>({ adults: 2 })
-  const [hotel, setHotel] = useState<HotelValue>({ name: "", place: null })
-  const [name, setName] = useState("")
-  const [contactChannel, setContactChannel] = useState<ContactChannel>("whatsapp")
-  const [phoneCountry, setPhoneCountry] = useState<Country | undefined>("RU")
-  const [phone, setPhone] = useState("")
-  const [telegramHandle, setTelegramHandle] = useState("")
-  const [extras, setExtras] = useState<Record<string, number>>({})
+  const [date, setDate] = useState(draft?.date ?? "")
+  const [packageByDest, setPackageByDest] = useState<Partial<Record<DestinationId, string>>>(
+    draft?.packageByDest ?? {},
+  )
+  const [departureByDest, setDepartureByDest] = useState<Partial<Record<DestinationId, string>>>(
+    draft?.departureByDest ?? {},
+  )
+  const [guests, setGuests] = useState<Record<string, number>>(draft?.guests ?? { adults: 2 })
+  const [hotel, setHotel] = useState<HotelValue>(draft?.hotel ?? { name: "", place: null })
+  const [name, setName] = useState(draft?.name ?? "")
+  const [contactChannel, setContactChannel] = useState<ContactChannel>(
+    draft?.contactChannel ?? "whatsapp",
+  )
+  const [phoneCountry, setPhoneCountry] = useState<Country | undefined>(
+    draft ? (draft.phoneCountry ?? undefined) : "RU",
+  )
+  const [phone, setPhone] = useState(draft?.phone ?? "")
+  const [telegramHandle, setTelegramHandle] = useState(draft?.telegramHandle ?? "")
+  const [extras, setExtras] = useState<Record<string, number>>(draft?.extras ?? {})
+
+  // Черновик сохраняем только в клиентском экземпляре формы — серверный
+  // (до гидрации) иначе затёр бы его пустыми полями
+  useEffect(() => {
+    if (!persist) return
+    const next: Draft = {
+      savedAt: Date.now(),
+      date,
+      packageByDest,
+      departureByDest,
+      guests,
+      hotel,
+      name,
+      contactChannel,
+      phoneCountry: phoneCountry ?? null,
+      phone,
+      telegramHandle,
+      extras,
+    }
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(next))
+    } catch {}
+  }, [
+    persist,
+    date,
+    packageByDest,
+    departureByDest,
+    guests,
+    hotel,
+    name,
+    contactChannel,
+    phoneCountry,
+    phone,
+    telegramHandle,
+    extras,
+  ])
+
   const guestsRef = useRef(guests)
   useEffect(() => {
     guestsRef.current = guests
@@ -129,6 +232,7 @@ export function BookingSection({ destination }: { destination: DestinationId }) 
           ),
           token,
         })
+        clearDraft()
         setStatus("success")
       } else if (data.error === "validation" && data.errors) {
         setErrors(data.errors)
