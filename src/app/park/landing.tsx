@@ -21,6 +21,14 @@ function subscribe(cb: () => void) {
   }
 }
 
+// Нижний переключатель появляется, только когда турист начал листать:
+// первый экран — просто шапка с предложением, без лишних кнопок.
+const subscribeScroll = (cb: () => void) => {
+  window.addEventListener("scroll", cb, { passive: true })
+  return () => window.removeEventListener("scroll", cb)
+}
+const readScrolled = () => window.scrollY > 40
+
 const readDestination = (): DestinationId =>
   new URLSearchParams(window.location.search).get("t") === "hontam" ? "hontam" : "park"
 
@@ -54,6 +62,7 @@ export function Landing({
   // клавиатурой и закрывает поле. Смотрим на саму клавиатуру (visualViewport
   // заметно ниже окна), а не на фокус: на Android клавиатуру закрывают кнопкой
   // «назад», поле остаётся в фокусе — и панель не возвращалась.
+  const scrolled = useSyncExternalStore(subscribeScroll, readScrolled, () => false)
   const [keyboardOpen, setKeyboardOpen] = useState(false)
   useEffect(() => {
     const vv = window.visualViewport
@@ -88,7 +97,7 @@ export function Landing({
       <nav
         aria-label="Направление"
         className={`fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 shadow-[0_-4px_16px_rgb(0_0_0/0.12)] transition-transform duration-300 ${
-          keyboardOpen ? "translate-y-full" : ""
+          keyboardOpen || !scrolled ? "translate-y-full" : ""
         }`}
       >
         {DESTINATION_ORDER.map((id) => {
