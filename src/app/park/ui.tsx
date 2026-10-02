@@ -65,11 +65,9 @@ export function Hero({
   alt,
   pills,
   objectPosition,
-  ctaHref = "#booking",
   children,
 }: {
   image: StaticImageData
-  ctaHref?: string
   alt: string
   pills: [string, string]
   objectPosition: string
@@ -94,12 +92,10 @@ export function Hero({
       </div>
       <div className="absolute inset-x-4 bottom-20 text-white">
         {children}
-        <a
-          href={ctaHref}
-          className="mt-4 inline-flex h-12 items-center rounded-full bg-(--c-accent) px-6 text-[15px] font-bold text-white shadow-[0_8px_20px_rgb(0_0_0/0.25)] active:scale-[0.98]"
-        >
-          Забронировать трансфер
-        </a>
+        {/* Не ссылка: турист должен пролистать и прочитать всё до формы */}
+        <div className="mt-4 inline-flex h-12 items-center gap-2 rounded-full bg-(--c-accent) px-6 text-[15px] font-bold text-white shadow-[0_8px_20px_rgb(0_0_0/0.25)] select-none">
+          Забронировать трансфер <span aria-hidden>⬇️</span>
+        </div>
       </div>
     </header>
   )

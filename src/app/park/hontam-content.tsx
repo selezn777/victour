@@ -22,7 +22,6 @@ export function HonTamContent() {
         alt="Остров Хон Там"
         pills={["НЯЧАНГ", "ТРАНСФЕР ВКЛЮЧЁН"]}
         objectPosition="45% center"
-        ctaHref="#seawalking"
       >
         <HeroTitle>
           Остров
