@@ -2,6 +2,7 @@ import { parsePhoneNumberFromString } from "libphonenumber-js/min"
 import {
   CONTACT_CHANNELS,
   DESTINATIONS,
+  findSlot,
   PARK_TIMEZONE,
   type ParkBooking,
 } from "@/app/park/park-config"
@@ -141,9 +142,13 @@ export async function buildParkBookingMessage(
     "",
     `📅 Date: <b>${formatTripDate(booking.date)}</b>`,
   ]
-  const slot = dest.departureTimes?.find((t) => t.boat === booking.departureTime)
+  const slot = findSlot(booking.destination, booking.departureTime)
   if (slot) {
-    lines.push(`🚤 Boat: <b>${slot.boat}</b> — hotel pick-up <b>${slot.pickup}</b> (±10 min)`)
+    lines.push(
+      slot.boat
+        ? `🚤 Boat: <b>${slot.boat}</b> — hotel pick-up <b>${slot.pickup}</b> (±10 min)`
+        : `🚐 Hotel pick-up: <b>${slot.pickup}</b> (±10 min)`,
+    )
   }
   lines.push(
     `🎫 Package: ${pkg.english}`,
@@ -187,6 +192,7 @@ export function buildParkConfirmedMessage(data: ConfirmData, now = new Date()): 
     `📅 ${formatTripDate(data.date)}${pkg ? ` · ${escapeHtml(pkg.english.split(" (")[0])}` : ""}`,
   ]
   if (data.boat) lines.push(`🚤 Boat ${data.boat} — hotel pick-up ${data.pickup} (±10 min)`)
+  else if (data.pickup) lines.push(`🚐 Hotel pick-up ${data.pickup} (±10 min)`)
   lines.push(
     `🏨 ${latinWithOriginal(data.hotel)}`,
     `📱 ${contact}`,

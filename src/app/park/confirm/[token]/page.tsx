@@ -35,8 +35,12 @@ export default async function ConfirmPage({ params }: { params: Promise<{ token:
               {data.pickup && (
                 <div className="mt-3 rounded-2xl bg-white/12 px-4 py-3 text-[15px]">
                   🚐 Выезд от отеля в <b className="text-(--c-on-primary)">{data.pickup}</b> (±10 мин)
-                  <br />
-                  🚤 Катер в <b className="text-(--c-on-primary)">{data.boat}</b>
+                  {data.boat && (
+                    <>
+                      <br />
+                      🚤 Катер в <b className="text-(--c-on-primary)">{data.boat}</b>
+                    </>
+                  )}
                 </div>
               )}
               <p className="mt-3 text-[14px] opacity-90">🏨 {data.hotel}</p>

@@ -43,6 +43,31 @@ export type ExtraOption = {
   english: string
 }
 
+export type DepartureSlot = { pickup: string; boat?: string }
+
+// "07:05" / "7:05" → "7:05"; всё остальное → null
+export function normalizeTime(v: string): string | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(v)
+  if (!m || Number(m[1]) > 23 || Number(m[2]) > 59) return null
+  return `${Number(m[1])}:${m[2]}`
+}
+
+const minutes = (t: string) => {
+  const [h, m] = t.split(":").map(Number)
+  return h * 60 + m
+}
+
+/** departureTime заявки → слот выезда (у Хон Тама — катер, у парка — выбранное время). */
+export function findSlot(dest: DestinationId, departureTime: string | null): DepartureSlot | undefined {
+  if (!departureTime) return undefined
+  const d = DESTINATIONS[dest]
+  if (d.departureTimes) return d.departureTimes.find((t) => t.boat === departureTime)
+  const t = normalizeTime(departureTime)
+  if (!t || !d.pickupRange) return undefined
+  const m = minutes(t)
+  return m >= minutes(d.pickupRange.min) && m <= minutes(d.pickupRange.max) ? { pickup: t } : undefined
+}
+
 export type Destination = {
   id: DestinationId
   tabLabel: string
@@ -52,7 +77,9 @@ export type Destination = {
   // хотя бы один из этих гостей должен быть в заявке (дети до 1 м одни не едут)
   payingGuests: string[]
   // Катер → во сколько выезжаем от отеля (всегда ±10 минут)
-  departureTimes?: { boat: string; pickup: string }[]
+  departureTimes?: Required<DepartureSlot>[]
+  // Без катера: турист сам выбирает время выезда от отеля в этих границах
+  pickupRange?: { min: string; max: string }
   extras: ExtraOption[]
 }
 
@@ -117,6 +144,7 @@ export const DESTINATIONS: Record<DestinationId, Destination> = {
       },
     ],
     payingGuests: ["adults", "children", "seniors"],
+    pickupRange: { min: "6:00", max: "18:00" },
     // Доп. услуги — цена за 1 человека; в форме счётчик «на сколько человек»
     extras: [
       { key: "fp_thunder", group: "🚀 Fast Pass — без очереди", label: "Tilt of Thunder («Опрокидывание грома»)", price: "250K ₫", english: "Fast Pass: Tilt of Thunder" },
@@ -288,7 +316,7 @@ export type ParkBooking = {
   destination: DestinationId
   date: string // YYYY-MM-DD
   packageId: string
-  departureTime: string | null // время катера (boat)
+  departureTime: string | null // Хон Там: время катера; парк: выезд от отеля
   guests: Record<string, number>
   hotel: string
   hotelPlace: HotelPlace | null
@@ -361,8 +389,11 @@ export function validateParkBooking(
   let departureTime: string | null = null
   if (dest.departureTimes) {
     departureTime = str(input.departureTime, 10)
-    if (!dest.departureTimes.some((t) => t.boat === departureTime)) {
-      errors.departureTime = "Выберите время катера"
+    if (!findSlot(destination, departureTime)) errors.departureTime = "Выберите время катера"
+  } else if (dest.pickupRange) {
+    departureTime = findSlot(destination, str(input.departureTime, 10))?.pickup ?? null
+    if (!departureTime) {
+      errors.departureTime = `Выберите время выезда с ${dest.pickupRange.min} до ${dest.pickupRange.max}`
     }
   }
 

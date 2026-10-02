@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto"
-import { DESTINATIONS, type DestinationId, type ParkBooking } from "@/app/park/park-config"
+import { DESTINATIONS, findSlot, type DestinationId, type ParkBooking } from "@/app/park/park-config"
 
 // Подтверждение выезда без базы: всё, что нужно показать туристу и прислать
 // Виктору, лежит в самой ссылке, подписанной HMAC — подделать или поменять
@@ -9,7 +9,7 @@ export type ConfirmData = {
   dest: DestinationId
   date: string // YYYY-MM-DD
   boat: string | null // Хон Там: время катера
-  pickup: string | null // Хон Там: выезд от отеля
+  pickup: string | null // выезд от отеля
   name: string
   hotel: string
   contact: string
@@ -26,7 +26,7 @@ function sign(body: string, key: string): string {
 }
 
 export function confirmDataFromBooking(b: ParkBooking): ConfirmData {
-  const slot = DESTINATIONS[b.destination].departureTimes?.find((t) => t.boat === b.departureTime)
+  const slot = findSlot(b.destination, b.departureTime)
   return {
     dest: b.destination,
     date: b.date,
@@ -63,8 +63,8 @@ export function readConfirmToken(token: string): ConfirmData | null {
 }
 
 /**
- * Когда напомнить туристу: Хон Там — за час до выезда от отеля,
- * парк (время выезда согласуем отдельно) — в 7:00 утра в день поездки.
+ * Когда напомнить туристу: за час до выезда от отеля
+ * (старые заявки парка без времени — в 7:00 утра в день поездки).
  * Возвращает момент в UTC (Нячанг = UTC+7, без перехода на летнее время).
  */
 export function reminderAtUtc(data: ConfirmData): Date {

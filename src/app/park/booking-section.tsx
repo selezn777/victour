@@ -21,6 +21,7 @@ import {
   type ContactChannel,
   type DestinationId,
   type ExtraOption,
+  normalizeTime,
 } from "./park-config"
 import { bookingSummaryRu } from "./park-texts"
 import { ADD_EXTRA_EVENT } from "./seawalking-cta"
@@ -67,7 +68,7 @@ export function BookingSection({ destination }: { destination: DestinationId }) 
 
   const [date, setDate] = useState("")
   const [packageByDest, setPackageByDest] = useState<Partial<Record<DestinationId, string>>>({})
-  const [departureTime, setDepartureTime] = useState<string | null>(null)
+  const [departureByDest, setDepartureByDest] = useState<Partial<Record<DestinationId, string>>>({})
   const [guests, setGuests] = useState<Record<string, number>>({ adults: 2 })
   const [hotelState, setHotelState] = useState<HotelValue | null>(null)
   const [name, setName] = useState("")
@@ -98,6 +99,8 @@ export function BookingSection({ destination }: { destination: DestinationId }) 
   const [success, setSuccess] = useState<{ waText: string; token: string | null } | null>(null)
 
   const packageId = packageByDest[destination] ?? null
+  const departureTime = departureByDest[destination] ?? null
+  const setDepartureTime = (t: string) => setDepartureByDest((s) => ({ ...s, [destination]: t }))
   const hotel = hotelState ?? savedHotel ?? { name: "", place: null }
   const contact = contactChannel === "telegram" && telegramHandle ? telegramHandle : phone
 
@@ -293,6 +296,44 @@ export function BookingSection({ destination }: { destination: DestinationId }) 
                   </button>
                 )
               })}
+            </div>
+            <p className="mt-1.5 text-[12px] text-(--c-muted)">
+              Время выезда указываем всегда ±10 минут.
+            </p>
+            <FieldError text={errors.departureTime} />
+          </div>
+        )}
+
+        {dest.pickupRange && (
+          <div id="park-field-departureTime">
+            <label htmlFor="park-pickup" className={LABEL}>
+              Во сколько забрать из отеля
+            </label>
+            {/* Нативное поле времени прозрачно лежит поверх: тап открывает системные
+                часы (Android — циферблат как в Google Календаре, iPhone — барабан) */}
+            <div className="relative">
+              <div
+                aria-hidden
+                className={`${INPUT} flex items-center justify-between ${departureTime ? "" : "text-(--c-muted)/60"}`}
+              >
+                <span className={departureTime ? "text-[17px] font-bold tabular-nums" : ""}>
+                  {departureTime ?? "Выберите время"}
+                </span>
+                <span className="text-[18px]">🕗</span>
+              </div>
+              <input
+                id="park-pickup"
+                type="time"
+                step={300}
+                min={dest.pickupRange.min.padStart(5, "0")}
+                max={dest.pickupRange.max.padStart(5, "0")}
+                value={departureTime ? departureTime.padStart(5, "0") : ""}
+                onChange={(e) => {
+                  const t = normalizeTime(e.target.value)
+                  if (t) setDepartureTime(t)
+                }}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              />
             </div>
             <p className="mt-1.5 text-[12px] text-(--c-muted)">
               Время выезда указываем всегда ±10 минут.

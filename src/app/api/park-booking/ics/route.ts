@@ -30,7 +30,7 @@ export async function GET(request: Request) {
   const end = new Date(start.getTime() + 15 * 60 * 1000)
   const confirmUrl = `${url.origin}/park/confirm/${token}`
   const when = data.pickup
-    ? `Выезд от отеля в ${data.pickup} (±10 мин), катер ${data.boat}.`
+    ? `Выезд от отеля в ${data.pickup} (±10 мин)${data.boat ? `, катер ${data.boat}` : ""}.`
     : "Сегодня поездка в VinWonders."
   const description = `${confirmSummaryRu(data)}\n${when}\nПодтвердите выезд одной кнопкой: ${confirmUrl}`
 
