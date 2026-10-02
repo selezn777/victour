@@ -200,6 +200,17 @@ export function HonTamContent() {
           </div>
         </section>
 
+        <div className={`${CARD} p-4`}>
+          <div className="mb-1.5 flex items-center gap-2 text-[16px] font-extrabold text-(--c-primary)">
+            <span className="text-[22px]">🚌</span>Обратная дорога
+          </div>
+          <p className="text-[13.5px] leading-snug">
+            Катер привозит обратно в порт Хон Там. Оттуда —{" "}
+            <b className="text-(--c-primary)">бесплатный общий автобус №23</b>: идёт по первой
+            линии и удобно развозит посетителей.
+          </p>
+        </div>
+
 
 
         <section>
