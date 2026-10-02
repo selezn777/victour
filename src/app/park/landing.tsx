@@ -57,7 +57,8 @@ export function Landing({
         aria-label="Направление"
         className="sticky top-0 z-30 bg-(--c-bg)/90 px-4 pt-[calc(env(safe-area-inset-top)+8px)] pb-2 backdrop-blur transition-colors duration-500"
       >
-        <div className="mx-auto grid max-w-[528px] grid-cols-2 gap-1 rounded-full bg-(--c-bg-2) p-1">
+        {/* Две равноправные карточки: неактивная тоже явно кнопка, а не подпись */}
+        <div className="mx-auto grid max-w-[528px] grid-cols-2 gap-2">
           {DESTINATION_ORDER.map((id) => {
             const active = id === destination
             return (
@@ -66,11 +67,21 @@ export function Landing({
                 type="button"
                 onClick={() => !active && setDestination(id)}
                 aria-pressed={active}
-                className={`h-10 rounded-full text-[14px] font-bold transition-colors ${
-                  active ? "bg-(--c-primary) text-white shadow-sm" : "text-(--c-primary)"
+                className={`relative flex flex-col items-center justify-center rounded-2xl border-2 px-2 py-1.5 leading-tight transition-colors active:scale-[0.98] ${
+                  active
+                    ? "border-(--c-primary) bg-(--c-primary) text-white shadow-(--c-shadow-primary)"
+                    : "border-(--c-primary)/35 bg-white text-(--c-primary) shadow-[0_4px_12px_rgb(0_0_0/0.08)]"
                 }`}
               >
-                {DESTINATIONS[id].tabLabel}
+                <span className="text-[14.5px] font-extrabold whitespace-nowrap">
+                  {DESTINATIONS[id].tabLabel}
+                </span>
+                <span
+                  className={`text-[11.5px] font-semibold ${active ? "text-(--c-on-primary)" : "text-(--c-muted)"}`}
+                >
+                  {active ? "✓ " : ""}
+                  {DESTINATIONS[id].tabNote}
+                </span>
               </button>
             )
           })}

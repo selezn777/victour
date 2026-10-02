@@ -71,6 +71,7 @@ export function findSlot(dest: DestinationId, departureTime: string | null): Dep
 export type Destination = {
   id: DestinationId
   tabLabel: string
+  tabNote: string // подпись под названием в переключателе
   english: string
   childPriceLabel: string // подпись к childPrice: у парка скидка и детям, и 60+
   packages: PackageOption[]
@@ -88,6 +89,7 @@ export const DESTINATIONS: Record<DestinationId, Destination> = {
   park: {
     id: "park",
     tabLabel: "🚡 VinWonders",
+    tabNote: "парк + канатка",
     english: "VINWONDERS (cable car)",
     childPriceLabel: "дети и 60+",
     // price — взрослый, childPrice — ребёнок 100–139 см и пенсионер 60+
@@ -165,6 +167,7 @@ export const DESTINATIONS: Record<DestinationId, Destination> = {
   hontam: {
     id: "hontam",
     tabLabel: "🏝 Остров Хон Там",
+    tabNote: "пляж + катер",
     english: "HON TAM ISLAND",
     childPriceLabel: "дети",
     packages: [
