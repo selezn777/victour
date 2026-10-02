@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useSyncExternalStore } from "react"
+import { useEffect, useState, useSyncExternalStore } from "react"
 import { BookingSection } from "./booking-section"
 import { DESTINATIONS, DESTINATION_ORDER, PARK_WHATSAPP, type DestinationId } from "./park-config"
 import { THEMES } from "./ui"
@@ -48,6 +48,22 @@ export function Landing({
     return () => clearTimeout(t)
   }, [destination])
 
+  // Пока турист печатает в форме, нижняя панель прячется — иначе на телефоне
+  // она всплывает над клавиатурой и закрывает поле
+  const [typing, setTyping] = useState(false)
+  useEffect(() => {
+    const isField = (t: EventTarget | null) =>
+      t instanceof HTMLElement && t.matches("input:not([type=time]):not([type=date]), textarea, select")
+    const onIn = (e: FocusEvent) => isField(e.target) && setTyping(true)
+    const onOut = () => setTyping(false)
+    document.addEventListener("focusin", onIn)
+    document.addEventListener("focusout", onOut)
+    return () => {
+      document.removeEventListener("focusin", onIn)
+      document.removeEventListener("focusout", onOut)
+    }
+  }, [])
+
   return (
     <div
       style={THEMES[destination] as React.CSSProperties}
@@ -55,7 +71,9 @@ export function Landing({
     >
       <nav
         aria-label="Направление"
-        className="sticky top-0 z-30 bg-(--c-bg)/90 px-4 pt-[calc(env(safe-area-inset-top)+8px)] pb-2 backdrop-blur transition-colors duration-500"
+        className={`fixed inset-x-0 bottom-0 z-30 border-t border-(--c-border) bg-(--c-bg)/92 px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+8px)] backdrop-blur transition-[transform,background-color] duration-300 ${
+          typing ? "translate-y-full" : ""
+        }`}
       >
         {/* Две равноправные карточки: неактивная тоже явно кнопка, а не подпись */}
         <div className="mx-auto grid max-w-[528px] grid-cols-2 gap-2">
@@ -88,7 +106,7 @@ export function Landing({
         </div>
       </nav>
 
-      <main className="mx-auto max-w-[560px] pb-10">
+      <main className="mx-auto max-w-[560px] pb-28">
         {content[destination]}
 
         <div className="mt-7 space-y-7 px-4">
