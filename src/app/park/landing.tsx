@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState, useSyncExternalStore } from "react"
+import { SiteMenu } from "@/components/site-menu"
 import { BookingSection } from "./booking-section"
 import { DESTINATIONS, DESTINATION_ORDER, PARK_WHATSAPP, type DestinationId } from "./park-config"
 import { THEMES } from "./ui"
@@ -67,14 +68,17 @@ export function Landing({
       style={THEMES[destination] as React.CSSProperties}
       className="flex-1 bg-(--c-bg) font-(family-name:--font-park-sans) text-(--c-ink) transition-colors duration-500"
     >
-      {/* Хедер ВикТур в цвет раздела — ссылка на главный сайт */}
+      {/* Хедер ВикТур в цвет раздела + бургер-меню основного сайта */}
       <header className="sticky top-0 z-30 bg-(--c-primary) pt-[env(safe-area-inset-top)] transition-colors duration-500">
-        <Link
-          href="/"
-          className="mx-auto flex h-11 max-w-[560px] items-center justify-center font-heading text-xl font-medium text-white"
-        >
-          ВикТур
-        </Link>
+        <div className="mx-auto grid h-13 max-w-[560px] grid-cols-[1fr_auto_1fr] items-center px-3">
+          <span />
+          <Link href="/" className="font-heading text-[22px] font-medium text-white">
+            ВикТур
+          </Link>
+          <div className="justify-self-end">
+            <SiteMenu triggerClassName="text-white hover:bg-white/15 hover:text-white" />
+          </div>
+        </div>
       </header>
 
       {/* Переключатель направлений: экран пополам, без рамок и скруглений */}
