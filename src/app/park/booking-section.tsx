@@ -304,7 +304,7 @@ function BookingForm({
                   type="button"
                   onClick={() => setPackageByDest((s) => ({ ...s, [destination]: p.id }))}
                   aria-pressed={active}
-                  className={`rounded-2xl border-2 px-3 py-2.5 text-left transition-colors ${
+                  className={`flex flex-col justify-start rounded-2xl border-2 px-3 py-2.5 text-left transition-colors ${
                     active
                       ? "border-(--c-primary) bg-(--c-primary) text-white"
                       : "border-(--c-border) bg-white text-(--c-ink)"
@@ -325,6 +325,19 @@ function BookingForm({
                       className={`block text-[11.5px] whitespace-nowrap ${active ? "text-white/80" : "text-(--c-muted)"}`}
                     >
                       {dest.childPriceLabel} — {p.childPrice}
+                    </span>
+                  )}
+                  {p.formNotes && (
+                    <span
+                      className={`mt-1.5 block space-y-0.5 border-t pt-1.5 text-[11.5px] leading-snug ${
+                        active ? "border-white/25 text-white/90" : "border-(--c-bg-2) text-(--c-muted)"
+                      }`}
+                    >
+                      {p.formNotes.map((n) => (
+                        <span key={n} className="block">
+                          {n}
+                        </span>
+                      ))}
                     </span>
                   )}
                 </button>

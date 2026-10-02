@@ -29,6 +29,7 @@ export type PackageOption = {
   title: string // в форме
   price: string // в форме, под названием (взрослый)
   childPrice?: string // ребёнок/пенсионер, если отличается
+  formNotes?: string[] // мелкие пояснения в карточке билета в форме
   english: string // в сообщении для Telegram
 }
 
@@ -108,6 +109,7 @@ export const DESTINATIONS: Record<DestinationId, Destination> = {
         price: "1 050K ₫",
         childPrice: "800K ₫",
         english: "Full day (adult 1,050K / child & senior 800K VND, + food voucher)",
+        formNotes: ["🍽 Ваучер на еду 150K", "детям и 60+ — 100K"],
       },
       {
         id: "2days",
@@ -115,6 +117,11 @@ export const DESTINATIONS: Record<DestinationId, Destination> = {
         price: "1 350K ₫",
         childPrice: "1 050K ₫",
         english: "2 days unlimited (adult 1,350K / child & senior 1,050K VND)",
+        formNotes: [
+          "Без ваучера на еду",
+          "Второй день — любой в течение 14 дней",
+          "🚐 Трансфер в подарок — только в первый день",
+        ],
       },
     ],
     guests: [
