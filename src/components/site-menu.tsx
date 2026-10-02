@@ -55,8 +55,13 @@ export function SiteMenu({
         <nav className="flex flex-col gap-1 px-4">
           <AccountMenuRow />
           <div className="my-2 border-t border-border" />
-          <Link href="/tours" className={ITEM}>
-            Туры
+          {/* Главный пункт — туда в первую очередь ведём людей, выделен золотом */}
+          <Link
+            href="/tours"
+            className="my-1 flex items-center justify-between rounded-xl bg-[linear-gradient(135deg,#f6dc8c_0%,#d9a73e_55%,#b8862b_100%)] px-3 py-3 font-heading text-lg font-semibold text-[#2b1d05] shadow-[0_6px_18px_rgb(217_167_62/0.35)] ring-1 ring-[#fff3c4]/60 transition active:scale-[0.98]"
+          >
+            <span>⭐ Туры</span>
+            <span aria-hidden>→</span>
           </Link>
           {/* Обычные <a>, не Link: /park читает направление из ?t= при загрузке,
               клиентская навигация /park ↔ /park?t=hontam его бы не переключила */}
