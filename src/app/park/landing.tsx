@@ -58,6 +58,12 @@ function setDestination(id: DestinationId) {
   window.history.replaceState(null, "", url)
   window.dispatchEvent(new Event(EVENT))
   window.scrollTo({ top: 0 })
+  // Новый раздел открывается как с нуля: хедер снова спрятан до прокрутки
+  // вверх. Переключатель остаётся (everScrolled не сбрасываем) — им уже
+  // пользовались.
+  lastScrollY = 0
+  headerShown = false
+  window.dispatchEvent(new Event("scroll"))
 }
 
 export function Landing({
