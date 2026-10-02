@@ -77,14 +77,17 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
         </div>
       ))}
       {!tapped && (
-        // Статичная плашка-подсказка, без пульса — Виктор: "кнопка нажми
-        // слишком навязчиво моргает, убираем ей моргание". Пропадает после
-        // первого тапа (см. tapped).
+        // Пока не нажали: фото слегка затемнено, по центру — плашка
+        // «нажимайте» с лёгким (медленным, едва заметным) пульсом. Раньше
+        // пульс был навязчивым и его убирали; теперь Виктор попросил вернуть
+        // «лёгкое моргание». Всё пропадает после первого тапа (см. tapped).
         <div
           aria-hidden
-          className="pointer-events-none absolute top-[88%] left-1/2 z-30 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-5 py-2.5 text-base font-bold text-primary-foreground shadow-lg sm:px-6 sm:py-3 sm:text-lg"
+          className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-black/35"
         >
-          нажми
+          <span className="tap-hint-pulse rounded-full bg-primary px-6 py-3 text-lg font-bold text-primary-foreground shadow-lg sm:px-7 sm:py-3.5 sm:text-xl">
+            нажимайте
+          </span>
         </div>
       )}
     </button>

@@ -480,3 +480,26 @@
 .park-wa-pulse {
   animation: park-wa-pulse 2.2s ease-in-out infinite;
 }
+
+/* Плашка «нажимайте» на стопке фото (главная, слайд трансфера): лёгкий
+   медленный пульс — едва заметный, не навязчивый (прошлый быстрый пульс
+   Виктор просил убрать). */
+@keyframes tap-hint-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.85;
+  }
+}
+.tap-hint-pulse {
+  animation: tap-hint-pulse 1.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tap-hint-pulse {
+    animation: none;
+  }
+}
