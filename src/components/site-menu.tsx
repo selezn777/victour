@@ -54,9 +54,6 @@ export function SiteMenu({
           <Link href="/reviews" className={ITEM}>
             Отзывы
           </Link>
-          <Link href="/faq" className={ITEM}>
-            Вопросы и ответы
-          </Link>
           <Link href="/blog" className={ITEM}>
             Полезное
           </Link>
