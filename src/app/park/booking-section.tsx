@@ -17,6 +17,7 @@ import {
   REDIRECT_SECONDS,
   todayInNhaTrang,
   validateParkBooking,
+  waTextLink,
   type BookingField,
   type ContactChannel,
   type DestinationId,
@@ -717,7 +718,7 @@ function SuccessScreen({ waText, token }: { waText: string; token: string | null
     }
   }, [])
 
-  const waHref = `${PARK_WHATSAPP.href}?text=${encodeURIComponent(waText)}`
+  const waHref = waTextLink(PARK_WHATSAPP.display, waText)
 
   return (
     <div

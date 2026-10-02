@@ -12,6 +12,14 @@ export const PARK_WHATSAPP = {
   name: "Виктор",
 }
 
+/**
+ * Ссылка «открыть чат с готовым текстом». Не wa.me: его редирект на части
+ * телефонов ломает кодировку, и эмодзи в тексте приходят знаками «�».
+ */
+export function waTextLink(phone: string, text: string): string {
+  return `https://api.whatsapp.com/send?phone=${phone.replace(/\D/g, "")}&text=${encodeURIComponent(text)}`
+}
+
 // ---------- Направления: парк (канатка) и остров Хон Там ----------
 
 export type DestinationId = "park" | "hontam"

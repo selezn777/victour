@@ -1,3 +1,4 @@
+import { waTextLink } from "@/app/park/park-config"
 import { reminderRu } from "@/app/park/park-texts"
 import { readConfirmToken, resolveLinkParam } from "@/lib/park-confirm"
 
@@ -13,8 +14,5 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   const origin = new URL(request.url).origin
   const confirmUrl = full === token ? `${origin}/park/confirm/${token}` : `${origin}/c/${token}`
   const text = reminderRu(data, confirmUrl)
-  return Response.redirect(
-    `https://wa.me/${data.phone.replace("+", "")}?text=${encodeURIComponent(text)}`,
-    302,
-  )
+  return Response.redirect(waTextLink(data.phone, text), 302)
 }
