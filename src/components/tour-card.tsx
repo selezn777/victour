@@ -94,12 +94,15 @@ export function TourCard({
                 "серебристо" — заметная кнопка с нажимаемым эффектом
                 (active:scale), единственный тап-таргет, ведущий на тур.
                 Потом ещё раз попросил "ещё больше" — увеличил паддинги и
-                шрифт дальше (px-4→px-6, py-2→py-3, text-sm→text-base). */}
+                шрифт дальше (px-4→px-6, py-2→py-3, text-sm→text-base).
+                Затем: "больше похоже на кнопку" — объёмный нижний край,
+                при нажатии кнопка опускается на него (как физическая). */}
             <Link
               href={`/tours/${tour.slug}`}
-              className="rounded-full bg-gradient-to-b from-white to-zinc-300 px-6 py-3 text-base font-semibold text-zinc-900 shadow-sm transition-transform duration-150 active:scale-95"
+              className="flex items-center gap-1.5 rounded-full bg-gradient-to-b from-white to-zinc-300 px-6 py-3 text-base font-semibold text-zinc-900 shadow-[0_4px_0_#71717a,0_8px_16px_rgb(0_0_0/0.35)] ring-1 ring-white/70 transition-[transform,box-shadow] duration-100 active:translate-y-[4px] active:shadow-[0_0_0_#71717a,0_2px_4px_rgb(0_0_0/0.3)]"
             >
               Программа тура
+              <span aria-hidden>→</span>
             </Link>
           </div>
         </div>
