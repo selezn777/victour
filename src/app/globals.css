@@ -481,9 +481,8 @@
   animation: park-wa-pulse 2.2s ease-in-out infinite;
 }
 
-/* Плашка «нажимайте» на стопке фото (главная, слайд трансфера): лёгкий
-   медленный пульс — едва заметный, не навязчивый (прошлый быстрый пульс
-   Виктор просил убрать). */
+/* Палец-подсказка на стопке фото (главная, слайд трансфера): мягко
+   моргает и чуть «нажимает» (уменьшается), показывая, что фото кликабельно. */
 @keyframes tap-hint-pulse {
   0%,
   100% {
@@ -491,12 +490,12 @@
     opacity: 1;
   }
   50% {
-    transform: scale(1.06);
-    opacity: 0.85;
+    transform: scale(0.88);
+    opacity: 0.45;
   }
 }
 .tap-hint-pulse {
-  animation: tap-hint-pulse 1.8s ease-in-out infinite;
+  animation: tap-hint-pulse 1.4s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
   .tap-hint-pulse {
