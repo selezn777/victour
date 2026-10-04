@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import PhoneNumberInput from "react-phone-number-input/input"
-import type { Country } from "react-phone-number-input"
-import { HotelPicker, type HotelValue } from "./hotel-picker"
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import PhoneNumberInput from "react-phone-number-input/input";
+import type { Country } from "react-phone-number-input";
+import { HotelPicker, type HotelValue } from "./hotel-picker";
 import {
   CONTACT_CHANNELS,
   DESTINATIONS,
@@ -24,58 +24,68 @@ import {
   type ExtraOption,
   findCurrentSlot,
   slotKey,
-} from "./park-config"
-import { bookingSummaryRu } from "./park-texts"
-import { ADD_EXTRA_EVENT } from "./seawalking-cta"
-import { WhatsAppIcon } from "./whatsapp-icon"
+} from "./park-config";
+import { bookingSummaryRu } from "./park-texts";
+import { ADD_EXTRA_EVENT } from "./seawalking-cta";
+import { WhatsAppIcon } from "./whatsapp-icon";
 
-type Status = "idle" | "sending" | "success" | "failed" | "rate_limited"
+type Status = "idle" | "sending" | "success" | "failed" | "rate_limited";
 
 const INPUT =
-  "h-12 w-full rounded-2xl border border-(--c-border) bg-white px-3.5 text-[16px] text-(--c-ink) outline-none placeholder:text-(--c-muted)/60 focus:border-(--c-primary-2) focus:ring-2 focus:ring-(--c-primary-2)/25"
-const LABEL = "mb-1.5 block text-[13px] font-bold text-(--c-primary)"
+  "h-12 w-full rounded-2xl border border-(--c-border) bg-white px-3.5 text-[16px] text-(--c-ink) outline-none placeholder:text-(--c-muted)/60 focus:border-(--c-primary-2) focus:ring-2 focus:ring-(--c-primary-2)/25";
+const LABEL = "mb-1.5 block text-[13px] font-bold text-(--c-primary)";
 
-const noopSubscribe = () => () => {}
+const noopSubscribe = () => () => {};
 
 // Черновик формы: турист отвлёкся, свернул браузер, страница перезагрузилась —
 // заполненное не пропадает. Живёт 12 часов, после отправки стирается.
-const DRAFT_KEY = "victour:park-draft"
-const DRAFT_TTL_MS = 12 * 60 * 60 * 1000
+const DRAFT_KEY = "victour:park-draft";
+const DRAFT_TTL_MS = 12 * 60 * 60 * 1000;
 
 type Draft = {
-  savedAt: number
-  date: string
-  packageByDest: Partial<Record<DestinationId, string>>
-  departureByDest: Partial<Record<DestinationId, string>>
-  guests: Record<string, number>
-  hotel: HotelValue
-  name: string
-  contactChannel: ContactChannel
-  phoneCountry: Country | null
-  phone: string
-  telegramHandle: string
-  extras: Record<string, number>
-}
+  savedAt: number;
+  date: string;
+  packageByDest: Partial<Record<DestinationId, string>>;
+  departureByDest: Partial<Record<DestinationId, string>>;
+  guests: Record<string, number>;
+  hotel: HotelValue;
+  name: string;
+  contactChannel: ContactChannel;
+  phoneCountry: Country | null;
+  phone: string;
+  telegramHandle: string;
+  extras: Record<string, number>;
+};
 
 function readDraft(): Draft | null {
   try {
-    const d = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? "null") as Draft | null
-    if (d && Date.now() - d.savedAt < DRAFT_TTL_MS) return d
-    localStorage.removeItem(DRAFT_KEY)
+    const d = JSON.parse(
+      localStorage.getItem(DRAFT_KEY) ?? "null",
+    ) as Draft | null;
+    if (d && Date.now() - d.savedAt < DRAFT_TTL_MS) return d;
+    localStorage.removeItem(DRAFT_KEY);
   } catch {}
-  return null
+  return null;
 }
 
 const clearDraft = () => {
   try {
-    localStorage.removeItem(DRAFT_KEY)
+    localStorage.removeItem(DRAFT_KEY);
   } catch {}
-}
+};
 
-export function BookingSection({ destination }: { destination: DestinationId }) {
+export function BookingSection({
+  destination,
+}: {
+  destination: DestinationId;
+}) {
   // Страница статическая: сервер рендерит пустую форму, на клиенте она
   // пересоздаётся уже с черновиком из localStorage
-  const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false)
+  const hydrated = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
   return (
     <BookingForm
       key={hydrated ? "client" : "server"}
@@ -83,7 +93,7 @@ export function BookingSection({ destination }: { destination: DestinationId }) 
       draft={hydrated ? readDraft() : null}
       persist={hydrated}
     />
-  )
+  );
 }
 
 function BookingForm({
@@ -91,45 +101,59 @@ function BookingForm({
   draft,
   persist,
 }: {
-  destination: DestinationId
-  draft: Draft | null
-  persist: boolean
+  destination: DestinationId;
+  draft: Draft | null;
+  persist: boolean;
 }) {
-  const dest = DESTINATIONS[destination]
+  const dest = DESTINATIONS[destination];
 
   // "Сегодня" считаем по Нячангу и только на клиенте — страница статическая,
   // дата сборки тут не годится.
-  const minDate = useSyncExternalStore(noopSubscribe, todayInNhaTrang, () => "")
+  const minDate = useSyncExternalStore(
+    noopSubscribe,
+    todayInNhaTrang,
+    () => "",
+  );
 
-  const [date, setDate] = useState(draft?.date ?? "")
-  const [packageByDest, setPackageByDest] = useState<Partial<Record<DestinationId, string>>>(
-    draft?.packageByDest ?? {},
-  )
-  const [departureByDest, setDepartureByDest] = useState<Partial<Record<DestinationId, string>>>(
+  const [date, setDate] = useState(draft?.date ?? "");
+  const [packageByDest, setPackageByDest] = useState<
+    Partial<Record<DestinationId, string>>
+  >(draft?.packageByDest ?? {});
+  const [departureByDest, setDepartureByDest] = useState<
+    Partial<Record<DestinationId, string>>
+  >(
     // В черновике может лежать время из старого расписания — его не подставляем
     Object.fromEntries(
       Object.entries(draft?.departureByDest ?? {}).filter(([d, t]) =>
         findCurrentSlot(d as DestinationId, t ?? null),
       ),
     ),
-  )
-  const [guests, setGuests] = useState<Record<string, number>>(draft?.guests ?? { adults: 2 })
-  const [hotel, setHotel] = useState<HotelValue>(draft?.hotel ?? { name: "", place: null })
-  const [name, setName] = useState(draft?.name ?? "")
+  );
+  const [guests, setGuests] = useState<Record<string, number>>(
+    draft?.guests ?? { adults: 2 },
+  );
+  const [hotel, setHotel] = useState<HotelValue>(
+    draft?.hotel ?? { name: "", place: null },
+  );
+  const [name, setName] = useState(draft?.name ?? "");
   const [contactChannel, setContactChannel] = useState<ContactChannel>(
     draft?.contactChannel ?? "whatsapp",
-  )
+  );
   const [phoneCountry, setPhoneCountry] = useState<Country | undefined>(
     draft ? (draft.phoneCountry ?? undefined) : "RU",
-  )
-  const [phone, setPhone] = useState(draft?.phone ?? "")
-  const [telegramHandle, setTelegramHandle] = useState(draft?.telegramHandle ?? "")
-  const [extras, setExtras] = useState<Record<string, number>>(draft?.extras ?? {})
+  );
+  const [phone, setPhone] = useState(draft?.phone ?? "");
+  const [telegramHandle, setTelegramHandle] = useState(
+    draft?.telegramHandle ?? "",
+  );
+  const [extras, setExtras] = useState<Record<string, number>>(
+    draft?.extras ?? {},
+  );
 
   // Черновик сохраняем только в клиентском экземпляре формы — серверный
   // (до гидрации) иначе затёр бы его пустыми полями
   useEffect(() => {
-    if (!persist) return
+    if (!persist) return;
     const next: Draft = {
       savedAt: Date.now(),
       date,
@@ -143,9 +167,9 @@ function BookingForm({
       phone,
       telegramHandle,
       extras,
-    }
+    };
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(next))
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(next));
     } catch {}
   }, [
     persist,
@@ -160,114 +184,134 @@ function BookingForm({
     phone,
     telegramHandle,
     extras,
-  ])
+  ]);
 
-  const guestsRef = useRef(guests)
+  const guestsRef = useRef(guests);
   useEffect(() => {
-    guestsRef.current = guests
-  }, [guests])
+    guestsRef.current = guests;
+  }, [guests]);
 
   // «Забронировать с Seawalking» из блока акции: отмечаем его на всех гостей с билетом
   useEffect(() => {
     const onAdd = (e: Event) => {
-      const key = (e as CustomEvent<string>).detail
-      if (!dest.extras.some((x) => x.key === key)) return
-      const people = dest.payingGuests.reduce((n, k) => n + (guestsRef.current[k] ?? 0), 0)
-      setExtras((x) => ({ ...x, [key]: Math.max(x[key] ?? 0, people, 1) }))
-    }
-    window.addEventListener(ADD_EXTRA_EVENT, onAdd)
-    return () => window.removeEventListener(ADD_EXTRA_EVENT, onAdd)
-  }, [dest])
-  const [website, setWebsite] = useState("") // honeypot
-  const [errors, setErrors] = useState<Partial<Record<BookingField, string>>>({})
-  const [status, setStatus] = useState<Status>("idle")
-  const [success, setSuccess] = useState<{ waText: string; token: string | null } | null>(null)
+      const key = (e as CustomEvent<string>).detail;
+      if (!dest.extras.some((x) => x.key === key)) return;
+      const people = dest.payingGuests.reduce(
+        (n, k) => n + (guestsRef.current[k] ?? 0),
+        0,
+      );
+      setExtras((x) => ({ ...x, [key]: Math.max(x[key] ?? 0, people, 1) }));
+    };
+    window.addEventListener(ADD_EXTRA_EVENT, onAdd);
+    return () => window.removeEventListener(ADD_EXTRA_EVENT, onAdd);
+  }, [dest]);
+  const [website, setWebsite] = useState(""); // honeypot
+  const [errors, setErrors] = useState<Partial<Record<BookingField, string>>>(
+    {},
+  );
+  const [status, setStatus] = useState<Status>("idle");
+  const [success, setSuccess] = useState<{
+    waText: string;
+    token: string | null;
+  } | null>(null);
 
-  const packageId = packageByDest[destination] ?? null
-  const departureTime = departureByDest[destination] ?? null
-  const compactSlots = dest.departureTimes.length === 3
-  const setDepartureTime = (t: string) => setDepartureByDest((s) => ({ ...s, [destination]: t }))
-  const contact = contactChannel === "telegram" && telegramHandle ? telegramHandle : phone
+  const packageId = packageByDest[destination] ?? null;
+  const departureTime = departureByDest[destination] ?? null;
+  const compactSlots = dest.departureTimes.length === 3;
+  const setDepartureTime = (t: string) =>
+    setDepartureByDest((s) => ({ ...s, [destination]: t }));
+  const contact =
+    contactChannel === "telegram" && telegramHandle ? telegramHandle : phone;
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (status === "sending") return
+    e.preventDefault();
+    if (status === "sending") return;
 
     const payload = {
       destination,
       date,
       packageId,
       departureTime,
-      guests: Object.fromEntries(dest.guests.map((g) => [g.key, guests[g.key] ?? 0])),
+      guests: Object.fromEntries(
+        dest.guests.map((g) => [g.key, guests[g.key] ?? 0]),
+      ),
       hotel: hotel.name,
       hotelPlace: hotel.place,
       name,
       contactChannel,
       contact,
-      extras: Object.fromEntries(dest.extras.map((x) => [x.key, extras[x.key] ?? 0])),
+      extras: Object.fromEntries(
+        dest.extras.map((x) => [x.key, extras[x.key] ?? 0]),
+      ),
       comment: "",
-    }
-    const check = validateParkBooking(payload)
+    };
+    const check = validateParkBooking(payload);
     if (!check.ok) {
-      setErrors(check.errors)
-      const first = Object.keys(check.errors)[0]
+      setErrors(check.errors);
+      const first = Object.keys(check.errors)[0];
       document
         .getElementById(`park-field-${first}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "center" })
-      return
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
     }
-    setErrors({})
-    setStatus("sending")
+    setErrors({});
+    setStatus("sending");
 
     try {
       const res = await fetch("/api/park-booking", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...payload, website }),
-      })
+      });
       const data = (await res.json().catch(() => ({}))) as {
-        ok?: boolean
-        error?: string
-        errors?: Partial<Record<BookingField, string>>
-        confirmToken?: string | null
-        confirmUrl?: string | null
-      }
+        ok?: boolean;
+        error?: string;
+        errors?: Partial<Record<BookingField, string>>;
+        confirmToken?: string | null;
+        confirmUrl?: string | null;
+      };
       if (res.ok && data.ok) {
-        const token = data.confirmToken ?? null
+        const token = data.confirmToken ?? null;
         setSuccess({
-          waText: bookingSummaryRu(
-            check.data,
-            data.confirmUrl ?? null,
-          ),
+          waText: bookingSummaryRu(check.data, data.confirmUrl ?? null),
           token,
-        })
-        clearDraft()
-        setStatus("success")
+        });
+        clearDraft();
+        setStatus("success");
       } else if (data.error === "validation" && data.errors) {
-        setErrors(data.errors)
-        setStatus("idle")
+        setErrors(data.errors);
+        setStatus("idle");
       } else if (data.error === "rate_limited") {
-        setStatus("rate_limited")
+        setStatus("rate_limited");
       } else {
-        setStatus("failed")
+        setStatus("failed");
       }
     } catch {
-      setStatus("failed")
+      setStatus("failed");
     }
   }
 
   const changeGuests = (key: string, delta: number) =>
-    setGuests((g) => ({ ...g, [key]: Math.min(GUEST_MAX, Math.max(0, (g[key] ?? 0) + delta)) }))
+    setGuests((g) => ({
+      ...g,
+      [key]: Math.min(GUEST_MAX, Math.max(0, (g[key] ?? 0) + delta)),
+    }));
   const changeExtra = (key: string, delta: number) =>
-    setExtras((x) => ({ ...x, [key]: Math.min(GUEST_MAX, Math.max(0, (x[key] ?? 0) + delta)) }))
+    setExtras((x) => ({
+      ...x,
+      [key]: Math.min(GUEST_MAX, Math.max(0, (x[key] ?? 0) + delta)),
+    }));
 
-  const extraGroups = dest.extras.reduce<Record<string, ExtraOption[]>>((acc, x) => {
-    ;(acc[x.group ?? ""] ??= []).push(x)
-    return acc
-  }, {})
-  const extrasChosen = dest.extras.filter((x) => extras[x.key]).length
+  const extraGroups = dest.extras.reduce<Record<string, ExtraOption[]>>(
+    (acc, x) => {
+      (acc[x.group ?? ""] ??= []).push(x);
+      return acc;
+    },
+    {},
+  );
+  const extrasChosen = dest.extras.filter((x) => extras[x.key]).length;
   // Если хоть одно название билета в 2 строки — резервируем 2 строки у всех, цены встают в линию
-  const longTitles = dest.packages.some((p) => p.title.length > 12)
+  const longTitles = dest.packages.some((p) => p.title.length > 12);
 
   return (
     <section
@@ -287,7 +331,10 @@ function BookingForm({
         className="relative space-y-5 rounded-[22px] bg-(--c-bg) p-4 text-(--c-ink) transition-colors duration-500"
       >
         {/* Honeypot: скрыто от людей, боты заполняют */}
-        <div aria-hidden className="absolute -left-[9999px] h-px w-px overflow-hidden">
+        <div
+          aria-hidden
+          className="absolute -left-[9999px] h-px w-px overflow-hidden"
+        >
           <label>
             Website
             <input
@@ -301,15 +348,22 @@ function BookingForm({
         </div>
 
         <div id="park-field-packageId">
-          <span className={LABEL}>Билет</span>
+          <span className={LABEL}>
+            Билет{" "}
+            <span className="font-normal text-(--c-muted)">
+              — нажмите на нужный
+            </span>
+          </span>
           <div className="grid grid-cols-2 gap-2">
             {dest.packages.map((p) => {
-              const active = packageId === p.id
+              const active = packageId === p.id;
               return (
                 <button
                   key={p.id}
                   type="button"
-                  onClick={() => setPackageByDest((s) => ({ ...s, [destination]: p.id }))}
+                  onClick={() =>
+                    setPackageByDest((s) => ({ ...s, [destination]: p.id }))
+                  }
                   aria-pressed={active}
                   className={`flex flex-col justify-start rounded-2xl border-2 px-3 py-2.5 text-left transition-colors ${
                     active
@@ -322,10 +376,24 @@ function BookingForm({
                   >
                     {p.title}
                   </span>
-                  <span
-                    className={`mt-0.5 block text-[13px] font-semibold whitespace-nowrap ${active ? "text-(--c-on-primary)" : "text-(--c-primary)"}`}
-                  >
-                    {p.price}
+                  <span className="mt-0.5 flex items-center justify-between gap-1">
+                    <span
+                      className={`text-[13px] font-semibold whitespace-nowrap ${active ? "text-(--c-on-primary)" : "text-(--c-primary)"}`}
+                    >
+                      {p.price}
+                    </span>
+                    {/* Кружок-переключатель: сразу видно, что карточку можно выбрать.
+                      Справа от цены — названия длинные, а строка цены короткая */}
+                    <span
+                      aria-hidden
+                      className={`flex shrink-0 h-[18px] w-[18px] items-center justify-center rounded-full border-2 text-[10px] font-black ${
+                        active
+                          ? "border-white bg-white text-(--c-primary)"
+                          : "border-(--c-border) bg-white"
+                      }`}
+                    >
+                      {active && "✓"}
+                    </span>
                   </span>
                   {p.childPrice && (
                     <span
@@ -337,7 +405,9 @@ function BookingForm({
                   {p.formNotes && (
                     <span
                       className={`mt-1.5 block space-y-0.5 border-t pt-1.5 text-[11.5px] leading-snug ${
-                        active ? "border-white/25 text-white/90" : "border-(--c-bg-2) text-(--c-muted)"
+                        active
+                          ? "border-white/25 text-white/90"
+                          : "border-(--c-bg-2) text-(--c-muted)"
                       }`}
                     >
                       {p.formNotes.map((n) => (
@@ -348,7 +418,7 @@ function BookingForm({
                     </span>
                   )}
                 </button>
-              )
+              );
             })}
           </div>
           <FieldError text={errors.packageId} />
@@ -372,10 +442,12 @@ function BookingForm({
         <div id="park-field-departureTime">
           <span className={LABEL}>Во сколько выезд от отеля</span>
           {/* Три слота (Хон Там) — в одну строку, компактно, без иконки */}
-          <div className={`grid gap-2 ${compactSlots ? "grid-cols-3" : "grid-cols-2"}`}>
+          <div
+            className={`grid gap-2 ${compactSlots ? "grid-cols-3" : "grid-cols-2"}`}
+          >
             {dest.departureTimes.map((t) => {
-              const key = slotKey(t)
-              const active = departureTime === key
+              const key = slotKey(t);
+              const active = departureTime === key;
               return (
                 <button
                   key={key}
@@ -394,10 +466,12 @@ function BookingForm({
                   <span
                     className={`block text-[12.5px] ${active ? "text-(--c-on-primary)" : "text-(--c-muted)"}`}
                   >
-                    {t.boat ? `катер ${compactSlots ? "" : "в "}${t.boat}` : `на канатку в ${t.cableCar}`}
+                    {t.boat
+                      ? `катер ${compactSlots ? "" : "в "}${t.boat}`
+                      : `на канатку в ${t.cableCar}`}
                   </span>
                 </button>
-              )
+              );
             })}
           </div>
           <p className="mt-1.5 text-[12px] text-(--c-muted)">
@@ -410,7 +484,10 @@ function BookingForm({
           <span className={LABEL}>Сколько вас</span>
           <div className="divide-y divide-(--c-bg-2) rounded-2xl bg-white">
             {dest.guests.map((g) => (
-              <div key={g.key} className="flex items-center justify-between gap-2 px-3 py-2">
+              <div
+                key={g.key}
+                className="flex items-center justify-between gap-2 px-3 py-2"
+              >
                 <span className="text-[14px] leading-tight">
                   {g.emoji} {g.formLabel}
                 </span>
@@ -429,7 +506,11 @@ function BookingForm({
           <label htmlFor="park-hotel" className={LABEL}>
             Отель, откуда забрать
           </label>
-          <HotelPicker value={hotel} onChange={setHotel} inputClassName={INPUT} />
+          <HotelPicker
+            value={hotel}
+            onChange={setHotel}
+            inputClassName={INPUT}
+          />
           <FieldError text={errors.hotel} />
         </div>
 
@@ -484,14 +565,18 @@ function BookingForm({
 
           {!(contactChannel === "telegram" && telegramHandle) && (
             <>
-              <div className="mb-2 grid grid-cols-4 gap-1.5" role="group" aria-label="Код страны">
+              <div
+                className="mb-2 grid grid-cols-4 gap-1.5"
+                role="group"
+                aria-label="Код страны"
+              >
                 {PHONE_COUNTRIES.map((c) => (
                   <CountryChip
                     key={c.code}
                     active={phoneCountry === c.code}
                     onClick={() => {
-                      setPhoneCountry(c.code)
-                      setPhone("")
+                      setPhoneCountry(c.code);
+                      setPhone("");
                     }}
                   >
                     {c.flag} {c.dial}
@@ -500,8 +585,8 @@ function BookingForm({
                 <CountryChip
                   active={phoneCountry === undefined}
                   onClick={() => {
-                    setPhoneCountry(undefined)
-                    setPhone("")
+                    setPhoneCountry(undefined);
+                    setPhone("");
                   }}
                 >
                   🌍 Ещё
@@ -526,27 +611,42 @@ function BookingForm({
         </div>
 
         {dest.extras.length > 0 && (
-          <details className="group rounded-2xl bg-white" open={destination === "hontam"}>
+          <details
+            className="group rounded-2xl bg-white"
+            open={destination === "hontam"}
+          >
             <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 px-3.5 py-2.5 text-[14px] font-bold text-(--c-primary) [&::-webkit-details-marker]:hidden">
               <span>
                 ➕ Доп. услуги{" "}
                 <span className="font-normal text-(--c-muted)">
-                  {extrasChosen > 0 ? `— выбрано ${extrasChosen}` : "по желанию"}
+                  {extrasChosen > 0
+                    ? `— выбрано ${extrasChosen}`
+                    : "по желанию"}
                 </span>
               </span>
-              <span className="transition-transform group-open:rotate-180">⌄</span>
+              <span className="transition-transform group-open:rotate-180">
+                ⌄
+              </span>
             </summary>
             <div className="space-y-3 border-t border-(--c-bg-2) px-3 pt-2 pb-3">
               {Object.entries(extraGroups).map(([group, items]) => (
                 <div key={group}>
-                  {group && <b className="mb-1 block text-[13px] text-(--c-primary)">{group}</b>}
+                  {group && (
+                    <b className="mb-1 block text-[13px] text-(--c-primary)">
+                      {group}
+                    </b>
+                  )}
                   {items.map((x) => (
-                    <div key={x.key} className="flex items-center justify-between gap-2 py-1.5">
+                    <div
+                      key={x.key}
+                      className="flex items-center justify-between gap-2 py-1.5"
+                    >
                       <span className="text-[13.5px] leading-tight">
                         {x.label}
                         {x.price && (
                           <span className="block text-[12px] text-(--c-muted)">
-                            <span className="whitespace-nowrap">{x.price}</span> / чел.
+                            <span className="whitespace-nowrap">{x.price}</span>{" "}
+                            / чел.
                           </span>
                         )}
                       </span>
@@ -559,11 +659,12 @@ function BookingForm({
                   ))}
                 </div>
               ))}
-              <p className="text-[12px] text-(--c-muted)">Укажите, на сколько человек.</p>
+              <p className="text-[12px] text-(--c-muted)">
+                Укажите, на сколько человек.
+              </p>
             </div>
           </details>
         )}
-
 
         {status === "failed" && (
           <SendProblem text="Не получилось отправить заявку. Напишите нам в WhatsApp — забронируем вручную." />
@@ -582,17 +683,20 @@ function BookingForm({
       </form>
 
       <div className="mt-3.5 rounded-2xl bg-white/12 px-4 py-3 text-[14px]">
-        ☀️ Утром <b className="text-(--c-on-primary)">за час до выезда</b> подтвердите бронь
+        ☀️ Утром <b className="text-(--c-on-primary)">за час до выезда</b>{" "}
+        подтвердите бронь
       </div>
 
       {status === "success" && success && <SuccessScreen {...success} />}
     </section>
-  )
+  );
 }
 
 function FieldError({ text }: { text?: string }) {
-  if (!text) return null
-  return <p className="mt-1 text-[13px] font-semibold text-[#b3402a]">{text}</p>
+  if (!text) return null;
+  return (
+    <p className="mt-1 text-[13px] font-semibold text-[#b3402a]">{text}</p>
+  );
 }
 
 function CountryChip({
@@ -600,9 +704,9 @@ function CountryChip({
   onClick,
   children,
 }: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
 }) {
   return (
     <button
@@ -617,7 +721,7 @@ function CountryChip({
     >
       {children}
     </button>
-  )
+  );
 }
 
 function Stepper({
@@ -625,12 +729,12 @@ function Stepper({
   value,
   onChange,
 }: {
-  label: string
-  value: number
-  onChange: (delta: number) => void
+  label: string;
+  value: number;
+  onChange: (delta: number) => void;
 }) {
   const btn =
-    "flex size-11 items-center justify-center rounded-full bg-(--c-bg-2) text-[24px] leading-none font-bold text-(--c-primary) active:brightness-95 disabled:opacity-35"
+    "flex size-11 items-center justify-center rounded-full bg-(--c-bg-2) text-[24px] leading-none font-bold text-(--c-primary) active:brightness-95 disabled:opacity-35";
   return (
     <div className="flex shrink-0 items-center gap-1">
       <button
@@ -642,7 +746,10 @@ function Stepper({
       >
         −
       </button>
-      <span className="w-7 text-center text-[18px] font-bold tabular-nums" aria-live="polite">
+      <span
+        className="w-7 text-center text-[18px] font-bold tabular-nums"
+        aria-live="polite"
+      >
         {value}
       </span>
       <button
@@ -655,13 +762,18 @@ function Stepper({
         +
       </button>
     </div>
-  )
+  );
 }
 
 function SendProblem({ text }: { text: string }) {
   return (
-    <div className="rounded-2xl border-2 border-[#b3402a]/40 bg-white p-3.5" role="alert">
-      <p className="text-[14px] leading-snug font-semibold text-[#b3402a]">{text}</p>
+    <div
+      className="rounded-2xl border-2 border-[#b3402a]/40 bg-white p-3.5"
+      role="alert"
+    >
+      <p className="text-[14px] leading-snug font-semibold text-[#b3402a]">
+        {text}
+      </p>
       <a
         href={PARK_WHATSAPP.href}
         target="_blank"
@@ -672,37 +784,43 @@ function SendProblem({ text }: { text: string }) {
         Написать в WhatsApp
       </a>
     </div>
-  )
+  );
 }
 
-function SuccessScreen({ waText, token }: { waText: string; token: string | null }) {
-  const router = useRouter()
-  const [secondsLeft, setSecondsLeft] = useState(REDIRECT_SECONDS)
-  const [stayed, setStayed] = useState(false)
+function SuccessScreen({
+  waText,
+  token,
+}: {
+  waText: string;
+  token: string | null;
+}) {
+  const router = useRouter();
+  const [secondsLeft, setSecondsLeft] = useState(REDIRECT_SECONDS);
+  const [stayed, setStayed] = useState(false);
   // Главный шаг — турист пишет Виктору в WhatsApp. Автопереход на туры
   // запускается только после этого, иначе он уводил бы со страницы раньше.
-  const [waSent, setWaSent] = useState(false)
+  const [waSent, setWaSent] = useState(false);
 
   useEffect(() => {
-    if (!waSent || stayed) return
+    if (!waSent || stayed) return;
     if (secondsLeft <= 0) {
-      router.push("/tours")
-      return
+      router.push("/tours");
+      return;
     }
-    const t = setTimeout(() => setSecondsLeft((s) => s - 1), 1000)
-    return () => clearTimeout(t)
-  }, [secondsLeft, stayed, waSent, router])
+    const t = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [secondsLeft, stayed, waSent, router]);
 
   useEffect(() => {
-    window.scrollTo({ top: 0 })
-    const prev = document.body.style.overflow
-    document.body.style.overflow = "hidden"
+    window.scrollTo({ top: 0 });
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = prev
-    }
-  }, [])
+      document.body.style.overflow = prev;
+    };
+  }, []);
 
-  const waHref = waTextLink(PARK_WHATSAPP.display, waText)
+  const waHref = waTextLink(PARK_WHATSAPP.display, waText);
 
   return (
     <div
@@ -718,20 +836,24 @@ function SuccessScreen({ waText, token }: { waText: string; token: string | null
           </p>
           <h2
             id="park-success-title"
-            className="mt-2 font-(family-name:--font-park-serif) text-[26px] leading-tight font-bold text-balance"
+            className="mt-2 font-(family-name:--font-park-serif) text-[26px] leading-tight font-bold"
           >
-            {waSent ? "Спасибо! Ждём вас в WhatsApp" : "Закрепите бронь в WhatsApp"}
+            {waSent
+              ? "Спасибо! Ждём вас в WhatsApp"
+              : "Закрепите бронь в WhatsApp"}
           </h2>
 
           {!waSent && (
             <>
               <p className="mt-2 text-[14.5px] leading-snug opacity-95">
-                Сайт не может написать вам первым — так устроен WhatsApp. Отправьте нам заявку одним
-                нажатием, и у нас будет ваш чат:
+                Сайт не может написать вам первым — так устроен WhatsApp.
+                Отправьте нам заявку одним нажатием, и у нас будет ваш чат:
               </p>
               <ul className="mt-3 space-y-1.5 text-[14px] leading-snug">
                 <li>⏰ напомним утром — подтвердить выезд за час</li>
-                <li>🚐 будем на связи в день поездки, если водитель не найдёт вас</li>
+                <li>
+                  🚐 будем на связи в день поездки, если водитель не найдёт вас
+                </li>
                 <li>💬 быстро поможем, если планы изменятся</li>
               </ul>
             </>
@@ -755,7 +877,8 @@ function SuccessScreen({ waText, token }: { waText: string; token: string | null
             (!stayed ? (
               <div className="mt-3 flex items-center justify-between gap-3 text-[13px] opacity-90">
                 <span aria-live="polite">
-                  Переход к турам через <b className="tabular-nums">{secondsLeft}</b> с
+                  Переход к турам через{" "}
+                  <b className="tabular-nums">{secondsLeft}</b> с
                 </span>
                 <button
                   type="button"
@@ -818,8 +941,7 @@ function SuccessScreen({ waText, token }: { waText: string; token: string | null
         >
           Смотреть все туры
         </Link>
-
       </div>
     </div>
-  )
+  );
 }
