@@ -52,7 +52,11 @@ export type ExtraOption = {
   english: string
 }
 
-export type DepartureSlot = { pickup: string; boat?: string }
+// Слот выезда от отеля. Хон Там — к катеру (boat), парк — к канатке (cableCar).
+export type DepartureSlot = { pickup: string; boat?: string; cableCar?: string }
+
+// Что лежит в departureTime заявки: у Хон Тама — время катера, у парка — выезд от отеля
+export const slotKey = (s: DepartureSlot) => s.boat ?? s.pickup
 
 // "07:05" / "7:05" → "7:05"; всё остальное → null
 export function normalizeTime(v: string): string | null {
@@ -61,20 +65,28 @@ export function normalizeTime(v: string): string | null {
   return `${Number(m[1])}:${m[2]}`
 }
 
-const minutes = (t: string) => {
-  const [h, m] = t.split(":").map(Number)
-  return h * 60 + m
+/** departureTime заявки → слот выезда. Только текущее расписание (для проверки новых заявок). */
+export function findCurrentSlot(dest: DestinationId, departureTime: string | null): DepartureSlot | undefined {
+  if (!departureTime) return undefined
+  return DESTINATIONS[dest].departureTimes.find((s) => slotKey(s) === departureTime)
 }
 
-/** departureTime заявки → слот выезда (у Хон Тама — катер, у парка — выбранное время). */
+/**
+ * departureTime заявки → слот выезда для показа. Понимает и заявки, созданные
+ * до расписания с 04.10.2026: катер 8:00 у Хон Тама и любое время у парка.
+ */
 export function findSlot(dest: DestinationId, departureTime: string | null): DepartureSlot | undefined {
-  if (!departureTime) return undefined
-  const d = DESTINATIONS[dest]
-  if (d.departureTimes) return d.departureTimes.find((t) => t.boat === departureTime)
+  const current = findCurrentSlot(dest, departureTime)
+  if (current || !departureTime) return current
+  if (dest === "hontam") return departureTime === "8:00" ? { boat: "8:00", pickup: "7:20" } : undefined
   const t = normalizeTime(departureTime)
-  if (!t || !d.pickupRange) return undefined
-  const m = minutes(t)
-  return m >= minutes(d.pickupRange.min) && m <= minutes(d.pickupRange.max) ? { pickup: t } : undefined
+  return t ? { pickup: t } : undefined
+}
+
+/** «🚐 Выезд от отеля в 8:15 (±10 мин), катер в 9:00» */
+export function slotLineRu(s: DepartureSlot): string {
+  const to = s.boat ? `, катер в ${s.boat}` : s.cableCar ? `, на канатку в ${s.cableCar}` : ""
+  return `🚐 Выезд от отеля в ${s.pickup} (±10 мин)${to}`
 }
 
 export type Destination = {
@@ -87,10 +99,8 @@ export type Destination = {
   guests: GuestOption[]
   // хотя бы один из этих гостей должен быть в заявке (дети до 1 м одни не едут)
   payingGuests: string[]
-  // Катер → во сколько выезжаем от отеля (всегда ±10 минут)
-  departureTimes?: Required<DepartureSlot>[]
-  // Без катера: турист сам выбирает время выезда от отеля в этих границах
-  pickupRange?: { min: string; max: string }
+  // Расписание выездов от отеля (всегда ±10 минут) — турист выбирает один из слотов
+  departureTimes: DepartureSlot[]
   extras: ExtraOption[]
 }
 
@@ -163,7 +173,12 @@ export const DESTINATIONS: Record<DestinationId, Destination> = {
       },
     ],
     payingGuests: ["adults", "children", "seniors"],
-    pickupRange: { min: "6:00", max: "18:00" },
+    departureTimes: [
+      { pickup: "8:15", cableCar: "8:45" },
+      { pickup: "9:15", cableCar: "9:45" },
+      { pickup: "10:15", cableCar: "10:45" },
+      { pickup: "11:15", cableCar: "11:45" },
+    ],
     // Доп. услуги — цена за 1 человека; в форме счётчик «на сколько человек»
     extras: [
       { key: "fp_thunder", group: "🚀 Fast Pass — без очереди", label: "Tilt of Thunder («Опрокидывание грома»)", price: "250K ₫", english: "Fast Pass: Tilt of Thunder" },
@@ -244,10 +259,9 @@ export const DESTINATIONS: Record<DestinationId, Destination> = {
     ],
     payingGuests: ["adults", "children"],
     departureTimes: [
-      { boat: "8:00", pickup: "7:20" },
-      { boat: "9:00", pickup: "8:20" },
-      { boat: "10:00", pickup: "9:20" },
-      { boat: "12:00", pickup: "11:20" },
+      { boat: "9:00", pickup: "8:15" },
+      { boat: "10:00", pickup: "9:15" },
+      { boat: "12:00", pickup: "11:15" },
     ],
     extras: [
       {
@@ -399,16 +413,8 @@ export function validateParkBooking(
     errors.packageId = "Выберите билет"
   }
 
-  let departureTime: string | null = null
-  if (dest.departureTimes) {
-    departureTime = str(input.departureTime, 10)
-    if (!findSlot(destination, departureTime)) errors.departureTime = "Выберите время катера"
-  } else if (dest.pickupRange) {
-    departureTime = findSlot(destination, str(input.departureTime, 10))?.pickup ?? null
-    if (!departureTime) {
-      errors.departureTime = `Выберите время выезда с ${dest.pickupRange.min} до ${dest.pickupRange.max}`
-    }
-  }
+  const departureTime = str(input.departureTime, 10) || null
+  if (!findCurrentSlot(destination, departureTime)) errors.departureTime = "Выберите время выезда"
 
   const rawGuests = (input.guests && typeof input.guests === "object" ? input.guests : {}) as Record<
     string,

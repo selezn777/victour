@@ -41,6 +41,12 @@ export default async function ConfirmPage({ params }: { params: Promise<{ token:
                       🚤 Катер в <b className="text-(--c-on-primary)">{data.boat}</b>
                     </>
                   )}
+                  {data.cableCar && (
+                    <>
+                      <br />
+                      🚡 На канатку в <b className="text-(--c-on-primary)">{data.cableCar}</b>
+                    </>
+                  )}
                 </div>
               )}
               <p className="mt-3 text-[14px] opacity-90">🏨 {data.hotel}</p>

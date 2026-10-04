@@ -22,7 +22,8 @@ import {
   type ContactChannel,
   type DestinationId,
   type ExtraOption,
-  normalizeTime,
+  findCurrentSlot,
+  slotKey,
 } from "./park-config"
 import { bookingSummaryRu } from "./park-texts"
 import { ADD_EXTRA_EVENT } from "./seawalking-cta"
@@ -105,7 +106,12 @@ function BookingForm({
     draft?.packageByDest ?? {},
   )
   const [departureByDest, setDepartureByDest] = useState<Partial<Record<DestinationId, string>>>(
-    draft?.departureByDest ?? {},
+    // В черновике может лежать время из старого расписания — его не подставляем
+    Object.fromEntries(
+      Object.entries(draft?.departureByDest ?? {}).filter(([d, t]) =>
+        findCurrentSlot(d as DestinationId, t ?? null),
+      ),
+    ),
   )
   const [guests, setGuests] = useState<Record<string, number>>(draft?.guests ?? { adults: 2 })
   const [hotel, setHotel] = useState<HotelValue>(draft?.hotel ?? { name: "", place: null })
@@ -179,6 +185,7 @@ function BookingForm({
 
   const packageId = packageByDest[destination] ?? null
   const departureTime = departureByDest[destination] ?? null
+  const compactSlots = dest.departureTimes.length === 3
   const setDepartureTime = (t: string) => setDepartureByDest((s) => ({ ...s, [destination]: t }))
   const contact = contactChannel === "telegram" && telegramHandle ? telegramHandle : phone
 
@@ -362,78 +369,42 @@ function BookingForm({
           <FieldError text={errors.date} />
         </div>
 
-        {dest.departureTimes && (
-          <div id="park-field-departureTime">
-            <span className={LABEL}>Во сколько катер</span>
-            <div className="grid grid-cols-2 gap-2">
-              {dest.departureTimes.map((t) => {
-                const active = departureTime === t.boat
-                return (
-                  <button
-                    key={t.boat}
-                    type="button"
-                    onClick={() => setDepartureTime(t.boat)}
-                    aria-pressed={active}
-                    className={`rounded-2xl border-2 px-3 py-2 text-left transition-colors ${
-                      active
-                        ? "border-(--c-primary) bg-(--c-primary) text-white"
-                        : "border-(--c-border) bg-white"
-                    }`}
+        <div id="park-field-departureTime">
+          <span className={LABEL}>Во сколько выезд от отеля</span>
+          {/* Три слота (Хон Там) — в одну строку, компактно, без иконки */}
+          <div className={`grid gap-2 ${compactSlots ? "grid-cols-3" : "grid-cols-2"}`}>
+            {dest.departureTimes.map((t) => {
+              const key = slotKey(t)
+              const active = departureTime === key
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setDepartureTime(key)}
+                  aria-pressed={active}
+                  className={`rounded-2xl border-2 py-2 transition-colors ${compactSlots ? "px-1 text-center" : "px-3 text-left"} ${
+                    active
+                      ? "border-(--c-primary) bg-(--c-primary) text-white"
+                      : "border-(--c-border) bg-white"
+                  }`}
+                >
+                  <span className="block text-[17px] leading-tight font-bold tabular-nums">
+                    {compactSlots ? t.pickup : `🚐 ${t.pickup}`}
+                  </span>
+                  <span
+                    className={`block text-[12.5px] ${active ? "text-(--c-on-primary)" : "text-(--c-muted)"}`}
                   >
-                    <span className="block text-[17px] leading-tight font-bold">🚤 {t.boat}</span>
-                    <span
-                      className={`block text-[12.5px] ${active ? "text-(--c-on-primary)" : "text-(--c-muted)"}`}
-                    >
-                      выезд от отеля {t.pickup}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-            <p className="mt-1.5 text-[12px] text-(--c-muted)">
-              Время выезда указываем всегда ±10 минут.
-            </p>
-            <FieldError text={errors.departureTime} />
+                    {t.boat ? `катер ${compactSlots ? "" : "в "}${t.boat}` : `на канатку в ${t.cableCar}`}
+                  </span>
+                </button>
+              )
+            })}
           </div>
-        )}
-
-        {dest.pickupRange && (
-          <div id="park-field-departureTime">
-            <label htmlFor="park-pickup" className={LABEL}>
-              Во сколько забрать из отеля
-            </label>
-            {/* Нативное поле времени прозрачно лежит поверх: тап открывает системные
-                часы (Android — циферблат как в Google Календаре, iPhone — барабан) */}
-            <div className="relative">
-              <div
-                aria-hidden
-                className={`${INPUT} flex items-center justify-between ${departureTime ? "" : "text-(--c-muted)/60"}`}
-              >
-                <span className={departureTime ? "text-[17px] font-bold tabular-nums" : ""}>
-                  {departureTime ?? "Выберите время"}
-                </span>
-                <span className="text-[18px]">🕗</span>
-              </div>
-              <input
-                id="park-pickup"
-                type="time"
-                step={300}
-                min={dest.pickupRange.min.padStart(5, "0")}
-                max={dest.pickupRange.max.padStart(5, "0")}
-                value={departureTime ? departureTime.padStart(5, "0") : ""}
-                onChange={(e) => {
-                  const t = normalizeTime(e.target.value)
-                  if (t) setDepartureTime(t)
-                }}
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-              />
-            </div>
-            <p className="mt-1.5 text-[12px] text-(--c-muted)">
-              Время выезда указываем всегда ±10 минут.
-            </p>
-            <FieldError text={errors.departureTime} />
-          </div>
-        )}
+          <p className="mt-1.5 text-[12px] text-(--c-muted)">
+            Время выезда указываем всегда ±10 минут.
+          </p>
+          <FieldError text={errors.departureTime} />
+        </div>
 
         <div id="park-field-guests">
           <span className={LABEL}>Сколько вас</span>

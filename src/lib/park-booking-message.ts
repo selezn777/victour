@@ -147,7 +147,7 @@ export async function buildParkBookingMessage(
     lines.push(
       slot.boat
         ? `🚤 Boat: <b>${slot.boat}</b> — hotel pick-up <b>${slot.pickup}</b> (±10 min)`
-        : `🚐 Hotel pick-up: <b>${slot.pickup}</b> (±10 min)`,
+        : `🚐 Hotel pick-up: <b>${slot.pickup}</b> (±10 min)${slot.cableCar ? ` — cable car <b>${slot.cableCar}</b>` : ""}`,
     )
   }
   lines.push(
@@ -191,7 +191,9 @@ export function buildParkConfirmedMessage(data: ConfirmData, now = new Date()): 
     `📅 ${formatTripDate(data.date)}${pkg ? ` · ${escapeHtml(pkg.english.split(" (")[0])}` : ""}`,
   ]
   if (data.boat) lines.push(`🚤 Boat ${data.boat} — hotel pick-up ${data.pickup} (±10 min)`)
-  else if (data.pickup) lines.push(`🚐 Hotel pick-up ${data.pickup} (±10 min)`)
+  else if (data.pickup) {
+    lines.push(`🚐 Hotel pick-up ${data.pickup} (±10 min)${data.cableCar ? ` — cable car ${data.cableCar}` : ""}`)
+  }
   lines.push(
     `🏨 ${latinWithOriginal(data.hotel)}`,
     `📱 ${contact}`,

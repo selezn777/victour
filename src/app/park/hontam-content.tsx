@@ -47,8 +47,8 @@ export function HonTamContent() {
             </div>
           </div>
           <div className="mt-3.5 rounded-2xl bg-white/12 px-3.5 py-3 text-[14px] leading-snug">
-            🚤 Катер в <b className="text-(--c-on-primary)">8:00, 9:00, 10:00 или 12:00</b> —
-            выезжаем от отеля за 40 минут до катера. На острове — до 16:20.
+            🚤 Катер в <b className="text-(--c-on-primary)">9:00, 10:00 или 12:00</b> —
+            выезжаем от отеля за 45 минут до катера. На острове — до 16:20.
           </div>
         </section>
 

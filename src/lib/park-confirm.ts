@@ -10,6 +10,7 @@ export type ConfirmData = {
   dest: DestinationId
   date: string // YYYY-MM-DD
   boat: string | null // Хон Там: время катера
+  cableCar?: string | null // парк: во сколько заходят на канатку (в старых ссылках нет)
   pickup: string | null // выезд от отеля
   name: string
   hotel: string
@@ -32,6 +33,7 @@ export function confirmDataFromBooking(b: ParkBooking): ConfirmData {
     dest: b.destination,
     date: b.date,
     boat: slot?.boat ?? null,
+    cableCar: slot?.cableCar ?? null,
     pickup: slot?.pickup ?? null,
     name: b.name,
     hotel: b.hotel,
