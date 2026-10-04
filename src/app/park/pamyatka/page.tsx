@@ -127,14 +127,17 @@ export default function MemoPage() {
             заказ дороже — доплачиваете разницу.
           </p>
           <p className="pt-1 font-bold text-(--c-primary)">Где принимают:</p>
+          <p className="text-[13px] text-(--c-muted)">
+            📍 Число — номер точки на официальной карте парка.
+          </p>
           <Rows
             rows={[
-              ["Wind & Sea и Coral — буфеты на Food Street", "10:30–14:30, 16:30–19:30"],
-              ["Yummy Water World — фастфуд в аквапарке", "10:00–18:00"],
-              ["Yummy World Garden — вьетнамская кухня", "10:00–18:00"],
-              ["Street Food — уличная еда", "09:00–19:00"],
-              ["Wonder Ice Cream & Bakery — мороженое и выпечка", "09:00–19:00"],
-              ["Kiosk Monta", "10:00–18:00"],
+              ["📍 11.1 и 11.2 · Wind & Sea и Coral — буфеты на Food Street", "10:30–14:30, 16:30–19:30"],
+              ["📍 77 · Yummy Water World — фастфуд в аквапарке", "10:00–18:00"],
+              ["📍 37 · Yummy World Garden — вьетнамская кухня", "10:00–18:00"],
+              ["📍 54 · Street Food — уличная еда", "09:00–19:00"],
+              ["📍 15 · Wonder Ice Cream & Bakery — мороженое и выпечка", "09:00–19:00"],
+              ["📍 25 · Kiosk Monta", "10:00–18:00"],
             ]}
           />
         </Block>
