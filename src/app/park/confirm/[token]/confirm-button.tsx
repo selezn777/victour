@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 
-export function ConfirmButton({ token }: { token: string }) {
+// afterDone — что показать под плашкой «Выезд подтверждён!» (другие туры).
+export function ConfirmButton({ token, afterDone }: { token: string; afterDone?: ReactNode }) {
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "failed">("idle")
 
   async function confirm() {
@@ -21,6 +22,7 @@ export function ConfirmButton({ token }: { token: string }) {
 
   if (status === "done") {
     return (
+      <>
       <div className="rounded-[24px] bg-white p-5 text-center shadow-[0_8px_24px_rgb(60_60_40/0.11)]">
         <div className="text-[40px] leading-none">✅</div>
         <p className="mt-2 font-(family-name:--font-park-serif) text-[22px] font-bold text-(--c-primary)">
@@ -28,6 +30,8 @@ export function ConfirmButton({ token }: { token: string }) {
         </p>
         <p className="mt-1 text-[14px] text-(--c-muted)">Водитель будет у отеля вовремя. Хорошей поездки!</p>
       </div>
+      {afterDone}
+      </>
     )
   }
 

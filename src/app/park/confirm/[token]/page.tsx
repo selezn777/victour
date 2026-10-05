@@ -1,5 +1,8 @@
 import type { Metadata } from "next"
+import Image from "next/image"
 import Link from "next/link"
+import { formatUsd } from "@/lib/format"
+import { getHomepageData, type CatalogTour } from "@/lib/site-data"
 import { confirmSummaryRu, readConfirmToken } from "@/lib/park-confirm"
 import { lora, manrope } from "../../fonts"
 import { PARK_WHATSAPP } from "../../park-config"
@@ -15,6 +18,9 @@ export const metadata: Metadata = {
 export default async function ConfirmPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
   const data = readConfirmToken(decodeURIComponent(token))
+  // Каталог для блока «другие туры» после подтверждения — без него страница
+  // подтверждения должна работать как раньше.
+  const tours = data ? await getHomepageData().then((d) => d.tours).catch(() => []) : []
 
   return (
     <div
@@ -52,7 +58,10 @@ export default async function ConfirmPage({ params }: { params: Promise<{ token:
               <p className="mt-3 text-[14px] opacity-90">🏨 {data.hotel}</p>
             </div>
 
-            <ConfirmButton token={decodeURIComponent(token)} />
+            <ConfirmButton
+              token={decodeURIComponent(token)}
+              afterDone={tours.length > 0 && <OtherTours tours={tours.slice(0, 4)} />}
+            />
 
             <a
               href={PARK_WHATSAPP.href}
@@ -77,5 +86,42 @@ export default async function ConfirmPage({ params }: { params: Promise<{ token:
         )}
       </main>
     </div>
+  )
+}
+
+function OtherTours({ tours }: { tours: CatalogTour[] }) {
+  return (
+    <section className="rounded-[24px] bg-white p-4 shadow-[0_8px_24px_rgb(60_60_40/0.11)]">
+      <p className="px-1 font-(family-name:--font-park-serif) text-[19px] font-bold text-(--c-primary)">
+        Другие наши туры
+      </p>
+      <ul className="mt-3 flex flex-col gap-2">
+        {tours.map((t) => (
+          <li key={t.id}>
+            <Link
+              href={`/tours/${t.slug}`}
+              className="flex items-center gap-3 rounded-2xl bg-(--c-bg) p-2 pr-3 active:scale-[0.99]"
+            >
+              <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-black/10">
+                {t.heroImageUrl && (
+                  <Image src={t.heroImageUrl} alt={t.title} fill sizes="64px" className="object-cover" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[15px] leading-tight font-bold">{t.title}</p>
+                <p className="mt-0.5 text-[13px] text-(--c-muted)">
+                  {t.durationLabel}
+                  {t.priceFromUsd > 0 && <> · от {formatUsd(t.priceFromUsd)}</>}
+                </p>
+              </div>
+              <span className="text-[20px] text-(--c-primary)">›</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <Link href="/tours" className="mt-3 block text-center text-[15px] font-bold text-(--c-primary) underline">
+        Все туры
+      </Link>
+    </section>
   )
 }
