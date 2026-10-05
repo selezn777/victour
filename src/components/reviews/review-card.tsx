@@ -1,7 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { StarRatingDisplay } from "@/components/reviews/star-rating"
-import type { Review } from "@/lib/reviews-data"
+import { reviewTourHref, type Review } from "@/lib/reviews-data"
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("ru-RU", { day: "2-digit", month: "long", year: "numeric" })
@@ -23,7 +23,7 @@ export function ReviewCard({ review, hideTarget }: { review: Review; hideTarget?
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-base">
-            {avatarEmoji(review.id)}
+            {review.avatarEmoji ?? avatarEmoji(review.id)}
           </div>
           <div>
             <div className="text-sm font-medium">{review.authorName}</div>
@@ -47,7 +47,7 @@ export function ReviewCard({ review, hideTarget }: { review: Review; hideTarget?
         <div className="flex flex-wrap gap-1.5 text-xs text-muted-foreground">
           {review.tourTitle && hideTarget !== "tour" && (
             <Link
-              href={`/tours/${review.tourSlug}`}
+              href={reviewTourHref(review.tourSlug ?? "")}
               className="rounded-full bg-muted px-2.5 py-1 hover:underline"
             >
               {review.tourTitle}

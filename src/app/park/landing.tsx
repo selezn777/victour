@@ -5,6 +5,7 @@ import { useEffect, useState, useSyncExternalStore } from "react"
 import { SiteMenu } from "@/components/site-menu"
 import { BookingSection } from "./booking-section"
 import { DESTINATIONS, DESTINATION_ORDER, PARK_WHATSAPP, type DestinationId } from "./park-config"
+import { ParkReviews } from "./park-reviews"
 import { THEMES } from "./ui"
 import { WhatsAppIcon } from "./whatsapp-icon"
 
@@ -179,6 +180,8 @@ export function Landing({
               </b>
             </span>
           </a>
+
+          <ParkReviews key={destination} destination={destination} />
         </div>
       </main>
     </div>

@@ -3,13 +3,17 @@
 import { useEffect, useRef, useState } from "react"
 import { MicIcon, SquareIcon, Trash2Icon } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 const MAX_DURATION_SECONDS = 90
 
 export function AudioRecorder({
   onChange,
+  buttonClassName,
 }: {
   onChange: (blob: Blob | null) => void
+  /** Перекрасить кнопки под чужую тему (лендинг /park). */
+  buttonClassName?: string
 }) {
   const [recording, setRecording] = useState(false)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
@@ -84,7 +88,7 @@ export function AudioRecorder({
     return (
       <div className="flex items-center gap-2">
         <audio controls src={audioUrl} className="h-9 flex-1" />
-        <Button type="button" variant="outline" size="sm" onClick={reset}>
+        <Button type="button" variant="outline" size="sm" onClick={reset} className={buttonClassName}>
           <Trash2Icon className="size-4" />
         </Button>
       </div>
@@ -98,7 +102,7 @@ export function AudioRecorder({
         variant="outline"
         size="sm"
         onClick={recording ? stopRecording : startRecording}
-        className="w-fit"
+        className={cn("w-fit", buttonClassName)}
       >
         {recording ? (
           <>

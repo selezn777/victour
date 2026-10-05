@@ -11,6 +11,8 @@ function publicClient() {
 export type Review = {
   id: string
   authorName: string
+  /** Эмодзи-аватар, выбранный гостем (хранится префиксом в author_name). */
+  avatarEmoji: string | null
   rating: number
   text: string | null
   photoUrl: string | null
@@ -23,10 +25,10 @@ export type Review = {
   guideName: string | null
 }
 
-const REVIEW_SELECT =
+export const REVIEW_SELECT =
   "id, author_name, rating, text, photo_url, audio_url, created_at, tour_id, guide_id, tours(title, slug), guides(name)"
 
-type ReviewRow = {
+export type ReviewRow = {
   id: string
   author_name: string
   rating: number
@@ -40,10 +42,36 @@ type ReviewRow = {
   guides: { name: string } | null
 }
 
-function mapReview(row: ReviewRow): Review {
+// Отзывы с лендинга /park привязаны к скрытым «турам-якорям» (миграция
+// 20261005000000) — у них нет страницы /tours/<slug>, ведём на сам лендинг.
+export const PARK_REVIEW_SLUGS = { park: "park-vinwonders", hontam: "park-hontam" } as const
+export const isParkAnchorSlug = (slug: string) => slug.startsWith("park-")
+
+export function reviewTourHref(slug: string): string {
+  if (slug === PARK_REVIEW_SLUGS.hontam) return "/park?t=hontam"
+  if (isParkAnchorSlug(slug)) return "/park"
+  return `/tours/${slug}`
+}
+
+// Отдельной колонки под аватар нет (нет доступа к DDL) — эмодзи пишется
+// в начало author_name через пробел: «🌴 Анна».
+const EMOJI_PREFIX = /^(\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic}|\p{Emoji_Modifier})*) (.+)$/u
+
+export function composeAuthorName(emoji: string | null, name: string): string {
+  return emoji ? `${emoji} ${name}` : name
+}
+
+export function splitAuthorName(raw: string): { emoji: string | null; name: string } {
+  const m = raw.match(EMOJI_PREFIX)
+  return m ? { emoji: m[1], name: m[2] } : { emoji: null, name: raw }
+}
+
+export function mapReview(row: ReviewRow): Review {
+  const author = splitAuthorName(row.author_name)
   return {
     id: row.id,
-    authorName: row.author_name,
+    authorName: author.name,
+    avatarEmoji: author.emoji,
     rating: row.rating,
     text: row.text,
     photoUrl: row.photo_url,
@@ -99,6 +127,7 @@ export async function getTourOptions(): Promise<TourOption[]> {
   const { data, error } = await supabase
     .from("tours")
     .select("id, slug, title, sort_order")
+    .not("slug", "like", "park-%")
     .order("sort_order", { ascending: true })
 
   if (error) throw error

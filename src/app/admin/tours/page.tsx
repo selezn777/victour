@@ -13,6 +13,8 @@ export default async function AdminToursPage() {
   const { data } = await supabase
     .from("tours")
     .select("id, title, is_active, sort_order")
+    // скрытые «туры-якоря» для отзывов /park — не туры
+    .not("slug", "like", "park-%")
     .order("sort_order", { ascending: true })
 
   const tours: AdminTourRow[] = (data ?? []).map((row) => ({
