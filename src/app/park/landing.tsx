@@ -93,7 +93,19 @@ export function Landing({
   useEffect(() => {
     const vv = window.visualViewport
     if (!vv) return
-    const update = () => setKeyboardOpen(window.innerHeight - vv.height > 150)
+    // В layout стоит interactiveWidget: "resizes-content" — клавиатура сжимает
+    // и innerHeight тоже, так что сравниваем с полной высотой экрана, которую
+    // запомнили до клавиатуры (сбрасываем при повороте — меняется ширина).
+    let fullHeight = window.innerHeight
+    let width = window.innerWidth
+    const update = () => {
+      if (window.innerWidth !== width) {
+        width = window.innerWidth
+        fullHeight = vv.height
+      }
+      fullHeight = Math.max(fullHeight, vv.height)
+      setKeyboardOpen(fullHeight - vv.height > 150)
+    }
     vv.addEventListener("resize", update)
     return () => vv.removeEventListener("resize", update)
   }, [])
