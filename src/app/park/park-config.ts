@@ -261,7 +261,6 @@ export const DESTINATIONS: Record<DestinationId, Destination> = {
     departureTimes: [
       { boat: "9:00", pickup: "8:15" },
       { boat: "10:00", pickup: "9:15" },
-      { boat: "12:00", pickup: "11:15" },
     ],
     extras: [
       {
