@@ -176,8 +176,6 @@ export const DESTINATIONS: Record<DestinationId, Destination> = {
     departureTimes: [
       { pickup: "8:15", cableCar: "8:45" },
       { pickup: "9:15", cableCar: "9:45" },
-      { pickup: "10:15", cableCar: "10:45" },
-      { pickup: "11:15", cableCar: "11:45" },
     ],
     // Доп. услуги — цена за 1 человека; в форме счётчик «на сколько человек»
     extras: [
