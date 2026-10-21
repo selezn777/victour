@@ -1,3 +1,6 @@
+import { createHash } from "node:crypto"
+import { after } from "next/server"
+import { sendMetaLeadEvent } from "@/lib/meta-capi"
 import { buildParkConfirmedMessage } from "@/lib/park-booking-message"
 import { readConfirmToken } from "@/lib/park-confirm"
 
@@ -46,5 +49,14 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: "telegram_failed" }, { status: 502 })
   }
   recentlyConfirmed.set(token, now)
+  after(() =>
+    sendMetaLeadEvent({
+      stage: "Confirmed",
+      phone: data.phone,
+      firstName: data.name,
+      fbc: data.fbc,
+      eventId: `confirm-${createHash("sha256").update(token).digest("hex").slice(0, 16)}`,
+    }),
+  )
   return Response.json({ ok: true })
 }

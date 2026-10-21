@@ -28,6 +28,7 @@ import {
 import { bookingSummaryRu } from "./park-texts";
 import { ADD_EXTRA_EVENT } from "./seawalking-cta";
 import { WhatsAppIcon } from "./whatsapp-icon";
+import { captureFbclid, readFbc } from "@/lib/meta-click";
 
 type Status = "idle" | "sending" | "success" | "failed" | "rate_limited";
 
@@ -186,6 +187,8 @@ function BookingForm({
     extras,
   ]);
 
+  useEffect(() => captureFbclid(), []);
+
   const guestsRef = useRef(guests);
   useEffect(() => {
     guestsRef.current = guests;
@@ -261,7 +264,7 @@ function BookingForm({
       const res = await fetch("/api/park-booking", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...payload, website }),
+        body: JSON.stringify({ ...payload, website, fbc: readFbc() }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;

@@ -17,6 +17,7 @@ export type ConfirmData = {
   contact: string
   pkg: string // id билета
   phone: string | null // E.164, если контакт — номер (для напоминания в WhatsApp)
+  fbc?: string | null // ID клика Meta для Conversions API
 }
 
 function secret(): string | null {
@@ -27,7 +28,7 @@ function sign(body: string, key: string): string {
   return createHmac("sha256", key).update(body).digest("base64url").slice(0, 22)
 }
 
-export function confirmDataFromBooking(b: ParkBooking): ConfirmData {
+export function confirmDataFromBooking(b: ParkBooking, fbc: string | null = null): ConfirmData {
   const slot = findSlot(b.destination, b.departureTime)
   return {
     dest: b.destination,
@@ -40,6 +41,7 @@ export function confirmDataFromBooking(b: ParkBooking): ConfirmData {
     contact: b.contact,
     pkg: b.packageId,
     phone: /^\+\d{7,15}$/.test(b.contact) ? b.contact : null,
+    ...(fbc ? { fbc } : {}),
   }
 }
 

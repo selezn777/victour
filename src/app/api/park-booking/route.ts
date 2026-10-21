@@ -1,5 +1,7 @@
 import { validateParkBooking } from "@/app/park/park-config"
 import { buildParkBookingMessage } from "@/lib/park-booking-message"
+import { after } from "next/server"
+import { sanitizeFbc, sendMetaLeadEvent } from "@/lib/meta-capi"
 import { confirmDataFromBooking, createConfirmToken, createShortId } from "@/lib/park-confirm"
 
 // Простое ограничение частоты: не больше RATE_LIMIT заявок с одного IP за
@@ -58,7 +60,9 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: "telegram_failed" }, { status: 500 })
   }
 
-  const token = createConfirmToken(confirmDataFromBooking(booking))
+  const fbc = sanitizeFbc(body.fbc)
+  const confirmData = confirmDataFromBooking(booking, fbc)
+  const token = createConfirmToken(confirmData)
   const origin = new URL(request.url).origin
   const shortId = token ? await createShortId(token) : null
   const links = token
@@ -97,6 +101,16 @@ export async function POST(request: Request) {
     console.error("park-booking: telegram request error:", err, "booking:", JSON.stringify(booking))
     return Response.json({ ok: false, error: "telegram_failed" }, { status: 502 })
   }
+
+  after(() =>
+    sendMetaLeadEvent({
+      stage: "Lead",
+      phone: confirmData.phone,
+      firstName: booking.name,
+      fbc,
+      eventId: shortId ? `lead-${shortId}` : undefined,
+    }),
+  )
 
   return Response.json({ ok: true, confirmToken: token, confirmUrl: links?.confirm ?? null })
 }
