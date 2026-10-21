@@ -6,6 +6,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PhoneNumberInput from "react-phone-number-input/input";
 import type { Country } from "react-phone-number-input";
+import {
+  getCountryCallingCode,
+  isValidPhoneNumber,
+  parsePhoneNumberFromString,
+} from "libphonenumber-js/min";
 import { HotelPicker, type HotelValue } from "./hotel-picker";
 import {
   CONTACT_CHANNELS,
@@ -437,6 +442,12 @@ function BookingForm({
             min={minDate || undefined}
             value={date}
             onChange={(e) => setDate(e.target.value)}
+            // По клику открываем календарь, а не правку дд/мм/гггг по частям
+            onClick={(e) => {
+              try {
+                e.currentTarget.showPicker();
+              } catch {}
+            }}
             className={`${INPUT} appearance-none`}
           />
           <FieldError text={errors.date} />
@@ -603,7 +614,7 @@ function BookingForm({
                 international
                 withCountryCallingCode
                 value={phone}
-                onChange={(v) => setPhone(v ?? "")}
+                onChange={(v) => setPhone(fixPhonePrefix(v ?? "", phoneCountry))}
                 placeholder={phoneCountry ? undefined : "+ код страны и номер"}
                 autoComplete="tel"
                 className={`${INPUT} text-[17px] tracking-wide tabular-nums`}
@@ -693,6 +704,20 @@ function BookingForm({
       {status === "success" && success && <SuccessScreen {...success} />}
     </section>
   );
+}
+
+// Код страны уже стоит в поле, а номер часто вводят целиком: «+7 7916…»,
+// «+84 84…» или с местным 8/0 впереди («+84 0704…»). Как только номер
+// набран полностью, убираем лишние цифры — иначе в заявку и WhatsApp
+// уходит номер с мусором.
+function fixPhonePrefix(value: string, country: Country | undefined): string {
+  if (!country || !value) return value;
+  const parsed = parsePhoneNumberFromString(value);
+  if (parsed?.isValid()) return parsed.number;
+  const code = getCountryCallingCode(country);
+  const national = value.slice(1 + code.length);
+  const withoutCode = `+${code}${national.slice(code.length)}`;
+  return national.startsWith(code) && isValidPhoneNumber(withoutCode) ? withoutCode : value;
 }
 
 function FieldError({ text }: { text?: string }) {
