@@ -1,8 +1,8 @@
 "use client"
 
 import Image from "next/image"
-import { PointerIcon } from "lucide-react"
-import { useState } from "react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { useRef, useState } from "react"
 
 // Три позиции в стопке: 0 — сверху (лицом), 1 — средняя, 2 — самая нижняя.
 // Каждое фото хранит СВОЮ текущую позицию (не индекс в массиве) — так CSS
@@ -25,42 +25,68 @@ const STACK_TRANSFORM = [
  * анимации появления (была: падение всей стопкой/по карточкам/стопками —
  * Виктор после нескольких раундов подбора тайминга решил, что падение в
  * принципе не нужно: "уберём вообще падение, пусть при переключении
- * сразу будут вот так в конечном виде"). По тапу стопка подпрыгивает и
- * перемешивается по кругу: нижнее фото выходит на передний план, остальные
- * опускаются на одну позицию — это единственная анимация, что осталась.
+ * сразу будут вот так в конечном виде"). При переключении стопка
+ * подпрыгивает и перемешивается по кругу — это единственная анимация.
+ *
+ * Переключение тремя способами (Виктор: "убрать палец, поставить как обычно
+ * стрелочки, переключение и стрелочками, и свайпом, и тыком"): стрелки по
+ * бокам, горизонтальный свайп (влево — дальше, вправо — назад) и тап по фото
+ * (дальше). Вертикальный жест не трогаем — им листается сама дека.
  */
-// Длительность переключения по тапу — Виктор: "процентов на 10 быстрее"
-// (было 180мс).
+// Длительность переключения — Виктор: "процентов на 10 быстрее" (было 180мс).
 const SHUFFLE_MS = 160
+const SWIPE_THRESHOLD = 40
 
 export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
   const [positions, setPositions] = useState(() => photos.map((_, i) => i))
   const [lifted, setLifted] = useState(false)
+  const start = useRef<{ x: number; y: number } | null>(null)
+  // Свайп заканчивается тем же pointerup, после которого браузер шлёт click —
+  // без этого флага свайп назад тут же откатывался бы тапом вперёд.
+  const swiped = useRef(false)
 
-  function shuffle() {
+  // step 1 — дальше: нижнее фото выходит на передний план, остальные
+  // опускаются на позицию; step -1 — назад: верхнее уходит в самый низ.
+  function shuffle(step: 1 | -1) {
     if (lifted) return
     setLifted(true)
     setTimeout(() => {
-      setPositions((prev) => prev.map((pos) => (pos + 1) % photos.length))
+      setPositions((prev) => prev.map((pos) => (pos + step + photos.length) % photos.length))
       setLifted(false)
     }, SHUFFLE_MS)
   }
 
-  // Тихая статичная текстовая подсказка (не мигает и не торопит) — Виктор:
-  // автопереключение убрали совсем (после "нажми" уже понятно, что можно
-  // тапнуть самому), подсказка теперь единственный намёк. Пропадает после
-  // первого собственного тапа.
-  const [tapped, setTapped] = useState(false)
+  const arrowClass =
+    "absolute top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm transition-colors hover:bg-black/65"
 
   return (
-    <button
-      type="button"
-      onClick={() => {
-        shuffle()
-        setTapped(true)
+    <div
+      role="group"
+      aria-roledescription="карусель"
+      aria-label={alt}
+      className="relative block h-full w-full cursor-pointer touch-pan-y select-none"
+      onPointerDown={(e) => {
+        start.current = { x: e.clientX, y: e.clientY }
+        swiped.current = false
       }}
-      aria-label="Показать следующее фото"
-      className="relative block h-full w-full"
+      onPointerUp={(e) => {
+        const s = start.current
+        start.current = null
+        if (!s) return
+        const dx = e.clientX - s.x
+        const dy = e.clientY - s.y
+        if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) {
+          swiped.current = true
+          shuffle(dx < 0 ? 1 : -1)
+        }
+      }}
+      onClick={() => {
+        if (swiped.current) {
+          swiped.current = false
+          return
+        }
+        shuffle(1)
+      }}
     >
       {photos.map((src, i) => (
         <div
@@ -74,24 +100,33 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
             transform: `${STACK_TRANSFORM[positions[i]]}${lifted ? " translateY(-26px) scale(1.02)" : ""}`,
           }}
         >
-          <Image src={src} alt={alt} fill className="object-cover" sizes="100vw" />
+          <Image src={src} alt={alt} fill draggable={false} className="object-cover" sizes="100vw" />
         </div>
       ))}
-      {!tapped && (
-        // Пока не нажали: фото сильно затемнено, по центру — белый
-        // контурный палец, который мягко моргает и «нажимает».
-        // Всё пропадает после первого тапа (см. tapped).
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-black/75"
-        >
-          {/* Иконка pointer — lucide (гладкий контур с закруглёнными концами) */}
-          <PointerIcon
-            strokeWidth={1.5}
-            className="tap-hint-pulse h-36 w-36 text-white drop-shadow-lg sm:h-44 sm:w-44"
-          />
-        </div>
-      )}
-    </button>
+      <button
+        type="button"
+        aria-label="Предыдущее фото"
+        className={`${arrowClass} left-2`}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation()
+          shuffle(-1)
+        }}
+      >
+        <ChevronLeft className="h-6 w-6" />
+      </button>
+      <button
+        type="button"
+        aria-label="Следующее фото"
+        className={`${arrowClass} right-2`}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation()
+          shuffle(1)
+        }}
+      >
+        <ChevronRight className="h-6 w-6" />
+      </button>
+    </div>
   )
 }

@@ -794,8 +794,7 @@ function PhotoSlide({
   imageAlt: string
   imagePosition?: string
   /** Если задано (2+ фото) — вместо статичного фото рендерится интерактивная
-   * стопка (PhotoStack): фото падают друг на друга при появлении, тап
-   * перемешивает по кругу. */
+   * стопка (PhotoStack): листается стрелками, свайпом вбок и тапом. */
   stackImages?: string[]
 }) {
   const photoWrapRef = useRef<HTMLDivElement>(null)
