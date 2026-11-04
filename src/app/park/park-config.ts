@@ -470,10 +470,15 @@ export const PROMO_TOURS = [
 // Реклама после заявки на Фукуоке — туры Фукуока (только с фото)
 export const PROMO_TOURS_PQ = [
   {
+    slug: "phuquoc-nastoyashchiy",
+    title: "Настоящий Фукуок",
+    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-nastoyashchiy/11.webp",
+  },
+  {
     slug: "phuquoc-vecher-safari",
     title: "Вечерний Фукуок + ночное сафари",
     imageSrc:
-      "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-vecher-safari/gondola_sunset_aerial_vertical.webp",
+      "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-vecher-safari/v3/06.webp",
   },
 ]
 

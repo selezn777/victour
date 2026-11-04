@@ -1108,8 +1108,14 @@ const PHUQUOC_TOURS: typeof CATALOG_TOURS = [
     slug: "phuquoc-vecher-safari",
     title: "Вечерний Фукуок + ночное сафари",
     imageSrc:
-      "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-vecher-safari/gondola_sunset_aerial_vertical.webp",
+      "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-vecher-safari/v3/06.webp",
     annotation: "Звёзды на пляже, Венеция на закате и ночное сафари за один вечер.",
+  },
+  {
+    slug: "phuquoc-nastoyashchiy",
+    title: "Настоящий Фукуок",
+    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-nastoyashchiy/11.webp",
+    annotation: "Дикий мёд, пагода над морем, кокосовая тюрьма и самолёты над головой. К 15:00 вы в отеле.",
   },
 ]
 
@@ -1270,7 +1276,7 @@ function ToursSlide() {
             заканчивается на "глубокие". */}
         <p className="mt-3 max-w-md text-base leading-snug font-medium text-foreground sm:mt-5 sm:max-w-xl sm:text-lg">
           {isPhuQuoc
-            ? "Самый яркий вечер острова: звёзды на пляже, Венеция на закате и ночное сафари. Утро свободное, выезжаем в 15:00."
+            ? "Два маршрута: яркий вечер с ночным сафари и настоящий Фукуок за одно утро, каким его знают сами вьетнамцы."
             : "Авторские маршруты, выверенные до мелочей! Всего 4 программы, потому что они безопасные, интересные и при этом глубокие."}
         </p>
       </div>
