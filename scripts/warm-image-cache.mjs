@@ -62,6 +62,10 @@ async function worker() {
       const r = await fetch(j, { headers: { accept: "image/avif,image/webp,*/*" } })
       await r.arrayBuffer()
       if (r.headers.get("x-vercel-cache") === "MISS") miss++
+      if (r.status === 403 || r.status === 429) {
+        console.log("Vercel включил защиту от ботов, останавливаюсь")
+        jobs.length = 0
+      }
       if (!r.ok) {
         bad++
         console.log(r.status, decodeURIComponent(j).slice(0, 160))
@@ -70,7 +74,10 @@ async function worker() {
       bad++
     }
     done++
+    await new Promise((r) => setTimeout(r, 250))
   }
 }
-await Promise.all(Array.from({ length: 6 }, worker))
+// Медленно и в 2 потока: 6 потоков без пауз Vercel принял за атаку и на ~6 минут
+// закрыл сайт для нашего IP проверкой «Security Checkpoint» (403).
+await Promise.all(Array.from({ length: 2 }, worker))
 console.log({ done, miss, bad, sec: Math.round((Date.now() - t0) / 1000) })
