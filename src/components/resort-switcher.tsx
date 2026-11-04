@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import { MapPinIcon } from "lucide-react"
+import { usePathname } from "next/navigation"
 import { useResort } from "@/hooks/use-resort"
 import { RESORTS, resortById, type ResortId } from "@/lib/resorts"
 
@@ -105,8 +106,12 @@ const noopSubscribe = () => () => {}
 /** Окно выбора курорта при первом заходе на сайт (пока гость не выбрал).
  *  Рендерим только после монтирования: на сервере выбор неизвестен, и
  *  иначе вернувшиеся гости видели бы мелькание окна. */
+// Служебные страницы туриста: по ссылке «моя поездка» не спрашиваем курорт
+const NO_GATE = ["/trips", "/account"]
+
 export function ResortGate() {
   const [resort] = useResort()
+  const pathname = usePathname()
   // true только на клиенте после гидратации (без setState в эффекте)
   const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false)
   const [suggested, setSuggested] = useState<ResortId | null>(null)
@@ -126,7 +131,7 @@ export function ResortGate() {
     }
   }, [mounted, resort])
 
-  if (!mounted || resort != null) return null
+  if (!mounted || resort != null || NO_GATE.some((p) => pathname.startsWith(p))) return null
   return (
     <div className="fixed inset-0 z-[100] overflow-y-auto bg-background">
       <ResortPicker className="min-h-dvh py-10" suggested={suggested} />

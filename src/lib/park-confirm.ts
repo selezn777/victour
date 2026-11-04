@@ -18,6 +18,7 @@ export type ConfirmData = {
   pkg: string // id билета
   phone: string | null // E.164, если контакт — номер (для напоминания в WhatsApp)
   fbc?: string | null // ID клика Meta для Conversions API
+  guests?: number // сколько человек (для «Мои поездки»; в старых ссылках нет)
 }
 
 function secret(): string | null {
@@ -41,6 +42,7 @@ export function confirmDataFromBooking(b: ParkBooking, fbc: string | null = null
     contact: b.contact,
     pkg: b.packageId,
     phone: /^\+\d{7,15}$/.test(b.contact) ? b.contact : null,
+    guests: Object.values(b.guests).reduce((a, n) => a + n, 0),
     ...(fbc ? { fbc } : {}),
   }
 }

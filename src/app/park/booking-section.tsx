@@ -1,5 +1,6 @@
 "use client";
 
+import { saveTrip } from "@/lib/my-trips";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -289,6 +290,7 @@ function BookingForm({
       };
       if (res.ok && data.ok) {
         const token = data.confirmToken ?? null;
+        if (token) saveTrip({ kind: "park", token });
         setSuccess({
           waText: bookingSummaryRu(check.data, data.confirmUrl ?? null),
           token,
@@ -1011,6 +1013,15 @@ function SuccessScreen({
           >
             🔔 Поставить напоминание в календарь
           </a>
+        )}
+        {token && (
+          <Link
+            href="/trips"
+            onClick={() => setStayed(true)}
+            className="mt-2 flex h-12 items-center justify-center gap-2 rounded-full bg-white/90 text-[15px] font-bold text-(--c-ink)"
+          >
+            🧳 Моя поездка: детали и изменения
+          </Link>
         )}
 
         <h3 className="mt-5 mb-3 px-1 font-(family-name:--font-park-serif) text-[20px] leading-snug font-bold text-(--c-primary)">

@@ -69,7 +69,12 @@ export default async function AccountPage() {
       </div>
 
       <section className="mt-8">
-        <h2 className="font-heading text-lg font-semibold sm:text-xl">Мои заявки</h2>
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="font-heading text-lg font-semibold sm:text-xl">Мои заявки</h2>
+          <Link href="/trips" className="text-sm font-semibold text-primary hover:underline">
+            🧳 Мои поездки →
+          </Link>
+        </div>
 
         {!bookings || bookings.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">

@@ -72,6 +72,9 @@ export function SiteMenu({
         </SheetHeader>
         <nav className="flex flex-col gap-1 px-4">
           <AccountMenuRow />
+          <Link href="/trips" className={ITEM}>
+            🧳 Мои поездки
+          </Link>
           <div className="my-2 border-t border-border" />
           {/* Главный пункт: крупная залитая кнопка, туда в первую очередь ведём людей */}
           <Link

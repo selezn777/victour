@@ -1,5 +1,6 @@
 "use client"
 
+import { saveTrip } from "@/lib/my-trips"
 import Link from "next/link"
 import { extendGroupTiers } from "@/lib/group-tiers"
 import { sendGAEvent } from "@next/third-parties/google"
@@ -482,6 +483,7 @@ export function RequestPageClient({
     }
 
     setSubmittedBookingId(data)
+    saveTrip({ kind: "booking", id: data as string })
     clear()
     setSubmitting(false)
 
@@ -527,9 +529,17 @@ export function RequestPageClient({
               {formatRubFromUsd(prepaymentUsd, settings.usdRubRate, settings.rubMarkupPct)}.
               Остальное — наличными при встрече.
             </p>
-            <Button size="lg" className="mt-6" nativeButton={false} render={<Link href="/" />}>
-              На главную
-            </Button>
+            <div className="mt-6 flex flex-col justify-center gap-2 sm:flex-row">
+              <Button size="lg" nativeButton={false} render={<Link href="/trips" />}>
+                🧳 Мои поездки
+              </Button>
+              <Button size="lg" variant="outline" nativeButton={false} render={<Link href="/" />}>
+                На главную
+              </Button>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Дата, маршрут и стоимость всегда будут в «Мои поездки» в меню сайта.
+            </p>
           </section>
         ) : items.length === 0 ? (
           <section className="rounded-2xl border border-border bg-card p-8 text-center shadow-sm sm:p-12">
