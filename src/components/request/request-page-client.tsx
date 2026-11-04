@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { extendGroupTiers } from "@/lib/group-tiers"
 import { sendGAEvent } from "@next/third-parties/google"
 import { MinusIcon, PlusIcon } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
@@ -335,13 +336,14 @@ export function RequestPageClient({
           }[]) {
             next[row.slug] = {
               durationDays: row.duration_days,
-              pricingTiers: row.pricing_tiers
-                .map((t) => ({
+              pricingTiers: extendGroupTiers(
+                row.slug,
+                row.pricing_tiers.map((t) => ({
                   guestCount: t.guest_count,
                   priceAdultUsd: t.price_adult_usd,
                   priceChildUsd: t.price_child_usd,
-                }))
-                .sort((a, b) => a.guestCount - b.guestCount),
+                })),
+              ),
             }
           }
           return next

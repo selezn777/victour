@@ -78,6 +78,7 @@ export function LocationDetailSheet({
         <div className="relative h-[42vh] w-full shrink-0 bg-muted sm:h-[46vh]">
           <Swiper
             modules={[Pagination]}
+            rewind
             pagination={{ clickable: true, el: ".location-detail-pagination" }}
             className="h-full w-full"
           >

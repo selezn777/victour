@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js"
+import { extendGroupTiers } from "@/lib/group-tiers"
 import type { Database } from "@/lib/supabase/database.types"
 
 function publicClient() {
@@ -170,13 +171,14 @@ export async function getTourPageData(slug: string): Promise<{
       guideVnd: t.guide_vnd,
       note: t.note.ru,
     })),
-    pricingTiers: pricingTiers
-      .map((t) => ({
+    pricingTiers: extendGroupTiers(
+      row.slug,
+      pricingTiers.map((t) => ({
         guestCount: t.guest_count,
         priceAdultUsd: t.price_adult_usd,
         priceChildUsd: t.price_child_usd,
-      }))
-      .sort((a, b) => a.guestCount - b.guestCount),
+      })),
+    ),
   }
 
   const guides: TourGuide[] = guidesRes.data.map((g) => {
@@ -274,7 +276,14 @@ export async function getHomepageData(): Promise<{
     const title = row.title as { ru: string }
     const shortDescription = row.short_description as { ru: string }
     const durationLabel = row.duration_label as { ru: string }
-    const tiers = row.pricing_tiers as { price_adult_usd: number; guest_count: number }[]
+    const tiers = extendGroupTiers(
+      row.slug,
+      (row.pricing_tiers as { price_adult_usd: number; guest_count: number }[]).map((t) => ({
+        guestCount: t.guest_count,
+        priceAdultUsd: t.price_adult_usd,
+        priceChildUsd: null,
+      })),
+    ).map((t) => ({ price_adult_usd: t.priceAdultUsd, guest_count: t.guestCount }))
     const cheapest = tiers.reduce<(typeof tiers)[number] | undefined>(
       (a, b) => (a == null || b.price_adult_usd < a.price_adult_usd ? b : a),
       undefined,

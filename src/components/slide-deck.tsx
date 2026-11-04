@@ -32,6 +32,24 @@ const PAGINATION_DOTS_CLASS = {
   "bottom-center": "flex! w-fit! flex-row items-center gap-2 pagination-flat-h",
 }
 
+// Модуль Mousewheel на краях не перематывает (rewind работает только для
+// свайпа/клавиатуры): колесо/трекпад вниз на последнем слайде -> на первый.
+// Пауза после смены слайда, чтобы инерция трекпада, докрутившая до конца,
+// тут же не отбросила в начало.
+function attachWheelRewind(swiper: SwiperType) {
+  let lastChange = Date.now()
+  swiper.on("slideChange", () => {
+    lastChange = Date.now()
+  })
+  swiper.el.addEventListener("wheel", (e: WheelEvent) => {
+    if (swiper.destroyed || swiper.animating || Date.now() - lastChange < 900) return
+    const delta = swiper.isHorizontal() && Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
+    if (Math.abs(delta) < 10) return
+    if (delta > 0 && swiper.isEnd) swiper.slideTo(0)
+    else if (delta < 0 && swiper.isBeginning) swiper.slideTo(swiper.slides.length - 1)
+  }, { passive: true })
+}
+
 export function SlideDeck({
   slides,
   // dvh (не svh) — svh это ГАРАНТИРОВАННЫЙ МИНИМУМ (тулбар браузера
@@ -141,6 +159,10 @@ export function SlideDeck({
       modules={[Mousewheel, Pagination, Keyboard]}
       direction={direction}
       speed={420}
+      // Виктор: листание везде циклическое - после последнего слайда снова первый
+      // ("пусть листают, пока не наиграются"). rewind, а не loop: loop клонирует
+      // слайды и ломает индексы (activeIndex, восстановление позиции).
+      rewind
       // forceToAxis — на горизонтальной деке трекпад/колесо мыши крутят
       // ТОЛЬКО вертикальную дельту (deltaY): без этого флага Swiper на
       // горизонтальной оси её игнорирует и прокрутка колесом просто ничего
@@ -152,6 +174,7 @@ export function SlideDeck({
       onTouchEnd={onDeckTouchEnd}
       onSwiper={(swiper) => {
         swiperRef.current = swiper
+        attachWheelRewind(swiper)
         onSwiper?.(swiper)
       }}
       onSlideChange={(swiper) => onSlideChange?.(swiper.activeIndex)}
