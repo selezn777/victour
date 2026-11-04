@@ -49,6 +49,21 @@ const COLLAGE_PHOTO_COUNT = 67
 // (Виктор: "все как надо кроме совпадения самих картинок" — не позиция,
 // не тайминг, а именно контент не совпадает с ожидаемым).
 const COLLAGE_CACHE_VERSION = 4
+
+// Весь коллаж одной картинкой (scripts/build-collage-composite.mjs) — фоном под
+// плитками: на медленном роуминге (Виктор, 41 КБ/с) серые пульсирующие квадраты
+// висели секундами. Сначала мгновенно размытая версия прямо из HTML (~1 КБ),
+// через один запрос (~55 КБ) — чёткая, а настоящие плитки проявляются поверх.
+// При замене фото пересобрать composite с той же версией, что COLLAGE_CACHE_VERSION.
+// До гидрации (size ещё 0) квадрат считает CSS по container query родителя,
+// чтобы коллаж был виден сразу из HTML, не дожидаясь JS.
+const SQUARE_CSS = "min(100cqw, 100cqh)"
+const COLLAGE_TINY =
+  "data:image/webp;base64,UklGRmoDAABXRUJQVlA4IF4DAACwDgCdASowADAAPsVMnE2npCKiPGgA8BiJbACdMuIotazf59AG2758Lz/98A3nz/XWgI0T1PEL3gVbtkR8MUwVwjJy5Dm6kEazvQ2zbpP43HN6fKbYutweRMnb0g9aEph+R74xi6zVlgfzMJH2tbwLJFZe0glWpVsBcFaI0DAA/vNNi+0kNF6t5N0m3gTk4b9eqUrHA+/D4fuObFip/BcftP8q/IjL6v/oGVeq1q7aUhPzzn7BZrHfTH3hMljpeoL6CnQ+cZBbcZh9z5m2c8wIAgcfS4qD/EC1z9YXd0iMbL/6SYyqGdOXnXIuu1Q+za+MKLMHkLAu+9kgR4paoGriJ+MdXm+URqjoZtjOmNh2X1P5byon7kSFkLZQcfYfGGS8A3NPW9BZX4vIkNd6IFs+pqsHLId0BryBwwsXl1hCd1Im5frbLwueibX18z/mNkwXIOBYuErTyCzgzQuh+B/s8ssGXGPmuSHUqw/xZfVyBWPsdcqevVoyXZTKPrBOSDs35TCZw8dcHL9H9npUCLPFXrHOY0nHg85IiNqTK2QeTgZ7XxNbfDMcI0vnRz0ZcmWknUFKNA1m1E0s/CruL9gNYD9wv7rTYIgbZOO1eOwZf6VyiOLu6pu/QeSfkljtU622gve8qgd+f7W1xqxlJ8vf22UUGbLkjEyD/VHgZjrOewaABE78PMEkqEmoiAD3OHexmTc/m/TbfmUIUP8gX6QesN8wZmr04Q2OggNQgwnsCU6PIQB44o7gSUQWfR5VPqsWGTNhlGqIkpmATWcZqCTMzSoxN3QHHfld9uJCDYsnt4hX+EJ8dMJmiBrw9/vJjvjyjEsYhCpkuCZN43ltdzBmzgpv1p0K99ciILTNfBlBypv22gqGZdK3ZM+tGuJVm0swiVHFqQkx15gEMQohr2wsgxzW/969YR01KWVal5Ad5SNCFGLkeFBOnDecI+5pGIH4fJJAxfU6vBvW3au2VRLYBsv1vBzDGAomto3Mydg1aBw5VNYZJw4i0/W7Xz16x/uOor+lMfJr5kJwsWH2RUC5ID92/PPn5hRm7/lVpIaCevjaRknae7OroqynqYuO6vgATZ0u/Gu2swArIO4O7usD107b53c3o1pW3Rr76NTGn8qLuN3Rp0E1Vpem2oAA"
+const COLLAGE_BACKDROP: React.CSSProperties = {
+  backgroundImage: `url(/images/collage/composite-v${COLLAGE_CACHE_VERSION}.webp), url(${COLLAGE_TINY})`,
+  backgroundSize: "100% 100%",
+}
 const COLLAGE_PHOTOS = Array.from(
   { length: COLLAGE_PHOTO_COUNT },
   (_, i) => `/images/collage/collage-${String(i + 1).padStart(2, "0")}.jpg?v=${COLLAGE_CACHE_VERSION}`,
@@ -631,7 +646,7 @@ function PhotoCollage({ size }: { size: number }) {
     // остатка по короткой стороне (см. useContainedSquareSize) — коллаж
     // вписывается в него всегда квадратом, на любом экране, без ручной
     // привязки к брейкпоинту.
-    <div className="relative overflow-hidden" style={{ width: size, height: size }}>
+    <div className="relative overflow-hidden" style={{ width: size || SQUARE_CSS, height: size || SQUARE_CSS, ...COLLAGE_BACKDROP }}>
       <div className="grid w-full grid-cols-8">
         {COLLAGE_PHOTOS.map((src, i) => {
           const active = activeByTile.get(i)
@@ -649,7 +664,7 @@ function PhotoCollage({ size }: { size: number }) {
               }}
               className={`relative aspect-square overflow-hidden transition-transform duration-100 active:scale-90 ${tileVisibilityClass(i)} ${
                 isPriming ? "tile-priming" : ""
-              } ${loadedTiles.has(i) ? "" : "animate-pulse bg-white/15"}`}
+              } `}
             >
               <Image
                 src={src}
@@ -742,7 +757,7 @@ function IntroSlide() {
           снизу (у текста естественный размер, не flex-1 — см. комментарий
           у PhotoCollage). items-center/justify-center центрируют квадрат,
           если остатка больше, чем нужно для его короткой стороны. */}
-      <div ref={photoWrapRef} className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+      <div ref={photoWrapRef} className="flex min-h-0 flex-1 items-center justify-center overflow-hidden [container-type:size]">
         <PhotoCollage size={photoSize} />
       </div>
       {/* justify-[safe_center] (не просто justify-center) — на высоких экранах
