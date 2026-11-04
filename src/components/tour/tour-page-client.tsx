@@ -1,6 +1,8 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { useResort } from "@/hooks/use-resort"
+import { resortSurchargeUsd } from "@/lib/resorts"
 import { useBottomBarHeightVar } from "@/hooks/use-bottom-bar-height-var"
 import { usePackage } from "@/hooks/use-package"
 import { isRecentBackNavigation } from "@/lib/navigation"
@@ -25,7 +27,7 @@ import type { FaqItem } from "@/lib/faq-data"
 // будет не кнопка, а прям ещё один слайд").
 
 export function TourPageClient({
-  tour,
+  tour: rawTour,
   guides,
   settings,
   reviews,
@@ -39,6 +41,25 @@ export function TourPageClient({
   faq: FaqItem[]
   tours: TourOption[]
 }) {
+  // Камрань: те же туры, но к каждой цене +$20 (см. resortSurchargeUsd).
+  // Цена с наценкой уходит и в заявку — PackageItem хранит priceAdultUsd.
+  const [resort] = useResort()
+  const surcharge = resortSurchargeUsd(resort, rawTour.slug)
+  const tour = useMemo(
+    () =>
+      surcharge === 0
+        ? rawTour
+        : {
+            ...rawTour,
+            pricingTiers: rawTour.pricingTiers.map((t) => ({
+              ...t,
+              priceAdultUsd: t.priceAdultUsd + surcharge,
+              priceChildUsd: t.priceChildUsd == null ? null : t.priceChildUsd + surcharge,
+            })),
+          },
+    [rawTour, surcharge],
+  )
+
   // По умолчанию — самая большая группа (обычно самая дешёвая цена за
   // человека, тарифы отсортированы по возрастанию guestCount): гость,
   // который просто листает страницу, должен сначала видеть младшую

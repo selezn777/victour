@@ -12,10 +12,18 @@ export const RESORTS: { id: ResortId; label: string; area: ResortArea }[] = [
 ]
 
 /** Туры Фукуока по slug; всё остальное считается зоной Нячанга/Камрани. */
-const PHUQUOC_TOUR_SLUGS = new Set(["phuquoc-vecher-safari"])
+const PHUQUOC_TOUR_SLUGS = new Set(["phuquoc-vecher-safari", "phuquoc-nastoyashchiy"])
 
 export function tourArea(slug: string): ResortArea {
   return PHUQUOC_TOUR_SLUGS.has(slug) ? "phuquoc" : "nyachang"
+}
+
+/** Камрань далеко от Нячанга — Виктор: к каждой цене +$20 (за человека),
+ *  туры те же. Для туров других зон наценки нет. */
+export const KAMRAN_SURCHARGE_USD = 20
+
+export function resortSurchargeUsd(resort: ResortId | null, tourSlug: string): number {
+  return resort === "kamran" && tourArea(tourSlug) === "nyachang" ? KAMRAN_SURCHARGE_USD : 0
 }
 
 export function resortById(id: ResortId | null) {
