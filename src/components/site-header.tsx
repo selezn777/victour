@@ -4,6 +4,7 @@ import { useRef } from "react"
 import Link from "next/link"
 import { CartDrawer } from "@/components/cart-drawer"
 import { SiteMenu } from "@/components/site-menu"
+import { ResortSwitcher } from "@/components/resort-switcher"
 import { useHeaderHeightVar } from "@/hooks/use-header-height-var"
 import type { PrimaryGuide, SiteSettings } from "@/lib/site-data"
 
@@ -27,12 +28,12 @@ export function SiteHeader({
           <CartDrawer />
         </div>
 
-        <Link
-          href="/"
-          className="justify-self-center font-heading text-2xl font-medium sm:text-3xl"
-        >
-          ВикТур
-        </Link>
+        <div className="flex flex-col items-center justify-self-center leading-none">
+          <Link href="/" className="font-heading text-2xl leading-none font-medium sm:text-3xl">
+            ВикТур
+          </Link>
+          <ResortSwitcher />
+        </div>
 
         <div className="flex items-center justify-self-end">
           <SiteMenu settings={settings} guide={guide} />

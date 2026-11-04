@@ -5,11 +5,24 @@ import type { Swiper as SwiperType } from "swiper/types"
 import { TourCard } from "@/components/tour-card"
 import { SlideDeck } from "@/components/slide-deck"
 import type { CatalogTour } from "@/lib/site-data"
+import { ResortPicker } from "@/components/resort-switcher"
+import { useResort } from "@/hooks/use-resort"
+import { resortById, tourArea } from "@/lib/resorts"
 
 const STORAGE_KEY = "tour-catalog:index"
 
-export function TourCatalog({ tours }: { tours: CatalogTour[] }) {
+export function TourCatalog({ tours: allTours }: { tours: CatalogTour[] }) {
   const swiperRef = useRef<SwiperType | null>(null)
+  const [resort] = useResort()
+  const area = resortById(resort)?.area ?? null
+
+  // Курорт ещё не выбран — сначала спрашиваем, потом показываем туры.
+  if (area == null) {
+    return <ResortPicker className="h-[calc(100dvh-var(--site-header-h))]" />
+  }
+
+  const tours = allTours.filter((t) => tourArea(t.slug) === area)
+  const storageKey = `${STORAGE_KEY}:${area}`
 
   if (tours.length === 0) return null
 
@@ -34,18 +47,19 @@ export function TourCatalog({ tours }: { tours: CatalogTour[] }) {
     // (с главной, из тура, откуда угодно) одинаково нежелательно.
     <section id="catalog">
       <SlideDeck
+        key={area}
         className="h-[calc(100dvh-var(--site-header-h))] w-full"
         direction="horizontal"
         paginationPosition="bottom-center"
         onSwiper={(swiper) => {
           swiperRef.current = swiper
-          const saved = sessionStorage.getItem(STORAGE_KEY)
+          const saved = sessionStorage.getItem(storageKey)
           if (saved != null) {
             swiper.slideTo(Number(saved), 0)
           }
         }}
         onSlideChange={(index) => {
-          sessionStorage.setItem(STORAGE_KEY, String(index))
+          sessionStorage.setItem(storageKey, String(index))
         }}
         slides={tours.map((tour) => (
           <TourCard key={tour.slug} tour={tour} fill />

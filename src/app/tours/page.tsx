@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   title: "Туры — ВикТур",
 }
 
+// Каталог перечитывает туры из Supabase раз в 5 минут: без этого страница
+// запекалась на билде, а данные fetch-кэша переживали даже новые билды
+// (новый тур Фукуока не появлялся в каталоге).
+export const revalidate = 300
+
 export default async function ToursPage() {
   const { tours, settings, guide } = await getHomepageData()
 

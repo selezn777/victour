@@ -6,6 +6,8 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import { SlideDeck } from "@/components/slide-deck"
 import { PhotoStack } from "@/components/photo-stack"
 import { cn } from "@/lib/utils"
+import { useResort } from "@/hooks/use-resort"
+import { resortById } from "@/lib/resorts"
 import type { Review } from "@/lib/reviews-data"
 
 // Квадратный блок (коллаж, стопка фото) должен вписаться в ЛЮБОЙ остаток
@@ -1056,7 +1058,7 @@ function ValuesSlide({
 // Северные острова убраны из подборки (Виктор: небезопасный и неидеальный
 // маршрут) — осталось ровно 4 программы, см. ToursSlide ниже про новую
 // концепцию (не "отбор из многих", а намеренно узкий список).
-const CATALOG_TOURS = [
+const CATALOG_TOURS: { slug: string; title: string; imageSrc: string; annotation: string }[] = [
   {
     slug: "fanrang-avtorskiy",
     title: "Авторский Фанранг",
@@ -1081,6 +1083,18 @@ const CATALOG_TOURS = [
     imageSrc: "/images/tours/dalat-2-dnya-vertical.jpg",
     annotation:
       "Не однодневный марш-бросок в горы: два спокойных дня, а вечер в городе - под присмотром, не самостоятельная прогулка.",
+  },
+]
+
+// Подборка Фукуока — главная показывает туры курорта, выбранного в шапке
+// (ResortSwitcher). Нячанг и Камрань — общий список выше.
+const PHUQUOC_TOURS: typeof CATALOG_TOURS = [
+  {
+    slug: "phuquoc-vecher-safari",
+    title: "Вечерний Фукуок + ночное сафари",
+    imageSrc:
+      "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-vecher-safari/gondola_sunset_aerial_vertical.webp",
+    annotation: "Звёзды на пляже, Венеция на закате и ночное сафари за один вечер.",
   },
 ]
 
@@ -1169,7 +1183,11 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
   return (
     <div
       ref={rootRef}
-      className="flex w-full max-w-3xl items-start gap-1 sm:max-w-4xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl"
+      className={`flex w-full items-start gap-1 ${
+        tours.length === 1
+          ? "max-w-[15rem] sm:max-w-xs"
+          : "max-w-3xl sm:max-w-4xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl"
+      }`}
     >
       {tours.map((tour, i) => (
         <div key={tour.slug} className={`flex min-w-0 flex-1 flex-col items-center ${STAGGER[i % STAGGER.length]}`}>
@@ -1213,6 +1231,8 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
 }
 
 function ToursSlide() {
+  const [resort] = useResort()
+  const isPhuQuoc = resortById(resort)?.area === "phuquoc"
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       {/* px-4 + max-w-full на теле (не px-6/max-w-sm) — тот же приём "текст
@@ -1222,17 +1242,21 @@ function ToursSlide() {
         {/* Фото наверх, заголовок под ними — тот же порядок, что на первом
             и втором слайдах (Виктор: "надо всё-таки заголовок сделать под
             фотографией, фотографии поднять наверх"). */}
-        <TourSelector tours={CATALOG_TOURS} />
+        <TourSelector
+          key={isPhuQuoc ? "pq" : "nt"}
+          tours={isPhuQuoc ? PHUQUOC_TOURS : CATALOG_TOURS}
+        />
         <h2 className="mt-6 max-w-xl font-heading text-3xl leading-[1.1] font-semibold sm:mt-8 sm:text-4xl">
-          Всего четыре маршрута
+          {isPhuQuoc ? "Новое на Фукуоке" : "Всего четыре маршрута"}
         </h2>
         {/* Точная формулировка от Виктора дословно ("вот так скорее похоже
             на то что я хочу написать") — не перефразировать. Второе
             предложение (про полное сопровождение) Виктор убрал целиком —
             заканчивается на "глубокие". */}
         <p className="mt-3 max-w-md text-base leading-snug font-medium text-foreground sm:mt-5 sm:max-w-xl sm:text-lg">
-          Авторские маршруты, выверенные до мелочей! Всего 4 программы, потому что они безопасные,
-          интересные и при этом глубокие.
+          {isPhuQuoc
+            ? "Самый яркий вечер острова: звёзды на пляже, Венеция на закате и ночное сафари. Утро свободное, выезжаем в 15:00."
+            : "Авторские маршруты, выверенные до мелочей! Всего 4 программы, потому что они безопасные, интересные и при этом глубокие."}
         </p>
       </div>
     </div>
