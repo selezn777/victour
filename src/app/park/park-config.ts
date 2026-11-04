@@ -22,7 +22,13 @@ export function waTextLink(phone: string, text: string): string {
 
 // ---------- Направления: парк (канатка) и остров Хон Там ----------
 
-export type DestinationId = "park" | "hontam"
+// park/hontam — Нячанг (/park), pq_* — Фукуок (/phuquoc). Форма, заявка,
+// напоминания и подтверждение общие, отличаются только данные направления.
+export type DestinationId = "park" | "hontam" | "pq_vin" | "pq_honthom"
+export type ParkRegion = "nyachang" | "phuquoc"
+
+/** Район отеля → цена индивидуального трансфера туда-обратно за машину (Фукуок). */
+export type TransferDistrict = { id: string; label: string; priceUsd: number }
 
 export type PackageOption = {
   id: string
@@ -68,7 +74,16 @@ export function normalizeTime(v: string): string | null {
 /** departureTime заявки → слот выезда. Только текущее расписание (для проверки новых заявок). */
 export function findCurrentSlot(dest: DestinationId, departureTime: string | null): DepartureSlot | undefined {
   if (!departureTime) return undefined
+  // Индивидуальный трансфер (Фукуок): гость сам пишет удобное время
+  if (DESTINATIONS[dest].departureMode === "free") {
+    const t = normalizeTime(departureTime)
+    return t ? { pickup: t } : undefined
+  }
   return DESTINATIONS[dest].departureTimes.find((s) => slotKey(s) === departureTime)
+}
+
+export function findDistrict(dest: DestinationId, id: string | null): TransferDistrict | undefined {
+  return id ? DESTINATIONS[dest].districts?.find((d) => d.id === id) : undefined
 }
 
 /**
@@ -102,11 +117,120 @@ export type Destination = {
   // Расписание выездов от отеля (всегда ±10 минут) — турист выбирает один из слотов
   departureTimes: DepartureSlot[]
   extras: ExtraOption[]
+  region: ParkRegion
+  placeRu: string // название в заявке и напоминаниях
+  emoji: string
+  bookingTitle: string
+  bookingIntro: string
+  submitLabel: string
+  /** slots — общие выезды по расписанию; free — индивидуальный трансфер, время пишет гость */
+  departureMode: "slots" | "free"
+  /** Платный трансфер по районам; нет — трансфер бесплатный */
+  districts?: TransferDistrict[]
+  mapCenter: { lat: number; lng: number }
+}
+
+const NHA_TRANG_CENTER = { lat: 12.2388, lng: 109.1967 }
+const PHU_QUOC_CENTER = { lat: 10.227, lng: 103.967 }
+
+// Цены трансфера на Фукуоке — по себестоимости, за машину туда-обратно.
+// Черновик, Виктор правит по районам.
+const PQ_NORTH = { id: "north", label: "Бай Дай, Гань Дау (Grand World, Vinpearl)" }
+const PQ_ONG_LANG = { id: "ong_lang", label: "Онг Ланг" }
+const PQ_CENTER = { id: "center", label: "Дуонг Донг (центр)" }
+const PQ_LONG_BEACH = { id: "long_beach", label: "Лонг Бич" }
+const PQ_SOUTH = { id: "south", label: "Юг: Ан Тхой, Sunset Town, Бай Кем, Бай Сао" }
+
+// ---------- Фукуок ----------
+// Официальные цены сезона 2026 (vinwonders.com, Sun World); билеты выкупаем
+// мы, трансфер индивидуальный и платный — по району отеля.
+const PQ_GUESTS_VIN: GuestOption[] = [
+  { key: "infants", emoji: "👶", title: "Дети ниже 100 см", note: "Вход БЕСПЛАТНО!", free: true, formLabel: "Дети ниже 100 см (бесплатно)", english: "Kids under 100 cm (free)" },
+  { key: "children", emoji: "🧒", title: "Детский билет", note: "Рост 100–139 см", formLabel: "Дети 100–139 см", english: "Children 100–139 cm" },
+  { key: "adults", emoji: "🧑", title: "Взрослый билет", note: "Рост от 140 см", formLabel: "Взрослые", english: "Adults" },
+  { key: "seniors", emoji: "👵", title: "Пенсионеры 60+", note: "Обязательно взять паспорт", formLabel: "Пенсионеры 60+", english: "Seniors 60+ (passport required)" },
+]
+
+const PQ_VIN: Destination = {
+  id: "pq_vin",
+  region: "phuquoc",
+  placeRu: "VinWonders и Сафари, Фукуок",
+  emoji: "🦒",
+  tabLabel: "🦒 VinWonders",
+  tabNote: "парк + сафари",
+  english: "PHU QUOC: VINWONDERS / SAFARI",
+  childPriceLabel: "дети и 60+",
+  bookingTitle: "Бронь билетов и трансфера",
+  bookingIntro: "Заполните заявку — это минута. Билеты выкупим заранее, трансфер по цене вашего района:",
+  submitLabel: "Забронировать",
+  departureMode: "free",
+  mapCenter: PHU_QUOC_CENTER,
+  packages: [
+    { id: "vin", title: "VinWonders", price: "1 050K ₫", childPrice: "800K ₫", english: "VinWonders (adult 1,050K / child & senior 800K VND)" },
+    { id: "safari", title: "Сафари днём", price: "950K ₫", childPrice: "710K ₫", english: "Vinpearl Safari day (adult 950K / child & senior 710K VND)", formNotes: ["Билеты только на дневное сафари. Ночное сафари есть в нашем туре «Вечерний Фукуок»"] },
+    { id: "combo", title: "VinWonders + Сафари", price: "1 700K ₫", childPrice: "1 300K ₫", english: "Combo VinWonders + Safari (adult 1,700K / child & senior 1,300K VND)", formNotes: ["Оба парка в один день: утром сафари, после обеда VinWonders"] },
+  ],
+  guests: PQ_GUESTS_VIN,
+  payingGuests: ["adults", "children", "seniors"],
+  departureTimes: [],
+  districts: [
+    { ...PQ_NORTH, priceUsd: 8 },
+    { ...PQ_ONG_LANG, priceUsd: 12 },
+    { ...PQ_CENTER, priceUsd: 15 },
+    { ...PQ_LONG_BEACH, priceUsd: 18 },
+    { ...PQ_SOUTH, priceUsd: 25 },
+  ],
+  extras: [],
+}
+
+const PQ_HONTHOM: Destination = {
+  id: "pq_honthom",
+  region: "phuquoc",
+  placeRu: "Канатка на Хон Тхом, Фукуок",
+  emoji: "🚡",
+  tabLabel: "🚡 Хон Тхом",
+  tabNote: "канатка + аквапарк",
+  english: "PHU QUOC: HON THOM CABLE CAR",
+  childPriceLabel: "дети",
+  bookingTitle: "Бронь билетов и трансфера",
+  bookingIntro: "Заполните заявку — это минута. Билеты выкупим заранее, трансфер по цене вашего района:",
+  submitLabel: "Забронировать",
+  departureMode: "free",
+  mapCenter: PHU_QUOC_CENTER,
+  packages: [
+    { id: "cable", title: "Канатка + аквапарк", price: "850K ₫", childPrice: "700K ₫", english: "Cable car round trip + Aquatopia (adult 850K / child 700K VND)" },
+    { id: "cable_lunch", title: "С обедом", price: "1 150K ₫", childPrice: "900K ₫", english: "Cable car + Aquatopia + buffet lunch (adult 1,150K / child 900K VND)" },
+  ],
+  guests: [
+    { key: "infants", emoji: "👶", title: "Дети до 1 метра", note: "Бесплатно!", free: true, formLabel: "Дети до 1 м (бесплатно)", english: "Kids under 1 m (free)" },
+    { key: "children", emoji: "🧒", title: "Дети 1–1,39 м", note: "от 700K ₫", formLabel: "Дети 100–139 см", english: "Children 1–1.39 m" },
+    { key: "adults", emoji: "🧑", title: "Взрослые (от 1,4 м)", note: "от 850K ₫", formLabel: "Взрослые", english: "Adults" },
+  ],
+  payingGuests: ["adults", "children"],
+  departureTimes: [],
+  districts: [
+    { ...PQ_SOUTH, priceUsd: 8 },
+    { ...PQ_LONG_BEACH, priceUsd: 12 },
+    { ...PQ_CENTER, priceUsd: 15 },
+    { ...PQ_ONG_LANG, priceUsd: 18 },
+    { ...PQ_NORTH, priceUsd: 25 },
+  ],
+  extras: [
+    { key: "kiss_show", group: "🌅 Вечер в Sunset Town", label: "Шоу Kiss of the Sea, 21:00 (кроме вторника)", english: "Kiss of the Sea show 21:00" },
+  ],
 }
 
 export const DESTINATIONS: Record<DestinationId, Destination> = {
   park: {
     id: "park",
+    region: "nyachang",
+    placeRu: "VinWonders",
+    emoji: "🎟",
+    bookingTitle: "Как заказать акцию",
+    bookingIntro: "Для бесплатного трансфера заполните заявку — это минута:",
+    submitLabel: "Забронировать трансфер",
+    departureMode: "slots",
+    mapCenter: NHA_TRANG_CENTER,
     tabLabel: "🚡 VinWonders",
     tabNote: "парк + канатка",
     english: "VINWONDERS (cable car)",
@@ -194,6 +318,14 @@ export const DESTINATIONS: Record<DestinationId, Destination> = {
   },
   hontam: {
     id: "hontam",
+    region: "nyachang",
+    placeRu: "Остров Хон Там",
+    emoji: "🏝",
+    bookingTitle: "Бронь на Хон Там",
+    bookingIntro: "Для бесплатного трансфера заполните заявку — это минута:",
+    submitLabel: "Забронировать трансфер",
+    departureMode: "slots",
+    mapCenter: NHA_TRANG_CENTER,
     tabLabel: "🏝 Остров Хон Там",
     tabNote: "пляж + катер",
     english: "HON TAM ISLAND",
@@ -276,9 +408,19 @@ export const DESTINATIONS: Record<DestinationId, Destination> = {
       },
     ],
   },
+  pq_vin: PQ_VIN,
+  pq_honthom: PQ_HONTHOM,
 }
 
-export const DESTINATION_ORDER: DestinationId[] = ["park", "hontam"]
+export const REGION_ORDER: Record<ParkRegion, DestinationId[]> = {
+  nyachang: ["park", "hontam"],
+  phuquoc: ["pq_vin", "pq_honthom"],
+}
+
+export const DESTINATION_ORDER: DestinationId[] = REGION_ORDER.nyachang
+
+export const isDestinationId = (v: unknown): v is DestinationId =>
+  typeof v === "string" && Object.prototype.hasOwnProperty.call(DESTINATIONS, v)
 export const GUEST_MAX = 20
 
 // ---------- Контакт ----------
@@ -325,6 +467,16 @@ export const PROMO_TOURS = [
   },
 ]
 
+// Реклама после заявки на Фукуоке — туры Фукуока (только с фото)
+export const PROMO_TOURS_PQ = [
+  {
+    slug: "phuquoc-vecher-safari",
+    title: "Вечерний Фукуок + ночное сафари",
+    imageSrc:
+      "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-vecher-safari/gondola_sunset_aerial_vertical.webp",
+  },
+]
+
 export const REDIRECT_SECONDS = 10
 
 // ---------- Данные формы и общая валидация (клиент + сервер) ----------
@@ -344,6 +496,7 @@ export type ParkBooking = {
   guests: Record<string, number>
   hotel: string
   hotelPlace: HotelPlace | null
+  district: string | null // район отеля (Фукуок, платный трансфер)
   name: string
   contactChannel: ContactChannel
   contact: string
@@ -357,6 +510,7 @@ export type BookingField =
   | "departureTime"
   | "guests"
   | "hotel"
+  | "district"
   | "name"
   | "contact"
   | "comment"
@@ -395,7 +549,7 @@ export function validateParkBooking(
   const input = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>
   const errors: Partial<Record<BookingField, string>> = {}
 
-  const destination: DestinationId = input.destination === "hontam" ? "hontam" : "park"
+  const destination: DestinationId = isDestinationId(input.destination) ? input.destination : "park"
   const dest = DESTINATIONS[destination]
 
   const date = str(input.date, 10)
@@ -411,7 +565,8 @@ export function validateParkBooking(
   }
 
   const departureTime = str(input.departureTime, 10) || null
-  if (!findCurrentSlot(destination, departureTime)) errors.departureTime = "Выберите время выезда"
+  if (!findCurrentSlot(destination, departureTime)) errors.departureTime =
+      dest.departureMode === "free" ? "Укажите, во сколько вас забрать" : "Выберите время выезда"
 
   const rawGuests = (input.guests && typeof input.guests === "object" ? input.guests : {}) as Record<
     string,
@@ -434,6 +589,9 @@ export function validateParkBooking(
   const hotel = str(input.hotel, 200)
   if (hotel.length < 2) errors.hotel = "Укажите отель, откуда забрать"
   const hotelPlace = parseHotelPlace(input.hotelPlace)
+
+  const district = dest.districts ? str(input.district, 30) || null : null
+  if (dest.districts && !findDistrict(destination, district)) errors.district = "Выберите район отеля"
 
   const name = str(input.name, 100)
   if (name.length < 2) errors.name = "Укажите ваше имя"
@@ -474,6 +632,7 @@ export function validateParkBooking(
       guests,
       hotel,
       hotelPlace,
+      district,
       name,
       contactChannel: contactChannel as ContactChannel,
       contact,

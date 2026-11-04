@@ -88,7 +88,7 @@ export function confirmSummaryRu(data: ConfirmData): string {
     day: "numeric",
     month: "long",
   }).format(new Date(`${data.date}T00:00:00Z`))
-  const place = data.dest === "hontam" ? "Остров Хон Там" : "VinWonders"
+  const place = dest.placeRu
   return [place, pkg?.title, date].filter(Boolean).join(" · ")
 }
 

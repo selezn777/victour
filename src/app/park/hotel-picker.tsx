@@ -9,6 +9,7 @@ import type { HotelPlace } from "./park-config"
 // Без ключа кнопка карты не показывается — остаётся обычное поле.
 const MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 const NHA_TRANG = { lat: 12.2388, lng: 109.1967 }
+type LatLng = { lat: number; lng: number }
 
 export type HotelValue = { name: string; place: HotelPlace | null }
 
@@ -38,10 +39,13 @@ export function HotelPicker({
   value,
   onChange,
   inputClassName,
+  center = NHA_TRANG,
 }: {
   value: HotelValue
   onChange: (v: HotelValue) => void
   inputClassName: string
+  /** Центр карты и поиска — курорт направления (Нячанг / Фукуок) */
+  center?: LatLng
 }) {
   const [mapOpen, setMapOpen] = useState(false)
 
@@ -91,6 +95,7 @@ export function HotelPicker({
       {mapOpen && (
         <HotelMapSheet
           initialQuery={value.place ? "" : value.name}
+          center={center}
           onClose={() => setMapOpen(false)}
           onSelect={(v) => {
             onChange(v)
@@ -106,10 +111,12 @@ type Selected = HotelValue & { place: HotelPlace }
 
 function HotelMapSheet({
   initialQuery,
+  center,
   onClose,
   onSelect,
 }: {
   initialQuery: string
+  center: LatLng
   onClose: () => void
   onSelect: (v: Selected) => void
 }) {
@@ -167,7 +174,7 @@ function HotelMapSheet({
         placesRef.current = places
         tokenRef.current = new places.AutocompleteSessionToken()
         const map = new Map(mapEl.current, {
-          center: NHA_TRANG,
+          center,
           zoom: 13,
           disableDefaultUI: true,
           zoomControl: true,
@@ -207,7 +214,7 @@ function HotelMapSheet({
           language: "ru",
           region: "vn",
           includedRegionCodes: ["vn"],
-          locationBias: { center: NHA_TRANG, radius: 30000 },
+          locationBias: { center, radius: 30000 },
         })
         if (!cancelled) {
           setSuggestions(

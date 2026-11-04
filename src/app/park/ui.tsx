@@ -4,7 +4,7 @@ import type { DestinationId } from "./park-config"
 // Палитры направлений. Компоненты красятся только через эти переменные
 // (bg-(--c-primary) и т.д.), поэтому при переключении Парк ↔ Хон Там
 // меняется вся страница, включая форму, карту и экран успеха.
-export const THEMES: Record<DestinationId, Record<string, string>> = {
+const NT_THEMES = {
   park: {
     "--c-primary": "#1f5a4a",
     "--c-primary-2": "#2e7a63",
@@ -37,7 +37,45 @@ export const THEMES: Record<DestinationId, Record<string, string>> = {
   },
 }
 
-export const CARD = "rounded-[20px] bg-white shadow-[0_8px_24px_rgb(60_60_40/0.11)]"
+// Палитры Фукуока (/phuquoc)
+const PQ_THEMES = {
+  // VinWonders + Сафари: тёплый закатный оранжевый, саванна
+  pq_vin: {
+    "--c-primary": "#8a3b12",
+    "--c-primary-2": "#b4541e",
+    "--c-bg": "#f7ebdc",
+    "--c-bg-2": "#ecd6bb",
+    "--c-ink": "#2d1a10",
+    "--c-accent": "#d98a1f",
+    "--c-on-primary": "#ffe1a8",
+    "--c-muted": "#6e5a4c",
+    "--c-tint": "#fdf3e2",
+    "--c-tint-ink": "#8a4a10",
+    "--c-border": "#dcc6aa",
+    "--c-hero-fade": "rgb(60 25 8 / 0.55)",
+    "--c-shadow-primary": "0 14px 36px rgb(138 59 18 / 0.28)",
+  },
+  // Хон Тхом: бирюзовое море юга
+  pq_honthom: {
+    "--c-primary": "#0b5d6e",
+    "--c-primary-2": "#0f8494",
+    "--c-bg": "#e4f3f2",
+    "--c-bg-2": "#c8e6e4",
+    "--c-ink": "#0f2f37",
+    "--c-accent": "#ef8a3c",
+    "--c-on-primary": "#ffe1a8",
+    "--c-muted": "#4b6b72",
+    "--c-tint": "#fdf1e4",
+    "--c-tint-ink": "#8a4d14",
+    "--c-border": "#b6d6d5",
+    "--c-hero-fade": "rgb(6 45 54 / 0.55)",
+    "--c-shadow-primary": "0 14px 36px rgb(11 93 110 / 0.3)",
+  },
+}
+
+export const THEMES: Record<DestinationId, Record<string, string>> = { ...NT_THEMES, ...PQ_THEMES }
+
+export const CARD ="rounded-[20px] bg-white shadow-[0_8px_24px_rgb(60_60_40/0.11)]"
 export const SERIF = "font-(family-name:--font-park-serif)"
 
 export function Pill({ children, accent }: { children: React.ReactNode; accent?: boolean }) {
@@ -65,9 +103,11 @@ export function Hero({
   alt,
   pills,
   objectPosition,
+  ctaLabel = "Забронировать трансфер",
   children,
 }: {
   image: StaticImageData
+  ctaLabel?: string
   alt: string
   pills: [string, string]
   objectPosition: string
@@ -94,7 +134,7 @@ export function Hero({
         {children}
         {/* Не ссылка: турист должен пролистать и прочитать всё до формы */}
         <div className="mt-4 inline-flex h-12 items-center gap-2 rounded-full bg-(--c-accent) px-6 text-[15px] font-bold text-white shadow-[0_8px_20px_rgb(0_0_0/0.25)] select-none">
-          Забронировать трансфер <span aria-hidden>⬇️</span>
+          {ctaLabel} <span aria-hidden>⬇️</span>
         </div>
       </div>
     </header>

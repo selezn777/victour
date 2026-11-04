@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import { HonTamContent } from "./hontam-content"
 import { Landing } from "./landing"
+import { REGION_ORDER } from "./park-config"
 import { VinWondersContent } from "./vinwonders-content"
 import { lora, manrope } from "./fonts"
 
@@ -23,7 +24,7 @@ export const viewport: Viewport = {
 export default function ParkPage() {
   return (
     <div className={`${lora.variable} ${manrope.variable} flex flex-1 flex-col`}>
-      <Landing content={{ park: <VinWondersContent />, hontam: <HonTamContent /> }} />
+      <Landing order={REGION_ORDER.nyachang} content={{ park: <VinWondersContent />, hontam: <HonTamContent /> }} />
     </div>
   )
 }

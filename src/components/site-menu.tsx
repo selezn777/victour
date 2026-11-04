@@ -7,6 +7,16 @@ import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/co
 import { AccountMenuRow } from "@/components/account-menu"
 import { formatRubFromUsd, formatVndFromUsd } from "@/lib/format"
 import type { PrimaryGuide, SiteSettings } from "@/lib/site-data"
+import { useResort } from "@/hooks/use-resort"
+
+const TICKETS_NT = [
+  { href: "/park", label: "🚡 Билеты VinWonders Нячанг" },
+  { href: "/park?t=hontam", label: "🏝 Билеты Хон Там" },
+]
+const TICKETS_PQ = [
+  { href: "/phuquoc", label: "🦒 Билеты VinWonders и Сафари Фукуок" },
+  { href: "/phuquoc?t=pq_honthom", label: "🚡 Канатка на Хон Тхом" },
+]
 
 const ITEM = "rounded-md px-2 py-2.5 font-heading text-base hover:bg-muted"
 
@@ -25,6 +35,14 @@ export function SiteMenu({
    *  страницы, поэтому цвет передаём явно и перекрашиваем токены темы. */
   accent?: string
 }) {
+  const [resort] = useResort()
+  // Билеты по выбранному курорту; пока не выбран — показываем оба набора
+  const tickets =
+    resort === "phuquoc"
+      ? TICKETS_PQ
+      : resort
+        ? TICKETS_NT
+        : [...TICKETS_NT, ...TICKETS_PQ]
   return (
     <Sheet>
       <SheetTrigger
@@ -55,22 +73,20 @@ export function SiteMenu({
         <nav className="flex flex-col gap-1 px-4">
           <AccountMenuRow />
           <div className="my-2 border-t border-border" />
-          {/* Главный пункт — туда в первую очередь ведём людей, выделен золотой обводкой; «вдавливается» при нажатии */}
+          {/* Главный пункт: крупная залитая кнопка, туда в первую очередь ведём людей */}
           <Link
             href="/tours"
-            className="my-1 flex items-center justify-between rounded-xl bg-[#d9a73e]/10 px-3 py-3 font-heading text-lg font-semibold text-foreground shadow-[0_3px_0_rgb(217_167_62/0.45)] ring-1 ring-[#d9a73e]/50 transition-[transform,box-shadow,background-color] duration-100 active:translate-y-[3px] active:bg-[#d9a73e]/20 active:shadow-none"
+            className="my-2 flex items-center justify-between rounded-2xl bg-[#d9a73e] px-4 py-5 font-heading text-2xl font-bold text-[#2a1d05] shadow-[0_4px_0_#a87b22] transition-[transform,box-shadow] duration-100 active:translate-y-[4px] active:shadow-none"
           >
-            <span>⭐ Туры</span>
-            <span aria-hidden className="text-[#e5b955]">→</span>
+            <span>Наши туры</span>
+            <span aria-hidden>→</span>
           </Link>
-          {/* Обычные <a>, не Link: /park читает направление из ?t= при загрузке,
-              клиентская навигация /park ↔ /park?t=hontam его бы не переключила */}
-          <a href="/park" className={ITEM}>
-            🚡 Билеты VinWonders
-          </a>
-          <a href="/park?t=hontam" className={ITEM}>
-            🏝 Билеты Хон Там
-          </a>
+          {/* Обычные <a>, не Link: /park и /phuquoc читают направление из ?t= при загрузке */}
+          {tickets.map((t) => (
+            <a key={t.href} href={t.href} className={ITEM}>
+              {t.label}
+            </a>
+          ))}
           <Link href="/guides" className={ITEM}>
             Гиды
           </Link>

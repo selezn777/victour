@@ -19,6 +19,7 @@ import {
   PARK_WHATSAPP,
   PHONE_COUNTRIES,
   PROMO_TOURS,
+  PROMO_TOURS_PQ,
   REDIRECT_SECONDS,
   todayInNhaTrang,
   validateParkBooking,
@@ -61,6 +62,7 @@ type Draft = {
   phone: string;
   telegramHandle: string;
   extras: Record<string, number>;
+  district?: string | null;
 };
 
 function readDraft(): Draft | null {
@@ -155,6 +157,10 @@ function BookingForm({
   const [extras, setExtras] = useState<Record<string, number>>(
     draft?.extras ?? {},
   );
+  // Район отеля (Фукуок) — от него зависит цена платного трансфера
+  const [district, setDistrict] = useState<string | null>(
+    draft?.district ?? null,
+  );
 
   // Черновик сохраняем только в клиентском экземпляре формы — серверный
   // (до гидрации) иначе затёр бы его пустыми полями
@@ -173,6 +179,7 @@ function BookingForm({
       phone,
       telegramHandle,
       extras,
+      district,
     };
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(next));
@@ -190,6 +197,7 @@ function BookingForm({
     phone,
     telegramHandle,
     extras,
+    district,
   ]);
 
   useEffect(() => captureFbclid(), []);
@@ -245,6 +253,7 @@ function BookingForm({
       ),
       hotel: hotel.name,
       hotelPlace: hotel.place,
+      district: dest.districts ? district : null,
       name,
       contactChannel,
       contact,
@@ -327,10 +336,10 @@ function BookingForm({
       className="scroll-mt-16 rounded-[28px] bg-(--c-primary) p-4 text-white shadow-(--c-shadow-primary) transition-colors duration-500"
     >
       <h2 className="px-1 font-(family-name:--font-park-serif) text-[24px] font-bold text-(--c-on-primary)">
-        {destination === "hontam" ? "Бронь на Хон Там" : "Как заказать акцию"}
+        {dest.bookingTitle}
       </h2>
       <p className="mt-1 mb-3.5 px-1 text-[14px] opacity-90">
-        Для бесплатного трансфера заполните заявку — это минута:
+        {dest.bookingIntro}
       </p>
 
       <form
@@ -453,46 +462,65 @@ function BookingForm({
           <FieldError text={errors.date} />
         </div>
 
-        <div id="park-field-departureTime">
-          <span className={LABEL}>Во сколько выезд от отеля</span>
-          {/* Три слота (Хон Там) — в одну строку, компактно, без иконки */}
-          <div
-            className={`grid gap-2 ${compactSlots ? "grid-cols-3" : "grid-cols-2"}`}
-          >
-            {dest.departureTimes.map((t) => {
-              const key = slotKey(t);
-              const active = departureTime === key;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setDepartureTime(key)}
-                  aria-pressed={active}
-                  className={`rounded-2xl border-2 py-2 transition-colors ${compactSlots ? "px-1 text-center" : "px-3 text-left"} ${
-                    active
-                      ? "border-(--c-primary) bg-(--c-primary) text-white"
-                      : "border-(--c-border) bg-white"
-                  }`}
-                >
-                  <span className="block text-[17px] leading-tight font-bold tabular-nums">
-                    {compactSlots ? t.pickup : `🚐 ${t.pickup}`}
-                  </span>
-                  <span
-                    className={`block text-[12.5px] ${active ? "text-(--c-on-primary)" : "text-(--c-muted)"}`}
-                  >
-                    {t.boat
-                      ? `катер ${compactSlots ? "" : "в "}${t.boat}`
-                      : `на канатку в ${t.cableCar}`}
-                  </span>
-                </button>
-              );
-            })}
+        {dest.departureMode === "free" ? (
+          <div id="park-field-departureTime">
+            <label htmlFor="park-time" className={LABEL}>
+              Во сколько вас забрать от отеля
+            </label>
+            <input
+              id="park-time"
+              type="time"
+              value={departureTime ?? ""}
+              onChange={(e) => setDepartureTime(e.target.value)}
+              className={`${INPUT} appearance-none tabular-nums`}
+            />
+            <p className="mt-1.5 text-[12px] text-(--c-muted)">
+              Трансфер индивидуальный — заберём во сколько удобно вам.
+            </p>
+            <FieldError text={errors.departureTime} />
           </div>
-          <p className="mt-1.5 text-[12px] text-(--c-muted)">
-            Время выезда указываем всегда ±10 минут.
-          </p>
-          <FieldError text={errors.departureTime} />
-        </div>
+        ) : (
+          <div id="park-field-departureTime">
+            <span className={LABEL}>Во сколько выезд от отеля</span>
+            {/* Три слота (Хон Там) — в одну строку, компактно, без иконки */}
+            <div
+              className={`grid gap-2 ${compactSlots ? "grid-cols-3" : "grid-cols-2"}`}
+            >
+              {dest.departureTimes.map((t) => {
+                const key = slotKey(t);
+                const active = departureTime === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setDepartureTime(key)}
+                    aria-pressed={active}
+                    className={`rounded-2xl border-2 py-2 transition-colors ${compactSlots ? "px-1 text-center" : "px-3 text-left"} ${
+                      active
+                        ? "border-(--c-primary) bg-(--c-primary) text-white"
+                        : "border-(--c-border) bg-white"
+                    }`}
+                  >
+                    <span className="block text-[17px] leading-tight font-bold tabular-nums">
+                      {compactSlots ? t.pickup : `🚐 ${t.pickup}`}
+                    </span>
+                    <span
+                      className={`block text-[12.5px] ${active ? "text-(--c-on-primary)" : "text-(--c-muted)"}`}
+                    >
+                      {t.boat
+                        ? `катер ${compactSlots ? "" : "в "}${t.boat}`
+                        : `на канатку в ${t.cableCar}`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-1.5 text-[12px] text-(--c-muted)">
+              Время выезда указываем всегда ±10 минут.
+            </p>
+            <FieldError text={errors.departureTime} />
+          </div>
+        )}
 
         <div id="park-field-guests">
           <span className={LABEL}>Сколько вас</span>
@@ -524,9 +552,46 @@ function BookingForm({
             value={hotel}
             onChange={setHotel}
             inputClassName={INPUT}
+            center={dest.mapCenter}
           />
           <FieldError text={errors.hotel} />
         </div>
+
+        {dest.districts && (
+          <div id="park-field-district">
+            <span className={LABEL}>Район отеля — цена трансфера</span>
+            <div className="space-y-2">
+              {dest.districts.map((d) => {
+                const active = district === d.id;
+                return (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => setDistrict(d.id)}
+                    aria-pressed={active}
+                    className={`flex w-full items-center justify-between gap-3 rounded-2xl border-2 px-3.5 py-2.5 text-left transition-colors ${
+                      active
+                        ? "border-(--c-primary) bg-(--c-primary) text-white"
+                        : "border-(--c-border) bg-white"
+                    }`}
+                  >
+                    <span className="text-[14px] leading-tight font-semibold">
+                      {d.label}
+                    </span>
+                    <span className="shrink-0 text-[17px] font-extrabold tabular-nums">
+                      ${d.priceUsd}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-1.5 text-[12px] text-(--c-muted)">
+              Индивидуальный трансфер туда-обратно, цена за всю машину, а не за
+              человека.
+            </p>
+            <FieldError text={errors.district} />
+          </div>
+        )}
 
         <div id="park-field-name">
           <label htmlFor="park-name" className={LABEL}>
@@ -614,7 +679,9 @@ function BookingForm({
                 international
                 withCountryCallingCode
                 value={phone}
-                onChange={(v) => setPhone(fixPhonePrefix(v ?? "", phoneCountry))}
+                onChange={(v) =>
+                  setPhone(fixPhonePrefix(v ?? "", phoneCountry))
+                }
                 placeholder={phoneCountry ? undefined : "+ код страны и номер"}
                 autoComplete="tel"
                 className={`${INPUT} text-[17px] tracking-wide tabular-nums`}
@@ -692,7 +759,7 @@ function BookingForm({
           disabled={status === "sending"}
           className="h-14 w-full rounded-full bg-(--c-accent) text-[16px] font-extrabold text-white shadow-[0_8px_20px_rgb(0_0_0/0.18)] transition active:scale-[0.99] disabled:opacity-60"
         >
-          {status === "sending" ? "Отправляем…" : "Забронировать трансфер"}
+          {status === "sending" ? "Отправляем…" : dest.submitLabel}
         </button>
       </form>
 
@@ -701,7 +768,12 @@ function BookingForm({
         подтвердите бронь
       </div>
 
-      {status === "success" && success && <SuccessScreen {...success} />}
+      {status === "success" && success && (
+        <SuccessScreen
+          {...success}
+          promoTours={dest.region === "phuquoc" ? PROMO_TOURS_PQ : PROMO_TOURS}
+        />
+      )}
     </section>
   );
 }
@@ -717,7 +789,9 @@ function fixPhonePrefix(value: string, country: Country | undefined): string {
   const code = getCountryCallingCode(country);
   const national = value.slice(1 + code.length);
   const withoutCode = `+${code}${national.slice(code.length)}`;
-  return national.startsWith(code) && isValidPhoneNumber(withoutCode) ? withoutCode : value;
+  return national.startsWith(code) && isValidPhoneNumber(withoutCode)
+    ? withoutCode
+    : value;
 }
 
 function FieldError({ text }: { text?: string }) {
@@ -818,9 +892,11 @@ function SendProblem({ text }: { text: string }) {
 function SuccessScreen({
   waText,
   token,
+  promoTours,
 }: {
   waText: string;
   token: string | null;
+  promoTours: { slug: string; title: string; imageSrc: string }[];
 }) {
   const router = useRouter();
   const [secondsLeft, setSecondsLeft] = useState(REDIRECT_SECONDS);
@@ -941,7 +1017,7 @@ function SuccessScreen({
           Пока ждёте — посмотрите наши авторские туры
         </h3>
         <div className="grid grid-cols-2 gap-3">
-          {PROMO_TOURS.map((tour) => (
+          {promoTours.map((tour) => (
             <Link
               key={tour.slug}
               href={`/tours/${tour.slug}`}

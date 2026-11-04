@@ -2,6 +2,7 @@ import { parsePhoneNumberFromString } from "libphonenumber-js/min"
 import {
   CONTACT_CHANNELS,
   DESTINATIONS,
+  findDistrict,
   findSlot,
   PARK_TIMEZONE,
   type ParkBooking,
@@ -136,9 +137,10 @@ export async function buildParkBookingMessage(
 ) {
   const dest = DESTINATIONS[booking.destination]
   const pkg = dest.packages.find((p) => p.id === booking.packageId)!
+  const district = findDistrict(booking.destination, booking.district)
 
   const lines = [
-    `${booking.destination === "hontam" ? "🏝" : "🎟"} <b>NEW BOOKING — ${dest.english}</b>`,
+    `${dest.emoji} <b>NEW BOOKING — ${dest.english}</b>`,
     "",
     `📅 Date: <b>${formatTripDate(booking.date)}</b>`,
   ]
@@ -157,6 +159,7 @@ export async function buildParkBookingMessage(
     ...dest.guests.map((g) => `• ${g.english}: ${booking.guests[g.key] ?? 0}`),
     "",
     ...formatHotel(booking),
+    ...(district ? [`🚐 Paid transfer: ${escapeHtml(district.label)} — <b>$${district.priceUsd}</b> round trip`] : []),
     `👤 Name: ${latinWithOriginal(booking.name)}`,
     `📱 Contact: ${formatContact(booking)}`,
   )

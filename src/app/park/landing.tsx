@@ -4,7 +4,8 @@ import Link from "next/link"
 import { useEffect, useState, useSyncExternalStore } from "react"
 import { SiteMenu } from "@/components/site-menu"
 import { BookingSection } from "./booking-section"
-import { DESTINATIONS, DESTINATION_ORDER, PARK_WHATSAPP, type DestinationId } from "./park-config"
+import { DESTINATIONS, PARK_WHATSAPP, type DestinationId } from "./park-config"
+import { PARK_REVIEW_SLUGS } from "@/lib/reviews-data"
 import { ParkReviews } from "./park-reviews"
 import { THEMES } from "./ui"
 import { WhatsAppIcon } from "./whatsapp-icon"
@@ -48,12 +49,15 @@ const readHeaderShown = () => {
   return headerShown
 }
 
-const readDestination = (): DestinationId =>
-  new URLSearchParams(window.location.search).get("t") === "hontam" ? "hontam" : "park"
+// order[0] — раздел по умолчанию (без ?t=), остальные — по ?t=<id>
+const readDestination = (order: DestinationId[]): DestinationId => {
+  const t = new URLSearchParams(window.location.search).get("t")
+  return order.find((id) => id === t) ?? order[0]
+}
 
-function setDestination(id: DestinationId) {
+function setDestination(id: DestinationId, order: DestinationId[]) {
   const url = new URL(window.location.href)
-  if (id === "park") url.searchParams.delete("t")
+  if (id === order[0]) url.searchParams.delete("t")
   else url.searchParams.set("t", id)
   url.hash = ""
   window.history.replaceState(null, "", url)
@@ -68,11 +72,18 @@ function setDestination(id: DestinationId) {
 }
 
 export function Landing({
+  order,
   content,
 }: {
-  content: Record<DestinationId, React.ReactNode>
+  /** Разделы-вкладки внизу: Нячанг — park/hontam, Фукуок — pq_vin/pq_honthom */
+  order: DestinationId[]
+  content: Partial<Record<DestinationId, React.ReactNode>>
 }) {
-  const destination = useSyncExternalStore(subscribe, readDestination, () => "park" as const)
+  const destination = useSyncExternalStore(
+    subscribe,
+    () => readDestination(order),
+    () => order[0],
+  )
 
   // Прямая ссылка на раздел (/park?t=hontam#seawalking): страница пререндерится
   // с парком, нужный блок появляется только после гидрации — докручиваем сами.
@@ -142,13 +153,13 @@ export function Landing({
           keyboardOpen || !scrolled ? "translate-y-full" : ""
         }`}
       >
-        {DESTINATION_ORDER.map((id) => {
+        {order.map((id) => {
           const active = id === destination
           return (
             <button
               key={id}
               type="button"
-              onClick={() => !active && setDestination(id)}
+              onClick={() => !active && setDestination(id, order)}
               aria-pressed={active}
               className={`flex min-h-16 flex-col items-center justify-center px-2 pt-2 pb-[calc(env(safe-area-inset-bottom)+8px)] leading-tight transition-colors ${
                 active ? "bg-(--c-primary) text-white" : "bg-white text-(--c-primary) active:bg-(--c-bg-2)"
@@ -193,7 +204,9 @@ export function Landing({
             </span>
           </a>
 
-          <ParkReviews key={destination} destination={destination} />
+          {destination in PARK_REVIEW_SLUGS && (
+            <ParkReviews key={destination} destination={destination} />
+          )}
         </div>
       </main>
     </div>

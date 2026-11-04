@@ -1,4 +1,4 @@
-import { DESTINATIONS, findSlot, slotLineRu, type DestinationId, type ParkBooking } from "./park-config"
+import { DESTINATIONS, findDistrict, findSlot, slotLineRu, type DestinationId, type ParkBooking } from "./park-config"
 
 const ruDate = (iso: string) =>
   new Intl.DateTimeFormat("ru-RU", {
@@ -23,11 +23,14 @@ export function bookingSummaryRu(b: ParkBooking, confirmUrl: string | null): str
   const lines = [
     "📋 Заявка ВикТур",
     "",
-    `🎟 ${b.destination === "hontam" ? "Остров Хон Там" : "VinWonders"} — ${pkg.title}`,
+    `${dest.emoji} ${dest.placeRu} — ${pkg.title}`,
     `📅 ${date}`,
   ]
   if (slot) lines.push(slotLineRu(slot))
-  lines.push(`👥 ${guests}`, `🏨 Отель: ${b.hotel}`, `👤 ${b.name}`)
+  lines.push(`👥 ${guests}`, `🏨 Отель: ${b.hotel}`)
+  const district = findDistrict(b.destination, b.district)
+  if (district) lines.push(`🚐 Трансфер: ${district.label} — $${district.priceUsd} туда-обратно`)
+  lines.push(`👤 ${b.name}`)
   if (extras.length) {
     lines.push(`➕ ${extras.map((x) => `${x.label} × ${b.extras[x.key]}`).join("; ")}`)
   }
@@ -49,7 +52,7 @@ export function reminderRu(
   },
   confirmUrl: string,
 ): string {
-  const place = d.dest === "hontam" ? "поездка на остров Хон Там" : "поездка в VinWonders"
+  const place = d.dest === "hontam" ? "поездка на остров Хон Там" : `поездка: ${DESTINATIONS[d.dest].placeRu}`
   const lines = [`Здравствуйте, ${d.name}! Это ВикТур 👋`, "", `Напоминаем: ${ruDate(d.date)} — ${place}.`]
   if (d.pickup) {
     lines.push(`${slotLineRu({ pickup: d.pickup, boat: d.boat ?? undefined, cableCar: d.cableCar ?? undefined })}.`)

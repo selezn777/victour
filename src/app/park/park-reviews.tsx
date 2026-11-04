@@ -44,7 +44,7 @@ async function fetchReviews(destination: DestinationId): Promise<Review[]> {
   const { data, error } = await supabase
     .from("reviews")
     .select(REVIEW_SELECT.replace("tours(", "tours!inner("))
-    .eq("tours.slug", PARK_REVIEW_SLUGS[destination])
+    .eq("tours.slug", (PARK_REVIEW_SLUGS as Record<string, string>)[destination])
     .order("created_at", { ascending: false })
   if (error) throw error
   return (data as unknown as ReviewRow[]).map(mapReview)
@@ -245,7 +245,7 @@ function ParkReviewForm({
       const { data: tour } = await supabase
         .from("tours")
         .select("id")
-        .eq("slug", PARK_REVIEW_SLUGS[destination])
+        .eq("slug", (PARK_REVIEW_SLUGS as Record<string, string>)[destination])
         .single()
       if (!tour) throw new Error("no anchor tour")
 
