@@ -13,6 +13,9 @@ function shuffled<T>(arr: T[]): T[] {
   return copy
 }
 
+// Пересобирается раз в 5 минут: правки туров/отзывов в базе видны без редеплоя
+export const revalidate = 300
+
 export default async function Home() {
   const { settings, guide } = await getHomepageData()
   const guideReviews = guide ? await getReviewsForGuide(guide.id) : []

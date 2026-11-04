@@ -2,11 +2,19 @@ import { cache } from "react"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { TourPageClient } from "@/components/tour/tour-page-client"
-import { getTourPageData } from "@/lib/site-data"
+import { getActiveTourSlugs, getTourPageData } from "@/lib/site-data"
 import { getReviewsForTour, getTourOptions } from "@/lib/reviews-data"
 import { getGeneralFaq, getFaqForTour } from "@/lib/faq-data"
 
 const loadTour = cache(getTourPageData)
+
+// Страницы туров пререндерятся и обновляются раз в 5 минут: без этого каждый
+// заход ждал Supabase (~2 с), а правки в базе теперь видны без редеплоя.
+export const revalidate = 300
+
+export async function generateStaticParams() {
+  return (await getActiveTourSlugs()).map((slug) => ({ slug }))
+}
 
 export async function generateMetadata({
   params,

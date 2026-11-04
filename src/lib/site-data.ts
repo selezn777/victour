@@ -302,3 +302,9 @@ export async function getHomepageData(): Promise<{
 
   return { tours, settings, guide: guideRes.data }
 }
+
+/** Слаги активных туров — для пререндера страниц туров (ISR). */
+export async function getActiveTourSlugs(): Promise<string[]> {
+  const { data } = await publicClient().from("tours").select("slug").eq("is_active", true)
+  return (data ?? []).map((t) => t.slug)
+}
