@@ -7,7 +7,7 @@ import { SlideDeck } from "@/components/slide-deck"
 import type { CatalogTour } from "@/lib/site-data"
 import { ResortPicker } from "@/components/resort-switcher"
 import { useResort } from "@/hooks/use-resort"
-import { resortById, resortSurchargeUsd, tourArea } from "@/lib/resorts"
+import { resortById, resortSurchargePerPersonUsd, tourArea } from "@/lib/resorts"
 
 const STORAGE_KEY = "tour-catalog:index"
 
@@ -23,7 +23,8 @@ export function TourCatalog({ tours: allTours }: { tours: CatalogTour[] }) {
 
   const tours = allTours
     .filter((t) => tourArea(t.slug) === area)
-    .map((t) => ({ ...t, priceFromUsd: t.priceFromUsd + resortSurchargeUsd(resort, t.slug) }))
+    .map((t) => ({ ...t, priceFromUsd: t.priceFromUsd + resortSurchargePerPersonUsd(resort, t.slug, t.priceFromGuests),
+    }))
   const storageKey = `${STORAGE_KEY}:${area}`
 
   if (tours.length === 0) return null

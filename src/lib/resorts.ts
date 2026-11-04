@@ -18,12 +18,18 @@ export function tourArea(slug: string): ResortArea {
   return PHUQUOC_TOUR_SLUGS.has(slug) ? "phuquoc" : "nyachang"
 }
 
-/** Камрань далеко от Нячанга — Виктор: к каждой цене +$20 (за человека),
- *  туры те же. Для туров других зон наценки нет. */
-export const KAMRAN_SURCHARGE_USD = 20
+/** Камрань далеко от Нячанга — Виктор: +$20 на ВСЮ группу (не на человека),
+ *  туры те же. Для туров других зон доплаты нет. */
+export const KAMRAN_SURCHARGE_GROUP_USD = 20
 
-export function resortSurchargeUsd(resort: ResortId | null, tourSlug: string): number {
-  return resort === "kamran" && tourArea(tourSlug) === "nyachang" ? KAMRAN_SURCHARGE_USD : 0
+/** Доплата за человека при группе guests: $20 делим на группу, вверх до доллара. */
+export function resortSurchargePerPersonUsd(
+  resort: ResortId | null,
+  tourSlug: string,
+  guests: number,
+): number {
+  if (resort !== "kamran" || tourArea(tourSlug) !== "nyachang") return 0
+  return Math.ceil(KAMRAN_SURCHARGE_GROUP_USD / Math.max(1, guests))
 }
 
 export function resortById(id: ResortId | null) {

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useResort } from "@/hooks/use-resort"
-import { resortSurchargeUsd } from "@/lib/resorts"
+import { resortSurchargePerPersonUsd } from "@/lib/resorts"
 import { useBottomBarHeightVar } from "@/hooks/use-bottom-bar-height-var"
 import { usePackage } from "@/hooks/use-package"
 import { isRecentBackNavigation } from "@/lib/navigation"
@@ -41,24 +41,24 @@ export function TourPageClient({
   faq: FaqItem[]
   tours: TourOption[]
 }) {
-  // Камрань: те же туры, но к каждой цене +$20 (см. resortSurchargeUsd).
+  // Камрань: те же туры, но +$20 на всю группу (см. resortSurchargePerPersonUsd).
   // Цена с наценкой уходит и в заявку — PackageItem хранит priceAdultUsd.
   const [resort] = useResort()
-  const surcharge = resortSurchargeUsd(resort, rawTour.slug)
-  const tour = useMemo(
-    () =>
-      surcharge === 0
-        ? rawTour
-        : {
-            ...rawTour,
-            pricingTiers: rawTour.pricingTiers.map((t) => ({
-              ...t,
-              priceAdultUsd: t.priceAdultUsd + surcharge,
-              priceChildUsd: t.priceChildUsd == null ? null : t.priceChildUsd + surcharge,
-            })),
-          },
-    [rawTour, surcharge],
-  )
+  const tour = useMemo(() => {
+    if (resortSurchargePerPersonUsd(resort, rawTour.slug, 1) === 0) return rawTour
+    return {
+      ...rawTour,
+      pricingTiers: rawTour.pricingTiers.map((t) => {
+        // $20 на группу раскладываем на человека в каждом тарифе
+        const add = resortSurchargePerPersonUsd(resort, rawTour.slug, t.guestCount)
+        return {
+          ...t,
+          priceAdultUsd: t.priceAdultUsd + add,
+          priceChildUsd: t.priceChildUsd == null ? null : t.priceChildUsd + add,
+        }
+      }),
+    }
+  }, [rawTour, resort])
 
   // По умолчанию — самая большая группа (обычно самая дешёвая цена за
   // человека, тарифы отсортированы по возрастанию guestCount): гость,

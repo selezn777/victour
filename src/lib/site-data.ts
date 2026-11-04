@@ -16,6 +16,9 @@ export type CatalogTour = {
   durationLabel: string
   heroImageUrl: string | null
   priceFromUsd: number
+  /** Размер группы, для которого действует priceFromUsd (нужен для доплаты
+   *  Камрани, которая считается на всю группу, см. resorts.ts). */
+  priceFromGuests: number
 }
 
 export type SiteSettings = {
@@ -250,7 +253,7 @@ export async function getHomepageData(): Promise<{
   const [toursRes, settingsRes, guideRes] = await Promise.all([
     supabase
       .from("tours")
-      .select("id, slug, title, short_description, duration_label, hero_image_url, sort_order, pricing_tiers(price_adult_usd)")
+      .select("id, slug, title, short_description, duration_label, hero_image_url, sort_order, pricing_tiers(price_adult_usd, guest_count)")
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
     supabase.from("settings").select("key, value"),
@@ -271,8 +274,10 @@ export async function getHomepageData(): Promise<{
     const title = row.title as { ru: string }
     const shortDescription = row.short_description as { ru: string }
     const durationLabel = row.duration_label as { ru: string }
-    const prices = (row.pricing_tiers as { price_adult_usd: number }[]).map(
-      (t) => t.price_adult_usd,
+    const tiers = row.pricing_tiers as { price_adult_usd: number; guest_count: number }[]
+    const cheapest = tiers.reduce<(typeof tiers)[number] | undefined>(
+      (a, b) => (a == null || b.price_adult_usd < a.price_adult_usd ? b : a),
+      undefined,
     )
     return {
       id: row.id,
@@ -281,7 +286,8 @@ export async function getHomepageData(): Promise<{
       shortDescription: shortDescription.ru,
       durationLabel: durationLabel.ru,
       heroImageUrl: row.hero_image_url,
-      priceFromUsd: Math.min(...prices),
+      priceFromUsd: cheapest?.price_adult_usd ?? 0,
+      priceFromGuests: cheapest?.guest_count ?? 1,
     }
   })
 
