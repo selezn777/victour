@@ -23,8 +23,15 @@ export function extendGroupTiers<T extends Tier>(slug: string, tiers: T[]): Tier
   const prev = sorted[sorted.length - 2]
   const total = (t: Tier) => t.priceAdultUsd * t.guestCount
   const perHead = Math.max(5, prev ? (total(last) - total(prev)) / (last.guestCount - prev.guestCount) : 5)
+  // Цена «с человека» без тарифной сетки (все тарифы одинаковые, напр. «Дикий
+  // Фукуок» $80 - всё включено): большие группы по той же цене.
+  const flat = sorted.every((t) => t.priceAdultUsd === last.priceAdultUsd)
   const out: Tier[] = sorted.map((t) => ({ guestCount: t.guestCount, priceAdultUsd: t.priceAdultUsd, priceChildUsd: t.priceChildUsd }))
   for (let n = last.guestCount + 1; n <= MAX_GROUP; n++) {
+    if (flat) {
+      out.push({ guestCount: n, priceAdultUsd: last.priceAdultUsd, priceChildUsd: null })
+      continue
+    }
     let sum = total(last) + perHead * (n - last.guestCount)
     if (n >= BUS_FROM && last.guestCount < BUS_FROM) sum += busExtraUsd(slug)
     out.push({ guestCount: n, priceAdultUsd: up5(sum / n), priceChildUsd: null })

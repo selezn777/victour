@@ -65,7 +65,12 @@ export function TourPageClient({
   // который просто листает страницу, должен сначала видеть младшую
   // цену, а не по умолчанию за двоих. Своё реальное число гостей он
   // выставит уже на слайде брони.
-  const cheapestTier = tour.pricingTiers[tour.pricingTiers.length - 1]
+  // При одинаковой цене для всех групп (цена «с человека») - самая маленькая
+  // группа, а не 15 человек.
+  const cheapestTier = tour.pricingTiers.reduce<(typeof tour.pricingTiers)[number] | undefined>(
+    (best, t) => (!best || t.priceAdultUsd < best.priceAdultUsd ? t : best),
+    undefined,
+  )
   const [guestCount, setGuestCount] = useState(cheapestTier?.guestCount ?? 2)
   const primaryGuide = guides[0] ?? null
   const priceAdultUsd =

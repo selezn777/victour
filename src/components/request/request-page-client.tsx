@@ -163,7 +163,10 @@ function ItemEditForm({
 }) {
   const minGuests = info.pricingTiers[0]?.guestCount ?? 2
   const maxGuests = info.pricingTiers[info.pricingTiers.length - 1]?.guestCount ?? 9
-  const cheapestTier = info.pricingTiers[info.pricingTiers.length - 1]
+  const cheapestTier = info.pricingTiers.reduce<(typeof info.pricingTiers)[number] | undefined>(
+    (best, t) => (!best || t.priceAdultUsd < best.priceAdultUsd ? t : best),
+    undefined,
+  )
   const [guestCount, setGuestCount] = useState(item.adults ?? cheapestTier?.guestCount ?? minGuests)
   const [selectedDate, setSelectedDate] = useState<string | null>(item.date)
 
