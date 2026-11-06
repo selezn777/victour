@@ -60,10 +60,17 @@ const COLLAGE_CACHE_VERSION = 4
 const SQUARE_CSS = "min(100cqw, 100cqh)"
 const COLLAGE_TINY =
   "data:image/webp;base64,UklGRmoDAABXRUJQVlA4IF4DAACwDgCdASowADAAPsVMnE2npCKiPGgA8BiJbACdMuIotazf59AG2758Lz/98A3nz/XWgI0T1PEL3gVbtkR8MUwVwjJy5Dm6kEazvQ2zbpP43HN6fKbYutweRMnb0g9aEph+R74xi6zVlgfzMJH2tbwLJFZe0glWpVsBcFaI0DAA/vNNi+0kNF6t5N0m3gTk4b9eqUrHA+/D4fuObFip/BcftP8q/IjL6v/oGVeq1q7aUhPzzn7BZrHfTH3hMljpeoL6CnQ+cZBbcZh9z5m2c8wIAgcfS4qD/EC1z9YXd0iMbL/6SYyqGdOXnXIuu1Q+za+MKLMHkLAu+9kgR4paoGriJ+MdXm+URqjoZtjOmNh2X1P5byon7kSFkLZQcfYfGGS8A3NPW9BZX4vIkNd6IFs+pqsHLId0BryBwwsXl1hCd1Im5frbLwueibX18z/mNkwXIOBYuErTyCzgzQuh+B/s8ssGXGPmuSHUqw/xZfVyBWPsdcqevVoyXZTKPrBOSDs35TCZw8dcHL9H9npUCLPFXrHOY0nHg85IiNqTK2QeTgZ7XxNbfDMcI0vnRz0ZcmWknUFKNA1m1E0s/CruL9gNYD9wv7rTYIgbZOO1eOwZf6VyiOLu6pu/QeSfkljtU622gve8qgd+f7W1xqxlJ8vf22UUGbLkjEyD/VHgZjrOewaABE78PMEkqEmoiAD3OHexmTc/m/TbfmUIUP8gX6QesN8wZmr04Q2OggNQgwnsCU6PIQB44o7gSUQWfR5VPqsWGTNhlGqIkpmATWcZqCTMzSoxN3QHHfld9uJCDYsnt4hX+EJ8dMJmiBrw9/vJjvjyjEsYhCpkuCZN43ltdzBmzgpv1p0K99ciILTNfBlBypv22gqGZdK3ZM+tGuJVm0swiVHFqQkx15gEMQohr2wsgxzW/969YR01KWVal5Ad5SNCFGLkeFBOnDecI+5pGIH4fJJAxfU6vBvW3au2VRLYBsv1vBzDGAomto3Mydg1aBw5VNYZJw4i0/W7Xz16x/uOor+lMfJr5kJwsWH2RUC5ID92/PPn5hRm7/lVpIaCevjaRknae7OroqynqYuO6vgATZ0u/Gu2swArIO4O7usD107b53c3o1pW3Rr76NTGn8qLuN3Rp0E1Vpem2oAA"
+// Виктор 2026-11-06: отдельные 64 плитки больше не грузим вообще — мозаика
+// целиком из склейки (v5, плитка 112px, ~165 КБ). Раньше плитки качались
+// пачкой поверх уже видимой склейки: тап не открывал фото, пока всё не
+// догрузится, а фото ниже по странице (машины, туры) стояли чёрными в
+// очереди. Слои: tiny из HTML -> v4 (~55 КБ, быстро) -> v5 (чётко).
+const COMPOSITE_VERSION = 5
 const COLLAGE_BACKDROP: React.CSSProperties = {
-  backgroundImage: `url(/images/collage/composite-v${COLLAGE_CACHE_VERSION}.webp), url(${COLLAGE_TINY})`,
+  backgroundImage: `url(/images/collage/composite-v${COMPOSITE_VERSION}.webp), url(/images/collage/composite-v${COLLAGE_CACHE_VERSION}.webp), url(${COLLAGE_TINY})`,
   backgroundSize: "100% 100%",
 }
+const COLLAGE_TILE_BG = `url(/images/collage/composite-v${COMPOSITE_VERSION}.webp), url(/images/collage/composite-v${COLLAGE_CACHE_VERSION}.webp)`
 const COLLAGE_PHOTOS = Array.from(
   { length: COLLAGE_PHOTO_COUNT },
   (_, i) => `/images/collage/collage-${String(i + 1).padStart(2, "0")}.jpg?v=${COLLAGE_CACHE_VERSION}`,
@@ -201,23 +208,6 @@ type Phase = "idle" | "priming" | "open" | "closing"
 // держит на экране ПРЕДЫДУЩУЮ картинку, пока новая не догрузится, и раскрытие стартовало по
 // таймеру раньше, чем реально сменился src: подмигнула одна плитка, а открылось предыдущее
 // фото. Раскрытие теперь ждёт реальной загрузки (плюс минимум PRIME_MS ради самого моргания).
-// Сама плитка коллажа рендерится маленькой (sizes~8-12vw) через next/image,
-// который отдельно запрашивает сильно уменьшенную версию — но preloadImage
-// ниже (для мелких плиток сетки, не для полноразмерного band) до сих пор
-// тянул СЫРОЙ файл из /public напрямую: средний файл в public/images/collage
-// ~150KB, а сам /_next/image?...&w=96&q=75 для той же картинки — ~1.6KB
-// (проверено curl'ом), т.е. каждая из 64 плиток качалась почти в 70 раз
-// тяжелее, чем реально нужно только чтобы понять "готово ли". nextImageUrl
-// собирает тот же публичный URL, что next/image использует сам — тем же
-// путём, которым реально пойдёт браузер за плиткой, так что preload либо
-// попадает в тот же кэш, что и настоящая плитка, либо в худшем случае
-// качает ещё один такой же маленький файл (не 150KB). q=75 — единственное
-// разрешённое значение quality по умолчанию у next/image (проверено:
-// q=60 отдавал 400 "quality of 60 is not allowed").
-function nextImageUrl(src: string, width: number) {
-  return `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=75`
-}
-
 function preloadImage(src: string) {
   return new Promise<void>((resolve) => {
     const img = new window.Image()
@@ -464,78 +454,17 @@ function useRevealCycle(
   return { phase, target, origin, closedScale, forced, notifyBandLoaded, triggerOpen }
 }
 
-// Плитки грузятся строго по порядку слева направо/сверху вниз, если просто
-// положиться на onLoad каждой <Image> — браузер и так тянет их по DOM-порядку
-// (плюс priority у первых усугублял это), и коллаж "дочерчивался" по рядам, а
-// не собирался как пазл (Виктор дважды: "видно, что страница грузится",
-// "чтобы как будто из пазла собирали"). Реальную загрузку каждой картинки
-// (<Image onLoad>) больше не используем для показа — вместо этого сами гоним
-// перемешанный порядок через preloadImage (см. эффект ниже).
-//
-// ВАЖНО: preloadImage запускаются пулом из COLLAGE_CONCURRENCY одновременных
-// загрузок (не await в цикле по одному — так было в первой версии, коллаж
-// из-за этого не показывался очень долго: Виктор "открыл — долго ничего не
-// грузится"; и не все 65 сразу без лимита — так было во второй версии, но на
-// медленной мобильной сети (49 КБ/с) 65 параллельных запросов делят между
-// собой один и тот же узкий канал, и ни один не доходит быстро — тот же
-// эффект, просто по другой причине: Виктор снова "фотки грузятся очень
-// долго"). Пул — как только одна картинка пришла, тут же стартует следующая,
-// но одновременно активно не больше COLLAGE_CONCURRENCY запросов. Задержка
-// на каждую плитку — чисто визуальная (для темпа появления), включается
-// ПОСЛЕ того, как картинка реально пришла.
-const TILE_FADE_MS = 260
-const TILE_STAGGER_MS = 30
-// Раньше "без лимита" (65 параллельных) душило медленную мобильную сеть,
-// когда каждый запрос тянул сырой файл (~150KB) — общий трафик был
-// огромный. Теперь preloadImage грузит оптимизированную next/image версию
-// (~1.6KB, см. nextImageUrl выше), общий трафик на весь коллаж упал на
-// два порядка — лимит можно поднять намного выше, не рискуя забить канал.
-const COLLAGE_CONCURRENCY = 16
-
-// Раньше была ещё крупная "hero"-плитка на всю область поверх сетки, пока
-// сетка грузится (заглушка на время загрузки) — Виктор: одна фотка держится
-// крупно, а раскрытие (см. useRevealCycle ниже) уже открывает поверх нее
-// другую плитку, до того как основная мозаика вообще успела прогрузиться —
-// "не красиво". Убрано: пока сетка не набрала все плитки, показываем только
-// плейсхолдеры (bg-white/15 pulse), без отдельного крупного фото поверх.
-// gridReady — сигнал для useRevealCycle (см. ready ниже): раскрытие плиток
-// начинается только после того, как вся мозаика уже видна целиком, не раньше.
 function PhotoCollage({ size }: { size: number }) {
-  const [loadedTiles, setLoadedTiles] = useState<Set<number>>(() => new Set())
-  const markLoaded = useCallback((i: number) => {
-    setLoadedTiles((prev) => (prev.has(i) ? prev : new Set(prev).add(i)))
-  }, [])
-  // VISIBLE_AT_LG (не COLLAGE_PHOTO_COUNT) — теперь одна плотность на всех
-  // брейкпоинтах (8×8=64 из 67), а preloadImage ниже грузит именно эти 64:
-  // сравнивать готовность с полными 67 значило бы никогда не стать true.
-  const gridReady = loadedTiles.size >= VISIBLE_AT_LG
-
+  // Отдельные плитки не грузятся (см. COMPOSITE_VERSION) — автопоказ ждёт
+  // только саму склейку, а дальше каждое раскрытие тянет ОДНО фото.
+  const [gridReady, setGridReady] = useState(false)
   useEffect(() => {
     let cancelled = false
-    const timers: ReturnType<typeof setTimeout>[] = []
-    // Грузим только те 64, что реально показываются (см. VISIBLE_AT_LG) —
-    // 3 всегда скрытых фото раньше тоже качались впустую.
-    const order = shuffledIndices(VISIBLE_AT_LG)
-    let next = 0
-    let done = 0
-    const runNext = () => {
-      if (cancelled || next >= order.length) return
-      const idx = order[next]
-      next += 1
-      preloadImage(nextImageUrl(COLLAGE_PHOTOS[idx], 96)).then(() => {
-        if (cancelled) return
-        const i = done
-        done += 1
-        timers.push(setTimeout(() => !cancelled && markLoaded(idx), i * TILE_STAGGER_MS))
-        runNext()
-      })
-    }
-    for (let k = 0; k < COLLAGE_CONCURRENCY; k++) runNext()
+    preloadImage(`/images/collage/composite-v${COMPOSITE_VERSION}.webp`).then(() => !cancelled && setGridReady(true))
     return () => {
       cancelled = true
-      timers.forEach(clearTimeout)
     }
-  }, [markLoaded])
+  }, [])
 
   // Реальные DOM-узлы плиток и полос — источник истины для origin (см.
   // makeGetOrigin ниже). tileRefs держит саму map между рендерами (не влияет на
@@ -629,7 +558,10 @@ function PhotoCollage({ size }: { size: number }) {
     const b = bandForTile(i)
     if (b == null) return
     const reveal = reveals[b]
-    if (reveal.phase !== "idle") return
+    // Виктор 2026-11-06: тап должен открывать фото сразу — автопоказ
+    // прерываем, а повторный тап блокируем только пока идёт раскрытие,
+    // запущенное самим гостем.
+    if (reveal.phase !== "idle" && reveal.forced) return
     userTookOverRef.current = true
     reveal.triggerOpen(i)
   }
@@ -648,10 +580,13 @@ function PhotoCollage({ size }: { size: number }) {
     // привязки к брейкпоинту.
     <div className="relative overflow-hidden" style={{ width: size || SQUARE_CSS, height: size || SQUARE_CSS, ...COLLAGE_BACKDROP }}>
       <div className="grid w-full grid-cols-8">
-        {COLLAGE_PHOTOS.map((src, i) => {
+        {COLLAGE_PHOTOS.slice(0, VISIBLE_AT_LG).map((src, i) => {
           const active = activeByTile.get(i)
           // forced (клик гостя) — без блика (см. комментарий у triggerOpen).
           const isPriming = active?.phase === "priming" && !active.forced
+          // Тап гостя: пока грузится именно это одно фото — тонкая белая
+          // рамка на плитке, чтобы было видно, что нажатие принято.
+          const isLoadingTap = active?.phase === "priming" && active.forced
           return (
             <button
               key={src}
@@ -664,20 +599,15 @@ function PhotoCollage({ size }: { size: number }) {
               }}
               className={`relative aspect-square overflow-hidden transition-transform duration-100 active:scale-90 ${tileVisibilityClass(i)} ${
                 isPriming ? "tile-priming" : ""
-              } `}
-            >
-              <Image
-                src={src}
-                alt=""
-                fill
-                sizes="(min-width: 1024px) 8vw, (min-width: 640px) 11vw, 12.5vw"
-                className="object-cover"
-                style={{
-                  opacity: loadedTiles.has(i) ? 1 : 0,
-                  transition: `opacity ${TILE_FADE_MS}ms ease-out`,
-                }}
-              />
-            </button>
+              } ${isLoadingTap ? "animate-pulse ring-2 ring-white ring-inset" : ""}`}
+              // Свой кусок той же склейки фоном (уже в кэше) — плитка выглядит
+              // как раньше, а моргание (filter) и нажатие (scale) снова видны.
+              style={{
+                backgroundImage: COLLAGE_TILE_BG,
+                backgroundSize: "800% 800%",
+                backgroundPosition: `${((i % 8) / 7) * 100}% ${(Math.floor(i / 8) / 7) * 100}%`,
+              }}
+            />
           )
         })}
       </div>
@@ -717,6 +647,9 @@ function PhotoCollage({ size }: { size: number }) {
       {reveals.map((reveal, b) => {
         const open = reveal.phase === "open"
         const rendered = open || reveal.phase === "closing"
+        // Большое фото монтируем только когда полоса реально что-то
+        // раскрывает — иначе каждая полоса сразу тянула бы фото №1 впустую.
+        const mounted = reveal.phase !== "idle"
         return (
           <div key={b} ref={bandRefs[b]} className={BAND_LAYOUT[b]}>
             <div
@@ -731,14 +664,17 @@ function PhotoCollage({ size }: { size: number }) {
                 boxShadow: rendered ? "0 20px 45px -12px rgba(0,0,0,0.55)" : undefined,
               }}
             >
-              <Image
-                src={COLLAGE_PHOTOS[reveal.target]}
-                alt=""
-                fill
-                sizes={BAND_SIZES[b]}
-                className="object-cover"
-                onLoad={reveal.notifyBandLoaded}
-              />
+              {mounted && (
+                <Image
+                  src={COLLAGE_PHOTOS[reveal.target]}
+                  alt=""
+                  fill
+                  loading="eager"
+                  sizes={BAND_SIZES[b]}
+                  className="object-cover"
+                  onLoad={reveal.notifyBandLoaded}
+                />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
             </div>
           </div>
