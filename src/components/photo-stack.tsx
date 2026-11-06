@@ -37,6 +37,35 @@ const STACK_TRANSFORM = [
 const SHUFFLE_MS = 160
 const SWIPE_THRESHOLD = 40
 
+// На медленном мобильном интернете (у Виктора было 7 КБ/с) часть фото задних
+// карточек отваливалась, и браузер рисовал в углу каждой карточки значок
+// «битая картинка» — по диагонали, как сдвинуты карточки. Поэтому: пока фото
+// не загрузилось, оно прозрачное (видна тёмная подложка карточки, а не значок),
+// при ошибке пробуем ещё раз (перемонтируем <Image> -> новый запрос), и
+// sizes под реальную ширину стопки, а не 100vw — файлы в разы легче.
+const MAX_RETRIES = 3
+
+function StackPhoto({ src, alt }: { src: string; alt: string }) {
+  const [attempt, setAttempt] = useState(0)
+  const [loaded, setLoaded] = useState(false)
+  return (
+    <Image
+      key={attempt}
+      src={src}
+      alt={alt}
+      fill
+      draggable={false}
+      className={`object-cover transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
+      sizes="(max-width: 768px) 90vw, 50vw"
+      onLoad={() => setLoaded(true)}
+      onError={() => {
+        setLoaded(false)
+        if (attempt < MAX_RETRIES) setTimeout(() => setAttempt((a) => a + 1), 1500 * (attempt + 1))
+      }}
+    />
+  )
+}
+
 export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
   const [positions, setPositions] = useState(() => photos.map((_, i) => i))
   const [lifted, setLifted] = useState(false)
@@ -91,7 +120,7 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
       {photos.map((src, i) => (
         <div
           key={src}
-          className="absolute inset-0 overflow-hidden shadow-xl"
+          className="absolute inset-0 overflow-hidden bg-neutral-800 shadow-xl"
           style={{
             zIndex: photos.length - positions[i],
             transitionProperty: "transform",
@@ -100,7 +129,7 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
             transform: `${STACK_TRANSFORM[positions[i]]}${lifted ? " translateY(-26px) scale(1.02)" : ""}`,
           }}
         >
-          <Image src={src} alt={alt} fill draggable={false} className="object-cover" sizes="100vw" />
+          <StackPhoto src={src} alt={alt} />
         </div>
       ))}
       <button
