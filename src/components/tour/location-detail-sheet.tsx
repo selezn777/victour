@@ -25,6 +25,8 @@ import "swiper/css/pagination"
 // Dialog/DialogContent (не Sheet) — по-настоящему центрированный попап
 // (fixed top-1/2 left-1/2 translate), со штатной кнопкой закрытия из
 // общего UI-кита, а не самодельной.
+const SHOW_ARTICLE_LINK = false
+
 export function LocationDetailSheet({
   title,
   description,
@@ -106,7 +108,8 @@ export function LocationDetailSheet({
             (тот же зелёный, что у кнопки брони на TourBottomBar), во всю
             ширину и без полей, флашем к нижнему краю попапа (скругление
             даёт overflow-hidden у DialogContent, свой rounded не нужен). */}
-        {articleSlug && (
+        {/* Виктор 2026-11-06: кнопку "Читать статью" пока прячем, вернёмся к ней позже. */}
+        {SHOW_ARTICLE_LINK && articleSlug && (
           <Button
             type="button"
             size="lg"

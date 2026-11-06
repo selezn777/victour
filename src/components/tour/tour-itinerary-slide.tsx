@@ -131,7 +131,6 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
                 {item.photos.length > 0 && (
                   <Button
                     type="button"
-                    variant="outline"
                     size="xs"
                     onClick={() => setOpenIndex(index)}
                     className="shrink-0"

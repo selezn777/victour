@@ -11,6 +11,7 @@ import { SlideDeck } from "@/components/slide-deck"
 import { TourHeader } from "@/components/tour/tour-header"
 import { TourPhotoSlide } from "@/components/tour/tour-photo-slide"
 import { TourItinerarySlide } from "@/components/tour/tour-itinerary-slide"
+import { TourAboutSlide } from "@/components/tour/tour-about-slide"
 import { TourIncludesSlide } from "@/components/tour/tour-includes-slide"
 import { whatToBringFor } from "@/lib/what-to-bring"
 import { TourBookingSlide } from "@/components/tour/tour-booking-slide"
@@ -122,7 +123,8 @@ export function TourPageClient({
   // и плашка с ценой пряталась не на слайде брони, а на следующем за ним
   // (FAQ) — там же из-за этого "обрезалась" страница (деке всё равно
   // вычитала высоту плашки, а сама плашка на FAQ была скрыта).
-  const bookingSlideIndex = 1 + itinerarySlides.length + 1
+  // +1 слайд "О туре" сразу после фото (Виктор 2026-11-06).
+  const bookingSlideIndex = 1 + 1 + itinerarySlides.length + 1
 
   // Плашка скрыта на фото (там и так "тыкни"/свайп) и на слайде брони
   // (там уже есть своя кнопка "Добавить в заявку" с ценой, дублировать не
@@ -168,6 +170,7 @@ export function TourPageClient({
         }}
         slides={[
           <TourPhotoSlide key="photo" tour={tour} />,
+          <TourAboutSlide key="about" tour={tour} />,
           ...itinerarySlides,
           <TourIncludesSlide
             key="includes"
