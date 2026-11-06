@@ -5,7 +5,6 @@ import { ChevronRightIcon } from "lucide-react"
 import type { ItineraryItem } from "@/lib/site-data"
 import { splitHighlights } from "@/lib/itinerary-highlights"
 import { LocationDetailSheet } from "@/components/tour/location-detail-sheet"
-import { Button } from "@/components/ui/button"
 
 // Триггерные слова (капибары, дракон, золотая башня и т.д.) — ярким акцентным
 // цветом прямо в тексте (Виктор: "тригерные туристические слова где ярким
@@ -116,38 +115,52 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
           без подписи — "непонятно, что это" — вернул текст "Подробнее" в
           стиле общих кнопок сайта (Button variant=outline), прижата к
           правому краю. */}
-      <ol className="flex h-full flex-col justify-between gap-2 pb-2 sm:gap-2.5">
-        {dayItems.map((item, index) => (
-          <li key={item.title} className="flex gap-2 text-left">
-            {/* Виктор: "цифры надо сделать ярким цветом" — было bg-muted/text-muted-foreground (серое). */}
-            <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
-              {index + 1}
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[13px] leading-snug font-medium sm:text-sm">
-                  <HighlightedText text={item.title} />
-                </p>
-                {item.photos.length > 0 && (
-                  <Button
-                    type="button"
-                    size="xs"
-                    onClick={() => setOpenIndex(index)}
-                    className="shrink-0"
-                  >
-                    Подробнее
+      {/* Виктор 2026-11-06: "между разными локациями... как кнопки сделать
+          и разделение, чтобы было видно, как линиями, тык-тык-тык" —
+          каждая точка теперь карточка-кнопка (тап по всей карточке
+          открывает фото и описание), а номера соединены вертикальной
+          линией маршрута, чтобы было видно, где кончается одна точка и
+          начинается другая. Распределение по высоте — тот же flexbox
+          (justify-between), без JS. */}
+      <ol className="relative flex h-full flex-col justify-between gap-1.5 pb-2 sm:gap-2">
+        <span aria-hidden className="absolute top-4 bottom-6 left-[9px] w-0.5 rounded-full bg-primary/35" />
+        {dayItems.map((item, index) => {
+          const clickable = item.photos.length > 0
+          // Длинные дни (Далат, 10 точек) с карточками не влезали под плашку
+          // цены — там убираем строку описания (она всё равно есть в попапе).
+          const dense = dayItems.length > 7
+          return (
+            <li key={item.title} className="relative flex items-center gap-2 text-left">
+              <span className="z-10 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground ring-4 ring-background">
+                {index + 1}
+              </span>
+              <button
+                type="button"
+                disabled={!clickable}
+                onClick={() => setOpenIndex(index)}
+                className={`flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-card px-2.5 text-left ${dense ? "py-1" : "py-1.5"} transition-colors enabled:hover:border-primary/60 enabled:active:bg-primary/10`}
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[13px] leading-snug font-medium sm:text-sm">
+                    <HighlightedText text={item.title} />
+                  </span>
+                  {item.description && !dense && (
+                    <span className="mt-0.5 line-clamp-1 text-[11px] leading-snug text-muted-foreground sm:text-xs">
+                      <HighlightedText text={item.description} />
+                    </span>
+                  )}
+                </span>
+                {clickable && (
+                  <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground">
+                    {/* в плотном режиме — только стрелка, чтобы название влезало в строку */}
+                    {!dense && "Подробнее"}
                     <ChevronRightIcon className="size-3" />
-                  </Button>
+                  </span>
                 )}
-              </div>
-              {item.description && (
-                <p className="mt-0.5 line-clamp-1 text-[11px] leading-snug text-muted-foreground sm:text-xs">
-                  <HighlightedText text={item.description} />
-                </p>
-              )}
-            </div>
-          </li>
-        ))}
+              </button>
+            </li>
+          )
+        })}
       </ol>
 
       {openItem && (
