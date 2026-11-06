@@ -5,7 +5,7 @@ import { MenuIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { AccountMenuRow } from "@/components/account-menu"
-import { formatRubFromUsd, formatVndFromUsd } from "@/lib/format"
+import { formatVndFromUsd } from "@/lib/format"
 import type { PrimaryGuide, SiteSettings } from "@/lib/site-data"
 import { useResort } from "@/hooks/use-resort"
 
@@ -101,10 +101,7 @@ export function SiteMenu({
           </Link>
           <div className="mt-3 flex flex-col gap-1 border-t border-border pt-3 text-xs text-muted-foreground">
             {settings && (
-              <>
-                <span>$1 = {formatVndFromUsd(1, settings.usdVndRate)}</span>
-                <span>$1 = {formatRubFromUsd(1, settings.usdRubRate, settings.rubMarkupPct)}</span>
-              </>
+              <span>$1 = {formatVndFromUsd(1, settings.usdVndRate)}</span>
             )}
             <Link href="/privacy" className="mt-1 hover:underline">
               Политика конфиденциальности

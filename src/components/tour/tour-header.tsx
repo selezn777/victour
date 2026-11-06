@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { AccountMenuRow } from "@/components/account-menu"
 import { CartDrawer } from "@/components/cart-drawer"
-import { formatRubFromUsd, formatVndFromUsd } from "@/lib/format"
+import { formatVndFromUsd } from "@/lib/format"
 import { useHeaderHeightVar } from "@/hooks/use-header-height-var"
 import type { SiteSettings, TourGuide } from "@/lib/site-data"
 
@@ -42,7 +42,7 @@ export function TourHeader({
 
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
           <span className="hidden text-xs text-muted-foreground md:inline">
-            $1 = {formatVndFromUsd(1, settings.usdVndRate)} · {formatRubFromUsd(1, settings.usdRubRate, settings.rubMarkupPct)}
+            $1 = {formatVndFromUsd(1, settings.usdVndRate)}
           </span>
 
           <Sheet>
@@ -64,9 +64,6 @@ export function TourHeader({
                 </Link>
                 <span className="px-2 py-2 text-sm text-muted-foreground">
                   $1 = {formatVndFromUsd(1, settings.usdVndRate)}
-                </span>
-                <span className="px-2 py-2 text-sm text-muted-foreground">
-                  $1 = {formatRubFromUsd(1, settings.usdRubRate, settings.rubMarkupPct)}
                 </span>
               </nav>
               {guide && (
