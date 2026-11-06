@@ -470,6 +470,11 @@ export const PROMO_TOURS = [
 // Реклама после заявки на Фукуоке — туры Фукуока (только с фото)
 export const PROMO_TOURS_PQ = [
   {
+    slug: "phuquoc-dikiy",
+    title: "Дикий Фукуок",
+    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-dikiy/v1-07.webp",
+  },
+  {
     slug: "phuquoc-nastoyashchiy",
     title: "Настоящий Фукуок",
     imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-nastoyashchiy/11.webp",

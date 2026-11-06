@@ -1117,6 +1117,12 @@ const PHUQUOC_TOURS: typeof CATALOG_TOURS = [
     imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-nastoyashchiy/11.webp",
     annotation: "Дикий мёд, пагода над морем, кокосовая тюрьма и самолёты над головой. К 15:00 вы в отеле.",
   },
+  {
+    slug: "phuquoc-dikiy",
+    title: "Дикий Фукуок",
+    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-dikiy/v1-07.webp",
+    annotation: "Питон на плечах, Будда, который исполняет желания, водопад в джунглях и круглые лодки.",
+  },
 ]
 
 // Было "горной" волной (пик в центре) — рассчитано на нечётное число
@@ -1276,7 +1282,7 @@ function ToursSlide() {
             заканчивается на "глубокие". */}
         <p className="mt-3 max-w-md text-base leading-snug font-medium text-foreground sm:mt-5 sm:max-w-xl sm:text-lg">
           {isPhuQuoc
-            ? "Два маршрута: яркий вечер с ночным сафари и настоящий Фукуок за одно утро, каким его знают сами вьетнамцы."
+            ? "Три маршрута: яркий вечер с ночным сафари, настоящий Фукуок за одно утро и дикий Фукуок на целый день, с питоном, Буддой и водопадом."
             : "Авторские маршруты, выверенные до мелочей! Всего 4 программы, потому что они безопасные, интересные и при этом глубокие."}
         </p>
       </div>
