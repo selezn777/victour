@@ -103,19 +103,21 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* Виктор 2026-11-08: «слишком чёрный», выбрал вариант «Ночное море» - тёмно-синий
+   фон с лёгкими волнами (body ниже), карточки и плашки в том же оттенке. */
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(0.185 0.035 235);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: oklch(0.23 0.037 235);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: oklch(0.23 0.037 235);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.596 0.145 163.225);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.269 0 0);
+  --secondary: oklch(0.27 0.035 235);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --muted: oklch(0.27 0.035 235);
+  --muted-foreground: oklch(0.72 0.015 235);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
@@ -164,6 +166,16 @@
        секунду. Дека сама ведёт вертикальную навигацию (Swiper), браузеру
        здесь дополнительно скроллить/обновлять нечего. */
     overscroll-behavior-y: none;
+  }
+  .dark body {
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='60'%3E%3Cpath d='M0 30 Q30 10 60 30 T120 30 T180 30 T240 30' fill='none' stroke='white' stroke-opacity='0.07' stroke-width='1.5'/%3E%3C/svg%3E"),
+      linear-gradient(180deg, oklch(0.22 0.045 225), oklch(0.16 0.03 245));
+    background-attachment: fixed;
+  }
+  /* Страница заявки в тёплой палитре - без синих волн под ней */
+  .dark body:has(.request-warm) {
+    background: oklch(0.155 0.012 40);
   }
   html {
     @apply font-sans;
