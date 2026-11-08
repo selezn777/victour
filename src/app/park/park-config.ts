@@ -220,7 +220,7 @@ const PQ_HONTHOM: Destination = {
     { key: "kiss_show", group: "🌅 Шоу в Sunset Town", label: "Kiss of the Sea 21:00–21:30, главная трибуна", price: "800K ₫", english: "Kiss of the Sea 21:00, main stand (800K VND)" },
     { key: "symphony_std", group: "🌅 Шоу в Sunset Town", label: "Symphony of the Sea 19:30, стандарт", price: "700K ₫", english: "Symphony of the Sea standard (700K VND)" },
     { key: "symphony_chill", group: "🌅 Шоу в Sunset Town", label: "Symphony of the Sea 19:30, chill + фуршет", price: "800K ₫", english: "Symphony of the Sea chill + snacks (800K VND)" },
-    { key: "symphony_dinner", group: "🌅 Шоу в Sunset Town", label: "Symphony of the Sea 19:30, ужин + шоу", price: "1 200K ₫ (сб 1 300K)", english: "Symphony of the Sea dinner + show (1,200K Sun–Fri / 1,300K Sat VND)" },
+    { key: "symphony_dinner", group: "🌅 Шоу в Sunset Town", label: "Symphony of the Sea 19:30, ужин + шоу", price: "1 200K ₫ (сб-вс 1 300K)", english: "Symphony of the Sea dinner + show (1,200K Sun–Fri / 1,300K Sat-Sun VND)" },
   ],
 }
 
