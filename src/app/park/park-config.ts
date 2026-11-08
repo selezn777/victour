@@ -200,6 +200,7 @@ const PQ_HONTHOM: Destination = {
   packages: [
     { id: "cable", title: "Канатка + аквапарк", price: "850K ₫", childPrice: "700K ₫", english: "Cable car round trip + Aquatopia (adult 850K / child 700K VND)" },
     { id: "cable_lunch", title: "С обедом", price: "1 150K ₫", childPrice: "900K ₫", english: "Cable car + Aquatopia + buffet lunch (adult 1,150K / child 900K VND)" },
+    { id: "oneway_lunch", title: "В одну сторону + обед", price: "1 070K ₫", childPrice: "800K ₫", english: "Cable car one way + Aquatopia + buffet lunch (adult 1,070K / child 800K VND)" },
   ],
   guests: [
     { key: "infants", emoji: "👶", title: "Дети до 1 метра", note: "Бесплатно!", free: true, formLabel: "Дети до 1 м (бесплатно)", english: "Kids under 1 m (free)" },
@@ -216,7 +217,10 @@ const PQ_HONTHOM: Destination = {
     { ...PQ_NORTH, priceUsd: 25 },
   ],
   extras: [
-    { key: "kiss_show", group: "🌅 Вечер в Sunset Town", label: "Шоу Kiss of the Sea, 21:00 (кроме вторника)", english: "Kiss of the Sea show 21:00" },
+    { key: "kiss_show", group: "🌅 Шоу в Sunset Town", label: "Kiss of the Sea 21:00–21:30, главная трибуна", price: "800K ₫", english: "Kiss of the Sea 21:00, main stand (800K VND)" },
+    { key: "symphony_std", group: "🌅 Шоу в Sunset Town", label: "Symphony of the Sea 19:30, стандарт", price: "700K ₫", english: "Symphony of the Sea standard (700K VND)" },
+    { key: "symphony_chill", group: "🌅 Шоу в Sunset Town", label: "Symphony of the Sea 19:30, chill + фуршет", price: "800K ₫", english: "Symphony of the Sea chill + snacks (800K VND)" },
+    { key: "symphony_dinner", group: "🌅 Шоу в Sunset Town", label: "Symphony of the Sea 19:30, ужин + шоу", price: "1 200K ₫ (сб 1 300K)", english: "Symphony of the Sea dinner + show (1,200K Sun–Fri / 1,300K Sat VND)" },
   ],
 }
 

@@ -384,7 +384,7 @@ function BookingForm({
                     setPackageByDest((s) => ({ ...s, [destination]: p.id }))
                   }
                   aria-pressed={active}
-                  className={`flex flex-col justify-start rounded-2xl border-2 px-3 py-2.5 text-left transition-colors ${
+                  className={`flex flex-col justify-start last:odd:col-span-2 rounded-2xl border-2 px-3 py-2.5 text-left transition-colors ${
                     active
                       ? "border-(--c-primary) bg-(--c-primary) text-white"
                       : "border-(--c-border) bg-white text-(--c-ink)"
@@ -696,7 +696,7 @@ function BookingForm({
         {dest.extras.length > 0 && (
           <details
             className="group rounded-2xl bg-white"
-            open={destination === "hontam"}
+            open={destination === "hontam" || destination === "pq_honthom"}
           >
             <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 px-3.5 py-2.5 text-[14px] font-bold text-(--c-primary) [&::-webkit-details-marker]:hidden">
               <span>

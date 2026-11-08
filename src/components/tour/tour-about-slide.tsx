@@ -1,20 +1,20 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { CheckIcon, CopyIcon, XIcon } from "lucide-react"
+import { XIcon } from "lucide-react"
 import type { TourDetail } from "@/lib/site-data"
-import { TOUR_ABOUT, aboutToText } from "@/lib/tour-about"
+import { TOUR_ABOUT } from "@/lib/tour-about"
 import { useShrinkToFit } from "@/hooks/use-shrink-to-fit"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog"
 
 // Слайд "О туре" (Виктор 2026-11-06): полноценное продающее описание —
-// кому, что, зачем, — которое можно скопировать и отправить в WhatsApp.
+// кому, что, зачем. Кнопку "Скопировать" Виктор убрал 2026-11-08.
 // Длинный текст не влезает в слайд, а скролл внутри слайда колоды Виктор
 // не хочет (и на телефоне он конфликтует с вертикальным Swiper). Поэтому
 // на самом слайде — заголовок, подзаголовок и первый абзац серым, а
 // целиком текст открывается в попапе (портал вне колоды, там скролл
-// работает) с кнопкой "Скопировать".
+// работает).
 export function TourAboutSlide({ tour }: { tour: TourDetail }) {
   const about = TOUR_ABOUT[tour.slug]
   const title = about?.title ?? tour.title
@@ -44,7 +44,6 @@ export function TourAboutSlide({ tour }: { tour: TourDetail }) {
               <Button type="button" size="lg" onClick={() => setOpen(true)}>
                 Читать полностью
               </Button>
-              <CopyButton text={aboutToText(about)} />
             </div>
           )}
         </div>
@@ -73,42 +72,9 @@ export function TourAboutSlide({ tour }: { tour: TourDetail }) {
                 </div>
               ))}
             </div>
-            <div className="shrink-0 border-t border-border p-3">
-              <CopyButton text={aboutToText(about)} className="w-full" />
-            </div>
           </DialogContent>
         </Dialog>
       )}
     </div>
-  )
-}
-
-function CopyButton({ text, className }: { text: string; className?: string }) {
-  const [done, setDone] = useState(false)
-  return (
-    <Button
-      type="button"
-      size="lg"
-      variant="outline"
-      className={className}
-      onClick={async () => {
-        try {
-          await navigator.clipboard.writeText(text)
-        } catch {
-          // Старые браузеры/вебвью Instagram без clipboard API.
-          const ta = document.createElement("textarea")
-          ta.value = text
-          document.body.appendChild(ta)
-          ta.select()
-          document.execCommand("copy")
-          ta.remove()
-        }
-        setDone(true)
-        setTimeout(() => setDone(false), 2000)
-      }}
-    >
-      {done ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
-      {done ? "Скопировано" : "Скопировать"}
-    </Button>
   )
 }
