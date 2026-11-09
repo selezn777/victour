@@ -1,4 +1,4 @@
-// Группы 10-15 человек (Виктор 2026-11-04: «у меня есть автобус, целую компанию
+// Группы 10-13 человек (Виктор 2026-11-04: «у меня есть автобус, целую компанию
 // свожу»). В базе pricing_tiers ограничен check (guest_count between 2 and 9),
 // поэтому большие группы достраиваются здесь, той же формулой, что и
 // supabase/seed-scripts/2026-11-04-group-tiers-to-15.mjs:
@@ -7,7 +7,7 @@
 //                     + автобус с 10 человек ($80, Далат 2 дня - $160 за два дня),
 //   цена за человека округляется вверх до $5.
 
-export const MAX_GROUP = 15
+export const MAX_GROUP = 13 // Виктор 2026-11-09: «до 13 человек ... все туры»
 const BUS_FROM = 10
 
 type Tier = { guestCount: number; priceAdultUsd: number; priceChildUsd: number | null }
