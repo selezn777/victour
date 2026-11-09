@@ -33,19 +33,23 @@ export function CookieConsent({ gaId }: { gaId: string | undefined }) {
         // и глушил клики по ней, пока согласие не выбрано (нашёл через
         // Puppeteer против прода: клик по "Подробнее" не срабатывал именно
         // из-за этого перекрытия, без баннера — работал).
-        <div className="fixed inset-x-3 bottom-20 z-50 sm:inset-x-auto sm:right-4 sm:bottom-20 sm:left-auto sm:max-w-xs">
-          <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card/95 p-4 shadow-lg backdrop-blur supports-backdrop-filter:bg-card/85">
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              Используем cookie для аналитики посещений.{" "}
+        // По центру и компактной квадратной карточкой (Виктор: "по центру, чтобы
+        // удобно тыкнуть и идти дальше", "более квадратный"). Крупные кнопки
+        // h-11 одна под другой - палец попадает с первого раза.
+        <div className="fixed inset-x-0 bottom-24 z-50 flex justify-center px-4 pointer-events-none">
+          <div className="pointer-events-auto flex w-[264px] flex-col items-center gap-3 rounded-3xl border border-border bg-card/95 p-5 text-center shadow-2xl backdrop-blur supports-backdrop-filter:bg-card/85">
+            <div className="text-3xl leading-none" aria-hidden>🍪</div>
+            <p className="text-sm leading-snug text-muted-foreground">
+              Cookie только для статистики посещений.{" "}
               <Link href="/privacy" className="text-primary hover:underline">
                 Подробнее
               </Link>
             </p>
-            <div className="flex gap-2">
-              <Button size="sm" className="flex-1" onClick={() => choose("accepted")}>
+            <div className="flex w-full flex-col gap-2">
+              <Button className="h-11 w-full rounded-xl text-base" onClick={() => choose("accepted")}>
                 Принять
               </Button>
-              <Button size="sm" variant="outline" className="flex-1" onClick={() => choose("declined")}>
+              <Button variant="ghost" className="h-9 w-full rounded-xl text-muted-foreground" onClick={() => choose("declined")}>
                 Отклонить
               </Button>
             </div>
