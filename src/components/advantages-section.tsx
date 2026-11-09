@@ -1409,6 +1409,49 @@ function QuoteSlide({
   )
 }
 
+// Трансфер: на Фукуоке свои машины - семиместные Toyota Veloz / Mitsubishi
+// Xpander, без кресел с массажем (Виктор 2026-11-09: "у нас нет пока здесь
+// таких машин на острове" - убрать из текста), фото под них. В Нячанге и
+// Камрани - прежний премиальный минивэн.
+const PQ_TRANSFER_PHOTOS = [1, 2, 3, 4, 5, 6, 7, 8].map(
+  (i) => `/images/hero/pq-transfer-${String(i).padStart(2, "0")}.jpg`,
+)
+
+function TransportSlide() {
+  const [resort] = useResort()
+  const isPhuQuoc = resortById(resort)?.area === "phuquoc"
+  if (isPhuQuoc) {
+    return (
+      <PhotoSlide
+        title="Трансфер, после которого не нужно восстанавливаться"
+        body="Ни тесноты, ни духоты, ни нервотрёпки за рулём. Просторный семиместный минивэн, климат-контроль и аккуратный, спокойный водитель."
+        imageSrc={PQ_TRANSFER_PHOTOS[0]}
+        imageAlt="Семиместный минивэн для трансфера на Фукуоке"
+        stackImages={PQ_TRANSFER_PHOTOS}
+      />
+    )
+  }
+  return (
+    <PhotoSlide
+      title="Трансфер, после которого не нужно восстанавливаться"
+      body="Ни тесноты, ни духоты, ни нервотрёпки за рулём. Кожаные кресла с массажем, климат-контроль и просто аккуратный, спокойный водитель."
+      imageSrc="/images/hero/premium-van-interior.jpg"
+      imageAlt="Салон премиального минивэна с кожаными креслами"
+      imagePosition="30% 50%"
+      stackImages={[
+        "/images/hero/premium-van-exterior.jpg",
+        "/images/hero/premium-van-interior-5.jpg",
+        "/images/hero/premium-van-interior-6.jpg",
+        "/images/hero/premium-van-interior-7.jpg",
+        "/images/hero/premium-van-interior-8.jpg",
+        "/images/hero/premium-van-exterior-2.jpg",
+        "/images/hero/premium-van-exterior-3.jpg",
+        "/images/hero/premium-van-interior-9.jpg",
+      ]}
+    />
+  )
+}
+
 export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
   // «Выбрать тур» — одна общая плашка во всю ширину под декой, а не своя
   // кнопка на каждом слайде (Виктор: «как будто 5 кнопок, а должна быть одна»).
@@ -1420,24 +1463,7 @@ export function AdvantagesSection({ heroQuotes }: { heroQuotes: Review[] }) {
         paginationPosition="none"
         slides={[
           <IntroSlide key="intro" />,
-          <PhotoSlide
-            key="transport"
-            title="Трансфер, после которого не нужно восстанавливаться"
-            body="Ни тесноты, ни духоты, ни нервотрёпки за рулём. Кожаные кресла с массажем, климат-контроль и просто аккуратный, спокойный водитель."
-            imageSrc="/images/hero/premium-van-interior.jpg"
-            imageAlt="Салон премиального минивэна с кожаными креслами"
-            imagePosition="30% 50%"
-            stackImages={[
-              "/images/hero/premium-van-exterior.jpg",
-              "/images/hero/premium-van-interior-5.jpg",
-              "/images/hero/premium-van-interior-6.jpg",
-              "/images/hero/premium-van-interior-7.jpg",
-              "/images/hero/premium-van-interior-8.jpg",
-              "/images/hero/premium-van-exterior-2.jpg",
-              "/images/hero/premium-van-exterior-3.jpg",
-              "/images/hero/premium-van-interior-9.jpg",
-            ]}
-          />,
+          <TransportSlide key="transport" />,
           <ToursSlide key="tours" />,
           <ValuesSlide
             key="values"
