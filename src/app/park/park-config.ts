@@ -474,6 +474,11 @@ export const PROMO_TOURS = [
 // Реклама после заявки на Фукуоке — туры Фукуока (только с фото)
 export const PROMO_TOURS_PQ = [
   {
+    slug: "phuquoc-hoian-danang",
+    title: "Хойан + Дананг, 3 дня",
+    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-hoian-danang/02.webp",
+  },
+  {
     slug: "phuquoc-dikiy",
     title: "Дикий Фукуок",
     imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-dikiy/v1-07.webp",

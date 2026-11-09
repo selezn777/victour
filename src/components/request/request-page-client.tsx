@@ -33,9 +33,9 @@ function formatDate(iso: string): string {
   })
 }
 
-function isoDatePlusOne(iso: string): string {
+function isoDatePlusOne(iso: string, days = 1): string {
   const d = new Date(`${iso}T00:00:00`)
-  d.setDate(d.getDate() + 1)
+  d.setDate(d.getDate() + days)
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, "0")
   const day = String(d.getDate()).padStart(2, "0")
@@ -177,7 +177,7 @@ function ItemEditForm({
     if (!selectedDate) return
     const result = onConfigure({
       date: selectedDate,
-      dateEnd: info.durationDays === 2 ? isoDatePlusOne(selectedDate) : null,
+      dateEnd: info.durationDays > 1 ? isoDatePlusOne(selectedDate, info.durationDays - 1) : null,
       adults: guestCount,
       priceAdultUsd,
     })

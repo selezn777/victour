@@ -12,7 +12,7 @@ export const RESORTS: { id: ResortId; label: string; area: ResortArea }[] = [
 ]
 
 /** Туры Фукуока по slug; всё остальное считается зоной Нячанга/Камрани. */
-const PHUQUOC_TOUR_SLUGS = new Set(["phuquoc-vecher-safari", "phuquoc-nastoyashchiy", "phuquoc-dikiy"])
+const PHUQUOC_TOUR_SLUGS = new Set(["phuquoc-vecher-safari", "phuquoc-nastoyashchiy", "phuquoc-dikiy", "phuquoc-hoian-danang"])
 
 export function tourArea(slug: string): ResortArea {
   return PHUQUOC_TOUR_SLUGS.has(slug) ? "phuquoc" : "nyachang"

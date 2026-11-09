@@ -70,9 +70,9 @@ function flyToCart(buttonEl: HTMLElement) {
   })
 }
 
-function isoDatePlusOne(iso: string): string {
+function isoDatePlusOne(iso: string, days = 1): string {
   const d = new Date(`${iso}T00:00:00`)
-  d.setDate(d.getDate() + 1)
+  d.setDate(d.getDate() + days)
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, "0")
   const day = String(d.getDate()).padStart(2, "0")
@@ -81,7 +81,9 @@ function isoDatePlusOne(iso: string): string {
 
 function isGuideFreeOnDate(guide: TourGuide, date: string, durationDays: number): boolean {
   if (guide.bookedDates.includes(date)) return false
-  if (durationDays === 2 && guide.bookedDates.includes(isoDatePlusOne(date))) return false
+  for (let i = 1; i < durationDays; i++) {
+    if (guide.bookedDates.includes(isoDatePlusOne(date, i))) return false
+  }
   return true
 }
 
@@ -234,7 +236,7 @@ export function TourBookingSlide({
       guideId: guide.id,
       guideName: guide.name,
       date: selectedDate,
-      dateEnd: tour.durationDays === 2 ? isoDatePlusOne(selectedDate) : null,
+      dateEnd: tour.durationDays > 1 ? isoDatePlusOne(selectedDate, tour.durationDays - 1) : null,
       adults: guestCount,
       priceAdultUsd,
     })

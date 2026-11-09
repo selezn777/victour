@@ -1069,6 +1069,12 @@ const PHUQUOC_TOURS: typeof CATALOG_TOURS = [
     imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-dikiy/v1-07.webp",
     annotation: "Питон на плечах, Будда, который исполняет желания, водопад в джунглях и круглые лодки.",
   },
+  {
+    slug: "phuquoc-hoian-danang",
+    title: "Хойан + Дананг, 3 дня",
+    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-hoian-danang/02.webp",
+    annotation: "Летим с Фукуока: Золотой мост, фонарики Хойана и Мраморные горы. Перелёт и отель включены.",
+  },
 ]
 
 // Было "горной" волной (пик в центре) — рассчитано на нечётное число
@@ -1226,7 +1232,7 @@ function ToursSlide() {
             текст проще + серый абзац, как на Фукуоке. */}
         <p className="mt-3 max-w-md text-base leading-snug font-medium text-foreground sm:mt-5 sm:max-w-xl sm:text-lg">
           {isPhuQuoc
-            ? "Авторские маршруты по острову с вашим гидом"
+            ? "Авторские маршруты по острову и за его пределы"
             : "Выверенные до мелочей: безопасные, интересные и при этом глубокие"}
         </p>
         {/* Виктор 2026-11-06: как на остальных слайдах — заголовок,
@@ -1234,7 +1240,7 @@ function ToursSlide() {
             маршрутов не называем, их скоро станет больше. */}
         <p className="mt-2 max-w-md text-base leading-snug text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-xl">
           {isPhuQuoc
-            ? "Вечер с ночным сафари, утро по главным местам и целый день в джунглях."
+            ? "Вечер с ночным сафари, утро по главным местам, день в джунглях и Хойан с Данангом на три дня."
             : "Нячанг за один день, маяк Дай Лань, Фанранг с пещерами и Далат на два дня."}
         </p>
       </div>

@@ -116,8 +116,9 @@ export function BookingCalendar({
     if (!selectedDate) return false
     const iso = toIsoDate(date)
     if (iso === selectedDate) return true
-    if (durationDays === 2) {
-      return iso === toIsoDate(addDays(new Date(`${selectedDate}T00:00:00`), 1))
+    // Многодневные туры (Далат 2 дня, Хойан 3 дня): подсвечиваем все дни тура.
+    for (let i = 1; i < durationDays; i++) {
+      if (iso === toIsoDate(addDays(new Date(`${selectedDate}T00:00:00`), i))) return true
     }
     return false
   }
@@ -196,9 +197,11 @@ export function BookingCalendar({
         )}
       </div>
 
-      {durationDays === 2 && (
+      {durationDays > 1 && (
         <p className={cn("text-xs text-muted-foreground", dense ? "mt-1.5 leading-snug" : "mt-2")}>
-          Тур на два дня — вторая дата бронируется автоматически следующим днём.
+          {durationDays === 2
+            ? "Тур на два дня — вторая дата бронируется автоматически следующим днём."
+            : `Тур на ${durationDays} дня — выберите день вылета, следующие дни бронируются автоматически.`}
         </p>
       )}
 
