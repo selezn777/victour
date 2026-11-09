@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { CookieConsent } from "@/components/cookie-consent";
 import { NavigationTracker } from "@/components/navigation-tracker";
 import { UrlCleaner } from "@/components/url-cleaner";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const inter = Inter({
@@ -54,6 +55,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <CookieConsent gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
         <NavigationTracker />
         <UrlCleaner />
+        {/* Vercel Web Analytics: без cookie, баннер согласия не нужен (Виктор 2026-11-09: «только не Яндекс») */}
+        <Analytics />
       </body>
     </html>
   );
