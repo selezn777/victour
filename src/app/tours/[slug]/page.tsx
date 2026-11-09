@@ -5,6 +5,7 @@ import { TourPageClient } from "@/components/tour/tour-page-client"
 import { getActiveTourSlugs, getTourPageData } from "@/lib/site-data"
 import { getReviewsForTour, getTourOptions } from "@/lib/reviews-data"
 import { getGeneralFaq, getFaqForTour } from "@/lib/faq-data"
+import { tourArea } from "@/lib/resorts"
 
 const loadTour = cache(getTourPageData)
 
@@ -46,7 +47,10 @@ export default async function TourPage({
     getFaqForTour(data.tour.id),
     getTourOptions(),
   ])
-  const faq = [...tourFaq, ...generalFaq]
+  // Фукуок: общий вопрос про забор из Камрани/Amiana там не к месту
+  // (Виктор 2026-11-09: "убери из фака", это про Нячанг).
+  const isPhuQuoc = tourArea(slug) === "phuquoc"
+  const faq = [...tourFaq, ...generalFaq.filter((f) => !(isPhuQuoc && /Amiana|Камран/i.test(f.question)))]
 
   return (
     <TourPageClient
