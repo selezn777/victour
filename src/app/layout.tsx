@@ -3,6 +3,7 @@ import { Inter, Geist_Mono, Unbounded } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { CookieConsent } from "@/components/cookie-consent";
 import { NavigationTracker } from "@/components/navigation-tracker";
+import { UrlCleaner } from "@/components/url-cleaner";
 import "./globals.css";
 
 const inter = Inter({
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </ThemeProvider>
         <CookieConsent gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
         <NavigationTracker />
+        <UrlCleaner />
       </body>
     </html>
   );

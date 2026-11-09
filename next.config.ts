@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Короткие ссылки для Instagram и мессенджеров (Виктор 2026-11-09)
+  async redirects() {
+    return [
+      { source: "/kanatka", destination: "/phuquoc?t=pq_honthom", permanent: false },
+      { source: "/vinwonders", destination: "/phuquoc", permanent: false },
+      { source: "/safari", destination: "/phuquoc", permanent: false },
+    ];
+  },
   images: {
     // Оптимизированные фото кэшируются на CDN Vercel 31 день (по умолчанию 4 часа:
     // после этого заход снова ждал пережатия ~1-2 с на фото). Фото в Blob
