@@ -133,8 +133,8 @@ export type Destination = {
 const NHA_TRANG_CENTER = { lat: 12.2388, lng: 109.1967 }
 const PHU_QUOC_CENTER = { lat: 10.227, lng: 103.967 }
 
-// Цены трансфера на Фукуоке — по себестоимости, за машину туда-обратно.
-// Черновик, Виктор правит по районам.
+// Цены трансфера на Фукуоке — за машину туда-обратно.
+// Виктор 2026-11-09: старые цены были за одну сторону, поэтому удвоены.
 const PQ_NORTH = { id: "north", label: "Бай Дай, Гань Дау (Grand World, Vinpearl)" }
 const PQ_ONG_LANG = { id: "ong_lang", label: "Онг Ланг" }
 const PQ_CENTER = { id: "center", label: "Дуонг Донг (центр)" }
@@ -174,11 +174,11 @@ const PQ_VIN: Destination = {
   payingGuests: ["adults", "children", "seniors"],
   departureTimes: [],
   districts: [
-    { ...PQ_NORTH, priceUsd: 8 },
-    { ...PQ_ONG_LANG, priceUsd: 12 },
-    { ...PQ_CENTER, priceUsd: 15 },
-    { ...PQ_LONG_BEACH, priceUsd: 18 },
-    { ...PQ_SOUTH, priceUsd: 25 },
+    { ...PQ_NORTH, priceUsd: 16 },
+    { ...PQ_ONG_LANG, priceUsd: 24 },
+    { ...PQ_CENTER, priceUsd: 30 },
+    { ...PQ_LONG_BEACH, priceUsd: 36 },
+    { ...PQ_SOUTH, priceUsd: 50 },
   ],
   extras: [],
 }
@@ -210,11 +210,11 @@ const PQ_HONTHOM: Destination = {
   payingGuests: ["adults", "children"],
   departureTimes: [],
   districts: [
-    { ...PQ_SOUTH, priceUsd: 8 },
-    { ...PQ_LONG_BEACH, priceUsd: 12 },
-    { ...PQ_CENTER, priceUsd: 15 },
-    { ...PQ_ONG_LANG, priceUsd: 18 },
-    { ...PQ_NORTH, priceUsd: 25 },
+    { ...PQ_SOUTH, priceUsd: 16 },
+    { ...PQ_LONG_BEACH, priceUsd: 24 },
+    { ...PQ_CENTER, priceUsd: 30 },
+    { ...PQ_ONG_LANG, priceUsd: 36 },
+    { ...PQ_NORTH, priceUsd: 50 },
   ],
   extras: [
     { key: "kiss_show", group: "🌅 Шоу в Sunset Town", label: "Kiss of the Sea 21:00–21:30, главная трибуна", price: "800K ₫", english: "Kiss of the Sea 21:00, main stand (800K VND)" },
