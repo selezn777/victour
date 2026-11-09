@@ -1421,8 +1421,12 @@ function TransportSlide() {
   const [resort] = useResort()
   const isPhuQuoc = resortById(resort)?.area === "phuquoc"
   if (isPhuQuoc) {
+    // key: курорт приходит из localStorage уже после гидратации, а PhotoStack
+    // держит в state список "уже показанных" фото от первого рендера (там
+    // были фото Нячанга) - без смены key фото Фукуока так и не рендерились.
     return (
       <PhotoSlide
+        key="pq"
         title="Трансфер, после которого не нужно восстанавливаться"
         body="Ни тесноты, ни духоты, ни нервотрёпки за рулём. Просторный семиместный минивэн, климат-контроль и аккуратный, спокойный водитель."
         imageSrc={PQ_TRANSFER_PHOTOS[0]}
@@ -1433,6 +1437,7 @@ function TransportSlide() {
   }
   return (
     <PhotoSlide
+      key="nt"
       title="Трансфер, после которого не нужно восстанавливаться"
       body="Ни тесноты, ни духоты, ни нервотрёпки за рулём. Кожаные кресла с массажем, климат-контроль и просто аккуратный, спокойный водитель."
       imageSrc="/images/hero/premium-van-interior.jpg"
