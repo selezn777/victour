@@ -1072,8 +1072,8 @@ const PHUQUOC_TOURS: typeof CATALOG_TOURS = [
   {
     slug: "phuquoc-hoian-danang",
     title: "Хойан + Дананг, 3 дня",
-    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-hoian-danang/02.webp",
-    annotation: "Летим с Фукуока: Золотой мост, фонарики Хойана и Мраморные горы. Перелёт и отель включены.",
+    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-hoian-danang/01.webp",
+    annotation: "Приключение с перелётом: пиво на вершине горы, фонарики на реке и две ночи в городе ЮНЕСКО.",
   },
 ]
 

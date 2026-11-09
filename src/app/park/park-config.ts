@@ -476,7 +476,7 @@ export const PROMO_TOURS_PQ = [
   {
     slug: "phuquoc-hoian-danang",
     title: "Хойан + Дананг, 3 дня",
-    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-hoian-danang/02.webp",
+    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-hoian-danang/01.webp",
   },
   {
     slug: "phuquoc-dikiy",
