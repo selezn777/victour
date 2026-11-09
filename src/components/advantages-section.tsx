@@ -782,7 +782,7 @@ function PhotoSlide({
           // 1:1 (см. комментарий в истории задач), object-cover на всю
           // рамку в PhotoStack тут просто не обрезает лишнего.
           <div className="p-3 pb-6 sm:p-5 sm:pb-8" style={{ width: photoSize, height: photoSize }}>
-            <PhotoStack photos={stackImages} alt={imageAlt} />
+            <PhotoStack photos={stackImages} alt={imageAlt} unoptimized={stackImages.every((u) => u.startsWith("/"))} />
           </div>
         ) : (
           <div className="relative h-full w-full overflow-hidden">
@@ -1448,14 +1448,37 @@ function QuoteSlide({
 // Xpander, без кресел с массажем (Виктор 2026-11-09: "у нас нет пока здесь
 // таких машин на острове" - убрать из текста), фото под них. В Нячанге и
 // Камрани - прежний премиальный минивэн.
-// Фото 03 (салон с правым рулём) убрано - во Вьетнаме левый руль, Виктор: "докопаются".
-const PQ_TRANSFER_PHOTOS = [1, 2, 4, 5, 6, 7, 8].map(
-  (i) => `/images/hero/pq-transfer-${String(i).padStart(2, "0")}.jpg`,
+// v2: машины с вьетнамскими номерами (Виктор прислал свои фото, прежние
+// "тайские/дубайские" убраны; салон с правым рулём тоже - во Вьетнаме левый).
+const PQ_TRANSFER_PHOTOS = [1, 2, 3, 4, 5, 6, 7].map(
+  (i) => `/images/hero/pq-transfer-v2-${String(i).padStart(2, "0")}.jpg`,
 )
+const NT_TRANSFER_PHOTOS = [
+  "/images/hero/premium-van-exterior.jpg",
+  "/images/hero/premium-van-interior-5.jpg",
+  "/images/hero/premium-van-interior-6.jpg",
+  "/images/hero/premium-van-interior-7.jpg",
+  "/images/hero/premium-van-interior-8.jpg",
+  "/images/hero/premium-van-exterior-2.jpg",
+  "/images/hero/premium-van-exterior-3.jpg",
+  "/images/hero/premium-van-interior-9.jpg",
+]
+
+// Фото трансфера прогреваем сразу при открытии главной (пока гость на первом
+// слайде), чтобы ко второму слайду стопка уже была с картинками.
+function usePreload(urls: string[]) {
+  useEffect(() => {
+    for (const u of urls) {
+      const img = new window.Image()
+      img.src = u
+    }
+  }, [urls])
+}
 
 function TransportSlide() {
   const [resort] = useResort()
   const isPhuQuoc = resortById(resort)?.area === "phuquoc"
+  usePreload(isPhuQuoc ? PQ_TRANSFER_PHOTOS : NT_TRANSFER_PHOTOS)
   if (isPhuQuoc) {
     // key: курорт приходит из localStorage уже после гидратации, а PhotoStack
     // держит в state список "уже показанных" фото от первого рендера (там
@@ -1479,16 +1502,7 @@ function TransportSlide() {
       imageSrc="/images/hero/premium-van-interior.jpg"
       imageAlt="Салон премиального минивэна с кожаными креслами"
       imagePosition="30% 50%"
-      stackImages={[
-        "/images/hero/premium-van-exterior.jpg",
-        "/images/hero/premium-van-interior-5.jpg",
-        "/images/hero/premium-van-interior-6.jpg",
-        "/images/hero/premium-van-interior-7.jpg",
-        "/images/hero/premium-van-interior-8.jpg",
-        "/images/hero/premium-van-exterior-2.jpg",
-        "/images/hero/premium-van-exterior-3.jpg",
-        "/images/hero/premium-van-interior-9.jpg",
-      ]}
+      stackImages={NT_TRANSFER_PHOTOS}
     />
   )
 }

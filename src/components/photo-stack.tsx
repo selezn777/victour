@@ -49,7 +49,7 @@ const MAX_RETRIES = 3
 // показанные не выгружаются.
 const EAGER_DEPTH = 4
 
-function StackPhoto({ src, alt }: { src: string; alt: string }) {
+function StackPhoto({ src, alt, unoptimized }: { src: string; alt: string; unoptimized?: boolean }) {
   const [attempt, setAttempt] = useState(0)
   const [loaded, setLoaded] = useState(false)
   return (
@@ -59,6 +59,7 @@ function StackPhoto({ src, alt }: { src: string; alt: string }) {
       alt={alt}
       fill
       draggable={false}
+      unoptimized={unoptimized}
       className={`object-cover transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
       sizes="(max-width: 768px) 90vw, 50vw"
       onLoad={() => setLoaded(true)}
@@ -70,7 +71,11 @@ function StackPhoto({ src, alt }: { src: string; alt: string }) {
   )
 }
 
-export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
+// unoptimized: файлы уже подготовлены квадратом нужного размера - отдаём как
+// есть, без /_next/image. Тогда их можно заранее прогреть обычным new Image()
+// (тот же URL), и стопка открывается сразу с фото, а не с серыми карточками
+// (Виктор 2026-11-09: "сначала серая картинка, потом подгружается").
+export function PhotoStack({ photos, alt, unoptimized }: { photos: string[]; alt: string; unoptimized?: boolean }) {
   const [positions, setPositions] = useState(() => photos.map((_, i) => i))
   const [lifted, setLifted] = useState(false)
   const [seen, setSeen] = useState(() => new Set(photos.filter((_, i) => i < EAGER_DEPTH)))
@@ -141,7 +146,7 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
             transform: `${STACK_TRANSFORM[positions[i]]}${lifted ? " translateY(-26px) scale(1.02)" : ""}`,
           }}
         >
-          {seen.has(src) && <StackPhoto src={src} alt={alt} />}
+          {seen.has(src) && <StackPhoto src={src} alt={alt} unoptimized={unoptimized} />}
         </div>
       ))}
       <button
