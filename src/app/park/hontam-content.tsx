@@ -1,4 +1,4 @@
-import Image from "next/image"
+import Image from "@/components/img"
 import honTam from "../../../public/park/hontam-hero.jpg"
 import boat from "../../../public/park/hontam-boat.jpg"
 import { DESTINATIONS, HONTAM_PROMO } from "./park-config"

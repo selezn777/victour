@@ -1,6 +1,6 @@
 "use client"
 
-import Image from "next/image"
+import Image from "@/components/img"
 import { usePinchZoom } from "@/hooks/use-pinch-zoom"
 
 // Обёртка над next/image с зумом щипком двух пальцев (отпустил — зум

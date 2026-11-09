@@ -1,4 +1,5 @@
-import Image, { type StaticImageData } from "next/image"
+import Image from "@/components/img"
+import type { StaticImageData } from "next/image"
 import type { DestinationId } from "./park-config"
 
 // Палитры направлений. Компоненты красятся только через эти переменные

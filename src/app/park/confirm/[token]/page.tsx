@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import Image from "next/image"
+import Image from "@/components/img"
 import Link from "next/link"
 import { formatUsd } from "@/lib/format"
 import { getHomepageData, type CatalogTour } from "@/lib/site-data"

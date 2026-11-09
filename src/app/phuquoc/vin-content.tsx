@@ -1,4 +1,4 @@
-import Image from "next/image"
+import Image from "@/components/img"
 import Link from "next/link"
 import giraffe from "../../../public/phuquoc/safari-giraffe-buggy.webp"
 import vinwonders from "../../../public/phuquoc/vinwonders.jpg"

@@ -1,4 +1,4 @@
-import Image from "next/image"
+import Image from "@/components/img"
 import Link from "next/link"
 import cablecar from "../../../public/park/cablecar.jpg"
 import parkView from "../../../public/park/park.jpg"

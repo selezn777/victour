@@ -1,4 +1,4 @@
-import Image from "next/image"
+import Image from "@/components/img"
 import Link from "next/link"
 import type { Guide } from "@/lib/guides-data"
 

@@ -2,7 +2,7 @@
 
 import { saveTrip } from "@/lib/my-trips";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import Image from "next/image";
+import Image from "@/components/img"
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PhoneNumberInput from "react-phone-number-input/input";

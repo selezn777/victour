@@ -1,6 +1,6 @@
 "use client"
 
-import Image from "next/image"
+import Image from "@/components/img"
 import Link from "next/link"
 import { CheckIcon } from "lucide-react"
 import { cn } from "@/lib/utils"

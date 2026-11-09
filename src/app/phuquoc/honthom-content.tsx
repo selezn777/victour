@@ -1,4 +1,4 @@
-import Image from "next/image"
+import Image from "@/components/img"
 import aerial from "../../../public/phuquoc/honthom-aerial.jpg"
 import town from "../../../public/phuquoc/honthom-town.jpg"
 import { DESTINATIONS } from "../park/park-config"

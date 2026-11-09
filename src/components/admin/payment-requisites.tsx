@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import Image from "next/image"
+import Image from "@/components/img"
 
 // Реальные банковские реквизиты Виктора — не публикуются на сайте, показываются
 // только здесь, на странице /admin/bookings (гейтится Google-логином и is_admin() в БД).

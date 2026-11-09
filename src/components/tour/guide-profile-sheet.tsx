@@ -1,6 +1,6 @@
 "use client"
 
-import Image from "next/image"
+import Image from "@/components/img"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"

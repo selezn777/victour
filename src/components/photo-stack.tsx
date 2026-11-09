@@ -1,6 +1,6 @@
 "use client"
 
-import Image from "next/image"
+import Image from "@/components/img"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useRef, useState } from "react"
 
@@ -44,6 +44,10 @@ const SWIPE_THRESHOLD = 40
 // при ошибке пробуем ещё раз (перемонтируем <Image> -> новый запрос), и
 // sizes под реальную ширину стопки, а не 100vw — файлы в разы легче.
 const MAX_RETRIES = 3
+// Сколько верхних карточек грузить сразу (2026-11-08, «сайт грузится долго»): из 8 фото
+// видно 3, остальные лежат под ними. Нижние подгружаются по мере перелистывания, уже
+// показанные не выгружаются.
+const EAGER_DEPTH = 4
 
 function StackPhoto({ src, alt }: { src: string; alt: string }) {
   const [attempt, setAttempt] = useState(0)
@@ -69,6 +73,7 @@ function StackPhoto({ src, alt }: { src: string; alt: string }) {
 export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
   const [positions, setPositions] = useState(() => photos.map((_, i) => i))
   const [lifted, setLifted] = useState(false)
+  const [seen, setSeen] = useState(() => new Set(photos.filter((_, i) => i < EAGER_DEPTH)))
   const start = useRef<{ x: number; y: number } | null>(null)
   // Свайп заканчивается тем же pointerup, после которого браузер шлёт click —
   // без этого флага свайп назад тут же откатывался бы тапом вперёд.
@@ -80,7 +85,14 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
     if (lifted) return
     setLifted(true)
     setTimeout(() => {
-      setPositions((prev) => prev.map((pos) => (pos + step + photos.length) % photos.length))
+      setPositions((prev) => {
+        const next = prev.map((pos) => (pos + step + photos.length) % photos.length)
+        setSeen((old) => {
+          const add = photos.filter((p, i) => next[i] < EAGER_DEPTH && !old.has(p))
+          return add.length ? new Set([...old, ...add]) : old
+        })
+        return next
+      })
       setLifted(false)
     }, SHUFFLE_MS)
   }
@@ -129,7 +141,7 @@ export function PhotoStack({ photos, alt }: { photos: string[]; alt: string }) {
             transform: `${STACK_TRANSFORM[positions[i]]}${lifted ? " translateY(-26px) scale(1.02)" : ""}`,
           }}
         >
-          <StackPhoto src={src} alt={alt} />
+          {seen.has(src) && <StackPhoto src={src} alt={alt} />}
         </div>
       ))}
       <button

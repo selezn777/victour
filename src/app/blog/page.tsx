@@ -1,5 +1,5 @@
 import Link from "next/link"
-import Image from "next/image"
+import Image from "@/components/img"
 import type { Metadata } from "next"
 import { getPublishedArticles } from "@/lib/articles-data"
 import { destinationLabel } from "@/lib/article-destinations"

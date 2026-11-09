@@ -33,6 +33,13 @@ export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
   const [active, setActive] = useState(0)
   const swiperRef = useRef<SwiperType | null>(null)
   const photos = tour.galleryUrls.length > 0 ? tour.galleryUrls : tour.heroImageUrl ? [tour.heroImageUrl] : []
+  // Грузим только текущее фото и соседей (2026-11-08, «сайт грузится долго»): раньше браузер
+  // тянул всю ленту сразу. Уже показанные остаются в DOM, чтобы не мигали при возврате.
+  const [loaded, setLoaded] = useState(() => new Set([0, 1, photos.length - 1]))
+  const n = photos.length
+  if (n > 0 && ![active, (active + 1) % n, (active - 1 + n) % n].every((i) => loaded.has(i))) {
+    setLoaded(new Set([...loaded, active, (active + 1) % n, (active - 1 + n) % n]))
+  }
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
@@ -55,12 +62,14 @@ export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
           >
             {photos.map((url, i) => (
               <SwiperSlide key={url} className="relative h-full w-full">
-                <PinchZoomPhoto
-                  src={url}
-                  alt={`${tour.title}, фото ${i + 1}`}
-                  priority={i === 0}
-                  objectPosition={cropPositionFor(url)}
-                />
+                {loaded.has(i) && (
+                  <PinchZoomPhoto
+                    src={url}
+                    alt={`${tour.title}, фото ${i + 1}`}
+                    priority={i === 0}
+                    objectPosition={cropPositionFor(url)}
+                  />
+                )}
               </SwiperSlide>
             ))}
           </Swiper>

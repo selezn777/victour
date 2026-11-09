@@ -1,6 +1,7 @@
 "use client"
 
-import Image from "next/image"
+import Image from "@/components/img"
+import { variantUrl } from "@/lib/image-variant-url"
 import Link from "next/link"
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import { SlideDeck } from "@/components/slide-deck"
@@ -66,11 +67,20 @@ const COLLAGE_TINY =
 // догрузится, а фото ниже по странице (машины, туры) стояли чёрными в
 // очереди. Слои: tiny из HTML -> v4 (~55 КБ, быстро) -> v5 (чётко).
 const COMPOSITE_VERSION = 5
+// Склейки отдаём готовыми копиями из Blob (см. lib/image-variant-url), если они есть.
+const COMPOSITE_SRC = (() => {
+  const p = `/images/collage/composite-v${COMPOSITE_VERSION}.webp`
+  return variantUrl(p, 1080) ?? p
+})()
+const COMPOSITE_CACHE_SRC = (() => {
+  const p = `/images/collage/composite-v${COLLAGE_CACHE_VERSION}.webp`
+  return variantUrl(p, 640) ?? p
+})()
 const COLLAGE_BACKDROP: React.CSSProperties = {
-  backgroundImage: `url(/images/collage/composite-v${COMPOSITE_VERSION}.webp), url(/images/collage/composite-v${COLLAGE_CACHE_VERSION}.webp), url(${COLLAGE_TINY})`,
+  backgroundImage: `url(${COMPOSITE_SRC}), url(${COMPOSITE_CACHE_SRC}), url(${COLLAGE_TINY})`,
   backgroundSize: "100% 100%",
 }
-const COLLAGE_TILE_BG = `url(/images/collage/composite-v${COMPOSITE_VERSION}.webp), url(/images/collage/composite-v${COLLAGE_CACHE_VERSION}.webp)`
+const COLLAGE_TILE_BG = `url(${COMPOSITE_SRC}), url(${COMPOSITE_CACHE_SRC})`
 const COLLAGE_PHOTOS = Array.from(
   { length: COLLAGE_PHOTO_COUNT },
   (_, i) => `/images/collage/collage-${String(i + 1).padStart(2, "0")}.jpg?v=${COLLAGE_CACHE_VERSION}`,
@@ -460,7 +470,7 @@ function PhotoCollage({ size }: { size: number }) {
   const [gridReady, setGridReady] = useState(false)
   useEffect(() => {
     let cancelled = false
-    preloadImage(`/images/collage/composite-v${COMPOSITE_VERSION}.webp`).then(() => !cancelled && setGridReady(true))
+    preloadImage(COMPOSITE_SRC).then(() => !cancelled && setGridReady(true))
     return () => {
       cancelled = true
     }

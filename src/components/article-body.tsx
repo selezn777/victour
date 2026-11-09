@@ -1,4 +1,4 @@
-import Image from "next/image"
+import Image from "@/components/img"
 
 // Простой формат тела статьи — без markdown-библиотеки: абзацы разделены пустой
 // строкой, фото-вставка — отдельная строка вида [фото: URL] или [фото: URL | подпись].
