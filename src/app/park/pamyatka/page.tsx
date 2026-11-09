@@ -192,7 +192,7 @@ export default function MemoPage() {
         <Block title="📞 Связь с нами">
           <p>
             WhatsApp Виктора: <b>+84 383 714 638</b> (wa.me/84383714638). Бронь трансфера и билетов
-            — на victour.vercel.app/park
+            — на victour.online/park
           </p>
         </Block>
       </main>

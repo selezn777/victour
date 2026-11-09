@@ -11,7 +11,7 @@ import { lora, manrope } from "./fonts"
 // своя палитра (ui.tsx → THEMES) и свои билеты в форме.
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://victour.vercel.app"),
+  metadataBase: new URL("https://victour.online"),
   title: "Официальные билеты в парк + бесплатный трансфер | ВикТур",
   description:
     "Билеты в VinWonders по официальным ценам и бесплатный трансфер от отеля до канатной дороги. Остров Хон Там с трансфером от $17. Бронирование и отмена — бесплатно.",

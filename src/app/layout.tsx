@@ -23,6 +23,7 @@ const unbounded = Unbounded({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://victour.online"),
   title: "ВикТур — private-туры по Вьетнаму",
   description:
     "Индивидуальные private-туры по Нячангу, Камрани и Далату. Больше гостей — дешевле.",

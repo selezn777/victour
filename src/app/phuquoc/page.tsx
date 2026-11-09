@@ -10,7 +10,7 @@ import { PqVinContent } from "./vin-content"
 // по району отеля. Вкладки: VinWonders/Сафари ↔ канатка Хон Тхом (?t=pq_honthom).
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://victour.vercel.app"),
+  metadataBase: new URL("https://victour.online"),
   title: "Билеты VinWonders, Сафари и канатка Хон Тхом на Фукуоке | ВикТур",
   description:
     "Официальные билеты в VinWonders, Vinpearl Safari и на канатную дорогу Хон Тхом. Выкупаем заранее, личный трансфер от отеля по себестоимости. Бронирование бесплатно.",
