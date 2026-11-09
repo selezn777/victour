@@ -103,6 +103,13 @@ function isGuideFreeOnDate(guide: TourGuide, date: string, durationDays: number)
 // на скролл-контейнере (тот же приём, что в tour-faq-slide.tsx): голый
 // overflow-y-auto внутри вертикального Swiper'а колоды не скроллился на
 // телефоне без него.
+// Туры без выбора гида на сайте (Виктор 2026-11-09: Хойан + Дананг ведут
+// только два своих гида, их пока нет в базе - "пусть пока бронируют без
+// гида"). booking_items.guide_id в БД NOT NULL, поэтому заявка молча
+// оформляется на первого гида из списка (Виктор, он и разбирает заявки),
+// а занятость гидов на календарь этого тура не влияет.
+const NO_GUIDE_PICK_SLUGS = new Set(["phuquoc-hoian-danang"])
+
 export function TourBookingSlide({
   tour,
   guides,
@@ -186,15 +193,17 @@ export function TourBookingSlide({
   // экран (Виктор: "надо всё немного уменьшить, чтобы всё влезло").
   const dense = packageOwnerByDate.size > 0
 
+  const noGuidePick = NO_GUIDE_PICK_SLUGS.has(tour.slug)
+
   const commonBookedDates = useMemo(() => {
-    if (guides.length === 0) return otherItemDates
+    if (guides.length === 0 || noGuidePick) return otherItemDates
     const dates = new Set<string>()
     for (const d of guides[0].bookedDates) {
       if (guides.every((g) => g.bookedDates.includes(d))) dates.add(d)
     }
     for (const d of otherItemDates) dates.add(d)
     return dates
-  }, [guides, otherItemDates])
+  }, [guides, otherItemDates, noGuidePick])
 
   const availableGuides = useMemo(() => {
     if (!selectedDate) return []
@@ -220,6 +229,10 @@ export function TourBookingSlide({
     // availableGuides/useMemo — на момент этого вызова selectedDate в
     // состоянии ещё старый), чтобы снять/выставить guideId синхронно с
     // выбором даты, без отдельного useEffect.
+    if (noGuidePick) {
+      setGuideId(guides[0]?.id ?? null)
+      return
+    }
     const freeOnDate = guides.filter((g) => isGuideFreeOnDate(g, date, tour.durationDays))
     setGuideId((prev) => {
       if (prev && freeOnDate.some((g) => g.id === prev)) return prev
@@ -304,7 +317,7 @@ export function TourBookingSlide({
             не отдельный слой поверх). border-2 border-transparent всегда
             в разметке (не только когда выбран) — иначе граница появлялась
             бы ПОСЛЕ рендера и на миг сдвигала бы контент на 2px. */}
-        {selectedDate && (
+        {selectedDate && !noGuidePick && (
           <div className={cn(dense ? "mt-2 space-y-1" : "mt-3 space-y-2")}>
             <span className="text-sm font-medium text-muted-foreground">Гид на эту дату</span>
             {availableGuides.map((g) => (
