@@ -56,17 +56,24 @@ export function TourCard({
         <div
           className={cn(
             "pointer-events-none absolute inset-0 z-10 bg-gradient-to-t to-transparent",
-            fill ? "from-black/70 via-black/5" : "from-black/95 via-black/20",
+            fill ? "from-black/40 via-transparent" : "from-black/95 via-black/20",
           )}
         />
 
         {/* На весь экран (fill) — отступ снизу увеличен: под карточкой теперь
             горизонтальный ряд точек-переключателя между турами, текст не
             должен на него наезжать. */}
+        {/* Виктор 2026-11-09: на весь экран текст "плохо видно" и
+            "перекрывает полфотки" - теперь компактная матовая плашка внизу
+            (размытие + затемнение под самим текстом, а не градиент на
+            полкадра): заголовок, описание в 2 строки, цена и кнопка. Фото
+            выше плашки остаётся чистым. */}
         <div
           className={cn(
-            "absolute inset-x-0 bottom-0 z-10 flex flex-col gap-2 px-5 pt-5 text-white",
-            fill ? "pb-20" : "pb-6",
+            "absolute inset-x-0 bottom-0 z-10 flex flex-col text-white",
+            fill
+              ? "mx-3 mb-16 gap-1.5 rounded-xl border border-white/10 bg-black/55 px-4 pt-3.5 pb-3.5 shadow-2xl backdrop-blur-md"
+              : "gap-2 px-5 pt-5 pb-6",
           )}
         >
           <span className="text-xs tracking-wide text-white/70 uppercase">
@@ -75,18 +82,18 @@ export function TourCard({
           <h3
             className={cn(
               "font-heading leading-tight font-semibold",
-              fill ? "text-3xl" : "text-2xl",
+              fill ? "text-2xl" : "text-2xl",
             )}
           >
             {tour.title}
           </h3>
           {/* На весь экран (fill) — без обрезки, Виктор хотел видеть описание
               полностью, не line-clamp-2 как в компактной сетке. */}
-          <p className={cn("text-white/80", fill ? "text-base" : "line-clamp-2 text-sm")}>
+          <p className={cn("text-white/85", fill ? "line-clamp-2 text-sm leading-snug" : "line-clamp-2 text-sm")}>
             {tour.shortDescription}
           </p>
 
-          <div className="mt-2 flex items-center justify-between border-t border-white/15 pt-3">
+          <div className={cn("flex items-center justify-between border-t border-white/15", fill ? "mt-1 pt-2.5" : "mt-2 pt-3")}>
             <span className="text-base font-medium text-primary">
               от {formatUsd(tour.priceFromUsd)} / чел
             </span>
@@ -99,7 +106,7 @@ export function TourCard({
                 при нажатии кнопка опускается на него (как физическая). */}
             <Link
               href={`/tours/${tour.slug}`}
-              className="flex items-center gap-1.5 rounded-full bg-gradient-to-b from-white to-zinc-300 px-6 py-3 text-base font-semibold text-zinc-900 shadow-[0_4px_0_#71717a,0_8px_16px_rgb(0_0_0/0.35)] ring-1 ring-white/70 transition-[transform,box-shadow] duration-100 active:translate-y-[4px] active:shadow-[0_0_0_#71717a,0_2px_4px_rgb(0_0_0/0.3)]"
+              className="flex items-center gap-1.5 rounded-full bg-gradient-to-b from-white to-zinc-300 px-5 py-2.5 text-base font-semibold text-zinc-900 shadow-[0_4px_0_#71717a,0_8px_16px_rgb(0_0_0/0.35)] ring-1 ring-white/70 transition-[transform,box-shadow] duration-100 active:translate-y-[4px] active:shadow-[0_0_0_#71717a,0_2px_4px_rgb(0_0_0/0.3)]"
             >
               Программа тура
               <span aria-hidden>→</span>

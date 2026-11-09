@@ -119,7 +119,7 @@ export function TourFaqSlide({
                     if (el) itemRefs.current.set(item.id, el)
                     else itemRefs.current.delete(item.id)
                   }}
-                  className="rounded-xl border border-border bg-card shadow-sm"
+                  className="rounded-md border border-border bg-card shadow-sm"
                 >
                   <button
                     type="button"

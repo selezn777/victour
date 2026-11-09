@@ -73,7 +73,7 @@ function IncludesPanel({ includes }: { includes: string[] }) {
 
 function PackingPanel({ packingItems }: { packingItems: string[] }) {
   return (
-    <div className="rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-5 sm:p-6">
+    <div className="rounded-md border border-dashed border-primary/40 bg-primary/5 p-5 sm:p-6">
       <h2 className="flex items-center justify-center gap-2 text-center font-heading text-xl font-semibold sm:justify-start sm:text-left sm:text-2xl">
         <LuggageIcon className="size-5 text-primary sm:size-6" />
         Что взять с собой

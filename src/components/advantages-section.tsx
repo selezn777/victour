@@ -1144,6 +1144,13 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
   )
 }
 
+const PQ_TOUR_LINES = [
+  { icon: "🌙", name: "Вечерний", text: "звёзды на пляже, Венеция на закате и ночное сафари" },
+  { icon: "🌿", name: "Настоящий", text: "дикий мёд, пагода над морем и самолёты над головой, к 15:00 в отеле" },
+  { icon: "🐍", name: "Дикий", text: "питон на плечах, водопад в джунглях и круглые лодки" },
+  { icon: "✈️", name: "Хойан + Дананг", text: "3 дня с перелётом, две ночи в городе ЮНЕСКО" },
+]
+
 function ToursSlide() {
   const [resort] = useResort()
   const isPhuQuoc = resortById(resort)?.area === "phuquoc"
@@ -1160,24 +1167,52 @@ function ToursSlide() {
           key={isPhuQuoc ? "pq" : "nt"}
           tours={isPhuQuoc ? PHUQUOC_TOURS : CATALOG_TOURS}
         />
-        <h2 className="mt-6 max-w-xl font-heading text-3xl leading-[1.1] font-semibold sm:mt-8 sm:text-4xl">
-          {isPhuQuoc ? "Новое на Фукуоке" : "Авторские маршруты"}
-        </h2>
-        {/* Виктор 2026-11-06: и на Нячанге число маршрутов не называем,
-            текст проще + серый абзац, как на Фукуоке. */}
-        <p className="mt-3 max-w-md text-base leading-snug font-medium text-foreground sm:mt-5 sm:max-w-xl sm:text-lg">
-          {isPhuQuoc
-            ? "Авторские маршруты по острову и за его пределы"
-            : "Выверенные до мелочей: безопасные, интересные и при этом глубокие"}
-        </p>
-        {/* Виктор 2026-11-06: как на остальных слайдах — заголовок,
-            подзаголовок и немного серого текста; текст проще. Число
-            маршрутов не называем, их скоро станет больше. */}
-        <p className="mt-2 max-w-md text-base leading-snug text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-xl">
-          {isPhuQuoc
-            ? "Вечер с ночным сафари, утро по главным местам, день в джунглях и Хойан с Данангом на три дня."
-            : "Нячанг за один день, маяк Дай Лань, Фанранг с пещерами и Далат на два дня."}
-        </p>
+        {isPhuQuoc ? (
+          // Виктор 2026-11-09: под фото "совсем пусто, навалить текста
+          // побольше", "поаккуратнее, подсобрать" - вместо одного серого
+          // абзаца плотный список: по строке на маршрут, общим блоком.
+          <>
+            <h2 className="mt-4 max-w-xl font-heading text-2xl leading-[1.1] font-semibold sm:mt-6 sm:text-4xl">
+              Новое на Фукуоке
+            </h2>
+            <p className="mt-1.5 max-w-md text-base leading-snug font-medium text-foreground sm:mt-3 sm:max-w-xl sm:text-lg">
+              Авторские маршруты по острову и за его пределы
+            </p>
+            {/* Низкие экраны (до 820px по высоте): список не влезает под
+                фото, а внутренний скролл в слайде деки на телефоне не
+                работает - там остаётся прежний короткий абзац. */}
+            <p className="mt-2 max-w-md text-base leading-snug text-muted-foreground [@media(min-height:820px)]:hidden">
+              Вечер с ночным сафари, утро по главным местам, день в джунглях и Хойан с Данангом на три дня.
+            </p>
+            <ul className="mt-3 hidden w-full max-w-md divide-y divide-border rounded-md border border-border bg-card/60 text-left sm:mt-5 sm:max-w-xl [@media(min-height:820px)]:block">
+              {PQ_TOUR_LINES.map((l) => (
+                <li key={l.name} className="flex items-start gap-2.5 px-3 py-2 sm:px-4 sm:py-2.5">
+                  <span aria-hidden className="text-base leading-snug sm:text-lg">{l.icon}</span>
+                  <span className="text-sm leading-snug text-muted-foreground sm:text-base">
+                    <span className="font-semibold text-foreground">{l.name}</span> - {l.text}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2.5 hidden max-w-md text-sm leading-snug text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-base [@media(min-height:820px)]:block">
+              Только ваша компания и свой гид, без чужих людей в машине и без спешки.
+            </p>
+          </>
+        ) : (
+          <>
+            <h2 className="mt-6 max-w-xl font-heading text-3xl leading-[1.1] font-semibold sm:mt-8 sm:text-4xl">
+              Авторские маршруты
+            </h2>
+            {/* Виктор 2026-11-06: и на Нячанге число маршрутов не называем,
+                текст проще + серый абзац. */}
+            <p className="mt-3 max-w-md text-base leading-snug font-medium text-foreground sm:mt-5 sm:max-w-xl sm:text-lg">
+              Выверенные до мелочей: безопасные, интересные и при этом глубокие
+            </p>
+            <p className="mt-2 max-w-md text-base leading-snug text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-xl">
+              Нячанг за один день, маяк Дай Лань, Фанранг с пещерами и Далат на два дня.
+            </p>
+          </>
+        )}
       </div>
     </div>
   )
