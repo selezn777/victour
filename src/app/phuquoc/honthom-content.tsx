@@ -50,7 +50,7 @@ export function PqHonThomContent() {
 
         <section className="grid grid-cols-2 gap-3">
           <TicketCard
-            label="Канатка + аквапарк"
+            label="Канатка туда-обратно"
             price={pkg("cable").price}
             secondary={pkg("cable").childPrice}
             secondaryLabel="дети"
@@ -65,7 +65,7 @@ export function PqHonThomContent() {
 
         <section className="grid grid-cols-2 gap-3">
           <InfoTile emoji="🚡" title="Туда и обратно" note="канатка в билете" />
-          <InfoTile emoji="🌊" title="Аквапарк" note="Aquatopia включён" />
+          <InfoTile emoji="🏖" title="Пляж на острове" note="чистая вода" />
         </section>
       </div>
 
@@ -95,8 +95,8 @@ export function PqHonThomContent() {
           <div className={`${CARD} space-y-2 p-4 text-[13.5px] leading-snug`}>
             <b className="block text-[16px] text-(--c-primary)">🏝 Остров Хон Тхом</b>
             <p>
-              Канатка стартует из Sunset Town и через три острова довозит до Хон Тхома. Там аквапарк
-              Aquatopia с горками для взрослых и детей, деревня Exotica и пляж с чистой водой.
+              Канатка стартует из Sunset Town и через три острова довозит до Хон Тхома. Там деревня Exotica и пляж
+              с чистой водой.
             </p>
           </div>
           <div className={`${CARD} space-y-2 p-4 text-[13.5px] leading-snug`}>
@@ -143,7 +143,7 @@ export function PqHonThomContent() {
           <SectionTitle>Путеводитель</SectionTitle>
           <GuideItem emoji="🗺" title="Как построить день" open>
             <p>
-              Выезжайте утром, чтобы застать канатку без толпы. День на острове: аквапарк, пляж,
+              Выезжайте утром, чтобы застать канатку без толпы. День на острове: пляж, деревня Exotica,
               обед. После обеда обратно на канатке, вечер в Sunset Town с закатом и шоу в 19:30 и 21:00.
             </p>
           </GuideItem>

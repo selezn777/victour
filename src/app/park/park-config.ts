@@ -189,7 +189,7 @@ const PQ_HONTHOM: Destination = {
   placeRu: "Канатка на Хон Тхом, Фукуок",
   emoji: "🚡",
   tabLabel: "🚡 Хон Тхом",
-  tabNote: "канатка + аквапарк",
+  tabNote: "канатка на остров",
   english: "PHU QUOC: HON THOM CABLE CAR",
   childPriceLabel: "дети",
   bookingTitle: "Бронь билетов и трансфера",
@@ -198,9 +198,9 @@ const PQ_HONTHOM: Destination = {
   departureMode: "free",
   mapCenter: PHU_QUOC_CENTER,
   packages: [
-    { id: "cable", title: "Канатка + аквапарк", price: "850K ₫", childPrice: "700K ₫", english: "Cable car round trip + Aquatopia (adult 850K / child 700K VND)" },
-    { id: "cable_lunch", title: "С обедом", price: "1 150K ₫", childPrice: "900K ₫", english: "Cable car + Aquatopia + buffet lunch (adult 1,150K / child 900K VND)" },
-    { id: "oneway_lunch", title: "В одну сторону + обед", price: "1 070K ₫", childPrice: "800K ₫", english: "Cable car one way + Aquatopia + buffet lunch (adult 1,070K / child 800K VND)" },
+    { id: "cable", title: "Канатка туда-обратно", price: "850K ₫", childPrice: "700K ₫", english: "Cable car round trip (adult 850K / child 700K VND)" },
+    { id: "cable_lunch", title: "С обедом", price: "1 150K ₫", childPrice: "900K ₫", english: "Cable car + buffet lunch (adult 1,150K / child 900K VND)" },
+    { id: "oneway_lunch", title: "В одну сторону + обед", price: "1 070K ₫", childPrice: "800K ₫", english: "Cable car one way + buffet lunch (adult 1,070K / child 800K VND)" },
   ],
   guests: [
     { key: "infants", emoji: "👶", title: "Дети до 1 метра", note: "Бесплатно!", free: true, formLabel: "Дети до 1 м (бесплатно)", english: "Kids under 1 m (free)" },

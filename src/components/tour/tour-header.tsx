@@ -2,11 +2,8 @@
 
 import { useRef } from "react"
 import Link from "next/link"
-import { MenuIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { AccountMenuRow } from "@/components/account-menu"
 import { CartDrawer } from "@/components/cart-drawer"
+import { SiteMenu } from "@/components/site-menu"
 import { formatVndFromUsd } from "@/lib/format"
 import { useHeaderHeightVar } from "@/hooks/use-header-height-var"
 import type { SiteSettings, TourGuide } from "@/lib/site-data"
@@ -45,36 +42,8 @@ export function TourHeader({
             $1 = {formatVndFromUsd(1, settings.usdVndRate)}
           </span>
 
-          <Sheet>
-            <SheetTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Меню" />}>
-              <MenuIcon />
-            </SheetTrigger>
-            <SheetContent side="right">
-              <SheetHeader>
-                <SheetTitle>ВикТур</SheetTitle>
-              </SheetHeader>
-              <nav className="flex flex-col gap-1 px-4">
-                <AccountMenuRow />
-                <div className="my-2 border-t border-border" />
-                <Link href="/tours" className="rounded-md px-2 py-2 text-sm hover:bg-muted">
-                  Все туры
-                </Link>
-                <Link href="/guides" className="rounded-md px-2 py-2 text-sm hover:bg-muted">
-                  Гиды
-                </Link>
-                <span className="px-2 py-2 text-sm text-muted-foreground">
-                  $1 = {formatVndFromUsd(1, settings.usdVndRate)}
-                </span>
-              </nav>
-              {guide && (
-                <div className="mt-auto border-t border-border p-4">
-                  <Link href={`/guides/${guide.id}`} className="text-sm text-primary hover:underline">
-                    Гид {guide.name} →
-                  </Link>
-                </div>
-              )}
-            </SheetContent>
-          </Sheet>
+          {/* Тот же бургер, что на остальном сайте (Виктор 2026-11-09) */}
+          <SiteMenu settings={settings} guide={guide} />
         </div>
       </div>
     </header>
