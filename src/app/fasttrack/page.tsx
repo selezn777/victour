@@ -14,13 +14,13 @@ import { GuideItem, InfoTile, PhotoCredits } from "../phuquoc/pq-ui"
 import { FasttrackForm } from "./fasttrack-form"
 
 // Фаст-трек в аэропорту Фукуока (Виктор 2026-11-10): отдельная страница, как билеты
-// в парки. Продаём фаст-трек, трансфер до отеля - бонус. Паспорта прикрепляют в форме.
+// в парки. Продаём фаст-трек, трансфер до отеля по себестоимости. Паспорта прикрепляют в форме.
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://victour.online"),
   title: "Фаст-трек в аэропорту Фукуока + трансфер до отеля | ВикТур",
   description:
-    "Паспортный контроль без очереди в аэропорту Фукуока: встретим у выхода из самолёта и проведём по отдельному коридору. Трансфер до отеля бонусом. Паспорта можно прикрепить прямо в заявке.",
+    "Паспортный контроль без очереди в аэропорту Фукуока: встретим у выхода из самолёта и проведём по отдельному коридору. Трансфер до отеля по себестоимости. Паспорта можно прикрепить прямо в заявке.",
 }
 
 export const viewport: Viewport = { themeColor: "#e8eef5" }
@@ -87,10 +87,12 @@ export default function FasttrackPage() {
               <div>
                 <span className="block text-[12px] font-bold tracking-[0.14em] text-(--c-on-primary)">ФАСТ-ТРЕК</span>
                 <b className={`${SERIF} text-[40px] leading-none`}>${FT_PRICE_USD}</b>
-                <span className="ml-1.5 text-[15px] opacity-90">за человека</span>
+                <span className="mt-1 block text-[15px] opacity-90">за человека</span>
               </div>
-              <span className="rounded-md bg-(--c-accent) px-3 py-1.5 text-[12px] font-extrabold tracking-wide">
-                🚐 ТРАНСФЕР БОНУСОМ
+              <span className="shrink-0 rounded-md bg-(--c-accent) px-3 py-1.5 text-center text-[12px] leading-tight font-extrabold tracking-wide">
+                🚐 ТРАНСФЕР
+                <br />
+                ПО СЕБЕСТОИМОСТИ
               </span>
             </div>
           </section>
@@ -157,7 +159,7 @@ export default function FasttrackPage() {
                 </tbody>
               </table>
               <p className="border-t border-(--c-border) bg-(--c-tint) px-3 py-2.5 text-[13px] leading-snug text-(--c-tint-ink)">
-                Цена за всю группу: фаст-трек на каждого и машина до отеля. Больше 5 человек - посчитаем в форме ниже.
+                Цена за всю группу: фаст-трек на каждого и машина до отеля по себестоимости. Больше 5 человек - посчитаем в форме ниже.
                 Без трансфера - <b>${FT_PRICE_USD} за человека</b>.
               </p>
             </div>
