@@ -1,4 +1,5 @@
 import { DESTINATIONS, findDistrict, findSlot, slotLineRu, type DestinationId, type ParkBooking } from "./park-config"
+import { buildReceipt, receiptTotalRu } from "@/lib/park-total"
 
 const ruDate = (iso: string) =>
   new Intl.DateTimeFormat("ru-RU", {
@@ -35,6 +36,10 @@ export function bookingSummaryRu(b: ParkBooking, confirmUrl: string | null): str
     lines.push(`➕ ${extras.map((x) => `${x.label} × ${b.extras[x.key]}`).join("; ")}`)
   }
   if (b.comment) lines.push(`💬 ${b.comment}`)
+  const r = buildReceipt(b)
+  if (r.ticketsVnd || r.transferUsd) {
+    lines.push("", `🧾 Итого на ${r.people} чел.: ${receiptTotalRu(r)}`)
+  }
   if (confirmUrl) lines.push("", `✅ Подтвердить выезд утром: ${confirmUrl}`)
   return lines.join("\n")
 }

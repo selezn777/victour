@@ -36,6 +36,12 @@ import { bookingSummaryRu } from "./park-texts";
 import { ADD_EXTRA_EVENT } from "./seawalking-cta";
 import { WhatsAppIcon } from "./whatsapp-icon";
 import { captureFbclid, readFbc } from "@/lib/meta-click";
+import {
+  buildReceipt,
+  formatVnd,
+  receiptTotalRu,
+  type Receipt,
+} from "@/lib/park-total";
 
 type Status = "idle" | "sending" | "success" | "failed" | "rate_limited";
 
@@ -749,6 +755,16 @@ function BookingForm({
           </details>
         )}
 
+        <ReceiptBox
+          receipt={buildReceipt({
+            destination,
+            packageId: packageId ?? "",
+            guests,
+            extras,
+            district: dest.districts ? district : null,
+          })}
+        />
+
         {status === "failed" && (
           <SendProblem text="Не получилось отправить заявку. Напишите нам в WhatsApp — забронируем вручную." />
         )}
@@ -794,6 +810,47 @@ function fixPhonePrefix(value: string, country: Country | undefined): string {
   return national.startsWith(code) && isValidPhoneNumber(withoutCode)
     ? withoutCode
     : value;
+}
+
+// Мини-чек над кнопкой: турист сразу видит, сколько человек и сколько платить
+// (Виктор 2026-11-10). Цены те же, что в карточках, поэтому «≈».
+function ReceiptBox({ receipt: r }: { receipt: Receipt }) {
+  if (!r.people || (!r.ticketsVnd && !r.transferUsd)) return null;
+  return (
+    <div
+      aria-live="polite"
+      className="rounded-2xl border-2 border-(--c-border) bg-white px-4 py-3 text-[14px] leading-snug text-(--c-ink)"
+    >
+      <p className="text-[12px] font-bold tracking-[0.12em] text-(--c-primary)">
+        🧾 ВАШ ЗАКАЗ · {r.people} ЧЕЛ.
+      </p>
+      <ul className="mt-2 space-y-1">
+        {r.lines.map((l) => (
+          <li key={l.label} className="flex items-baseline justify-between gap-3">
+            <span className="min-w-0">
+              {l.label} × {l.qty}
+            </span>
+            <span className="shrink-0 tabular-nums">
+              {l.unitVnd ? formatVnd(l.sumVnd) : "бесплатно"}
+            </span>
+          </li>
+        ))}
+        {r.transferUsd ? (
+          <li className="flex items-baseline justify-between gap-3">
+            <span className="min-w-0">Трансфер: {r.transferLabel}</span>
+            <span className="shrink-0 tabular-nums">${r.transferUsd}</span>
+          </li>
+        ) : null}
+      </ul>
+      <p className="mt-2 flex items-baseline justify-between gap-3 border-t border-(--c-border) pt-2 text-[16px] font-extrabold">
+        <span>Итого</span>
+        <span className="text-right tabular-nums">≈ {receiptTotalRu(r)}</span>
+      </p>
+      <p className="mt-1 text-[12px] text-(--c-muted)">
+        Точную сумму подтвердим в WhatsApp
+      </p>
+    </div>
+  );
 }
 
 function FieldError({ text }: { text?: string }) {

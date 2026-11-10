@@ -8,6 +8,7 @@ import {
   type ParkBooking,
 } from "@/app/park/park-config"
 import type { ConfirmData } from "@/lib/park-confirm"
+import { buildReceipt, formatVnd } from "@/lib/park-total"
 
 // Заявка с /park уходит Виктору в Telegram на английском: всё, что выбрано
 // из списков, — по словарю; имя и отель — транслитом (оригинал в скобках);
@@ -167,6 +168,14 @@ export async function buildParkBookingMessage(
   lines.push("", extras.length > 0 ? "➕ Extras (per person):" : "➕ Extras: none")
   for (const e of extras) lines.push(`• ${e.english} × <b>${booking.extras[e.key]}</b>`)
   if (booking.comment) lines.push(`💬 Comment: ${await translateComment(booking.comment)}`)
+  // Мини-чек: сколько человек и сколько платить (Виктор 2026-11-10)
+  const r = buildReceipt(booking)
+  lines.push("", `🧾 <b>TOTAL — ${r.people} pax</b>`)
+  for (const l of r.lines) {
+    lines.push(`• ${escapeHtml(l.label)}: ${l.qty} × ${l.unitVnd ? formatVnd(l.unitVnd) : "free"} = ${formatVnd(l.sumVnd)}`)
+  }
+  if (r.ticketsVnd) lines.push(`🎫 Tickets: <b>${formatVnd(r.ticketsVnd)}</b>`)
+  if (r.transferUsd) lines.push(`🚐 Transfer: <b>$${r.transferUsd}</b>`)
   lines.push(`🕒 Sent: ${formatSentAt(now)}`)
   if (links) {
     lines.push("", `🔗 Guest's pick-up confirmation link: ${escapeHtml(links.confirm)}`)
