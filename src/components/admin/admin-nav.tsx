@@ -6,8 +6,8 @@ import { HomeIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const TABS = [
-  { href: "/admin/bookings", label: "Заявки" },
-  { href: "/admin/clients", label: "Клиенты" },
+  { href: "/admin/clients", label: "CRM" },
+  { href: "/admin/bookings", label: "Заявки на туры" },
   { href: "/admin/guides", label: "Гиды" },
   { href: "/admin/blog", label: "Блог" },
   { href: "/admin/tours", label: "Туры" },
