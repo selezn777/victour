@@ -116,14 +116,14 @@ export function ParkBookingsBoard({ rows, error }: { rows: ParkRow[]; error?: st
             type="button"
             onClick={() => setFilter(f.key)}
             className={cn(
-              "rounded-full border-2 px-3.5 py-1.5 text-sm font-semibold transition-colors",
+              "rounded-md border-2 px-3.5 py-1.5 text-sm font-semibold transition-colors",
               filter === f.key ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground",
             )}
           >
             {f.label}
           </button>
         ))}
-        <Button onClick={copy} disabled={!forAgent.length} variant="outline" className="sm:ml-auto">
+        <Button onClick={copy} disabled={!forAgent.length} variant="outline" className="rounded-md sm:ml-auto">
           <CopyIcon className="size-4" />
           {copied ? "Скопировано" : `Скопировать для агента (${forAgent.length})`}
         </Button>
@@ -149,6 +149,14 @@ function ParkCard({ r }: { r: ParkRow }) {
   const [pending, start] = useTransition()
   const st = STAGES.find((s) => s.key === r.stage) ?? STAGES[0]
   const wa = r.contact_channel === "whatsapp" ? `https://wa.me/${r.contact.replace(/\D/g, "")}` : null
+  const [copied, setCopied] = useState(false)
+  async function copyOne() {
+    try {
+      await navigator.clipboard.writeText(agentText([r]).replace(/^1\) /, ""))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {}
+  }
 
   function setStage(stage: Stage) {
     start(async () => {
@@ -158,7 +166,7 @@ function ParkCard({ r }: { r: ParkRow }) {
   }
 
   return (
-    <div className={cn("rounded-2xl border border-border bg-card p-4", pending && "opacity-60")}>
+    <div className={cn("rounded-md border border-border bg-card p-4", pending && "opacity-60")}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-xs font-semibold text-muted-foreground uppercase">{fmtDate(r.date)}{r.departure_time ? ` · ${r.departure_time}` : ""}</div>
@@ -169,7 +177,7 @@ function ParkCard({ r }: { r: ParkRow }) {
           value={r.stage}
           onChange={(e) => setStage(e.target.value as Stage)}
           aria-label="Стадия"
-          className={cn("h-8 max-w-40 cursor-pointer rounded-full border-0 px-3 text-xs font-bold outline-none", st.pill)}
+          className={cn("h-8 max-w-40 cursor-pointer rounded-md border-0 px-3 text-xs font-bold outline-none", st.pill)}
         >
           {STAGES.map((s) => (
             <option key={s.key} value={s.key} className="bg-card text-foreground">
@@ -190,11 +198,16 @@ function ParkCard({ r }: { r: ParkRow }) {
           {vnd(r.tickets_vnd)}
           {r.transfer_usd ? ` + $${Number(r.transfer_usd)}` : ""}
         </span>
-        {wa && (
-          <a href={wa} target="_blank" rel="noreferrer" className={buttonVariants({ size: "sm", variant: "outline" })}>
-            Написать
-          </a>
-        )}
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={copyOne} className="rounded-md">
+            <CopyIcon className="size-3.5" /> {copied ? "Скопировано" : "Агенту"}
+          </Button>
+          {wa && (
+            <a href={wa} target="_blank" rel="noreferrer" className={cn(buttonVariants({ size: "sm", variant: "outline" }), "rounded-md")}>
+              Написать
+            </a>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -141,7 +141,8 @@ export async function saveFasttrackLead(b: FtBooking, ref: string) {
       "паспорта - в Telegram",
     ]
       .filter(Boolean)
-      .join("; "),
+      .join("; ") + `
+Старший группы: ${b.name}, ${b.contact}`,
     remind_on: weekBefore > today ? weekBefore : today,
   })
   if (error) console.error("fasttrack: crm insert failed:", error.message)
