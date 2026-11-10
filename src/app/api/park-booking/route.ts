@@ -3,6 +3,7 @@ import { buildParkBookingMessage } from "@/lib/park-booking-message"
 import { after } from "next/server"
 import { sanitizeFbc, sendMetaLeadEvent } from "@/lib/meta-capi"
 import { confirmDataFromBooking, createConfirmToken, createShortId } from "@/lib/park-confirm"
+import { saveParkBooking } from "@/lib/park-booking-store"
 
 // Простое ограничение частоты: не больше RATE_LIMIT заявок с одного IP за
 // RATE_WINDOW_MS. Память живёт в рамках одного инстанса функции — от
@@ -102,6 +103,8 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: "telegram_failed" }, { status: 502 })
   }
 
+  // Сохраняем заявку для утреннего отчёта и админки (ошибки базы не роняют заявку)
+  after(() => saveParkBooking(booking, token, shortId))
   after(() =>
     sendMetaLeadEvent({
       stage: "Lead",

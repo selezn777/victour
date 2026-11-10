@@ -3,6 +3,7 @@ import { after } from "next/server"
 import { sendMetaLeadEvent } from "@/lib/meta-capi"
 import { buildParkConfirmedMessage } from "@/lib/park-booking-message"
 import { readConfirmToken } from "@/lib/park-confirm"
+import { markParkBookingConfirmed } from "@/lib/park-booking-store"
 
 // Турист нажал «Подтверждаю выезд» — сообщаем Виктору в Telegram.
 // Повторы по той же ссылке в течение 30 минут не дублируем (память инстанса).
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: "telegram_failed" }, { status: 502 })
   }
   recentlyConfirmed.set(token, now)
+  after(() => markParkBookingConfirmed(token))
   after(() =>
     sendMetaLeadEvent({
       stage: "Confirmed",
