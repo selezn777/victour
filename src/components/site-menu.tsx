@@ -14,6 +14,7 @@ const TICKETS_NT = [
   { href: "/park?t=hontam", label: "🏝 Билеты Хон Там" },
 ]
 const TICKETS_PQ = [
+  { href: "/fasttrack", label: "✈️ Фаст-трек в аэропорту Фукуока" },
   { href: "/phuquoc", label: "🦒 Билеты VinWonders и Сафари Фукуок" },
   { href: "/phuquoc?t=pq_honthom", label: "🚡 Канатка на Хон Тхом" },
 ]
