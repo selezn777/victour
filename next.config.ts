@@ -4,6 +4,13 @@ const nextConfig: NextConfig = {
   // Короткие ссылки для Instagram и мессенджеров (Виктор 2026-11-09)
   async redirects() {
     return [
+      // Старый домен закрыт (Виктор 2026-11-10): всё с victour.vercel.app -> victour.online
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "victour.vercel.app" }],
+        destination: "https://victour.online/:path*",
+        permanent: true,
+      },
       { source: "/kanatka", destination: "/phuquoc?t=pq_honthom", permanent: false },
       { source: "/vinwonders", destination: "/phuquoc", permanent: false },
       { source: "/safari", destination: "/phuquoc", permanent: false },

@@ -8,7 +8,7 @@
 import fs from "fs"
 import { createClient } from "@supabase/supabase-js"
 
-const BASE = process.argv[2] ?? "https://victour.vercel.app"
+const BASE = process.argv[2] ?? "https://victour.online"
 const WIDTHS = [640, 828, 1200]
 
 const env = Object.fromEntries(
