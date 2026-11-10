@@ -42,7 +42,7 @@ export function VinWondersContent() {
       </Hero>
 
       <div className="relative z-10 -mt-12 space-y-3.5 px-4">
-        <section className="rounded-[28px] bg-(--c-primary) p-5 text-white shadow-(--c-shadow-primary)">
+        <section className="rounded-lg bg-(--c-primary) p-5 text-white shadow-(--c-shadow-primary)">
           <p className="text-[16px] leading-snug font-medium text-balance opacity-95">
             Цены — <b className="text-(--c-on-primary)">такие же, как официальные.</b> Но только у
             нас абсолютный эксклюзив:
@@ -58,7 +58,7 @@ export function VinWondersContent() {
               </p>
             </div>
           </div>
-          <div className="mt-3.5 rounded-2xl bg-white/12 px-3.5 py-3 text-[14px] leading-snug">
+          <div className="mt-3.5 rounded-md bg-white/12 px-3.5 py-3 text-[14px] leading-snug">
             💳 Оплата билета — <b className="text-(--c-on-primary)">прямо в официальной кассе</b>{" "}
             после встречи с водителем
           </div>
@@ -69,7 +69,7 @@ export function VinWondersContent() {
 
         <section className="grid grid-cols-2 gap-3">
           <TicketCard label="Пакет на 1 день" price={pkg("1day").price} secondary={pkg("1day").childPrice}>
-            <div className="rounded-xl border-2 border-dashed border-(--c-accent) bg-(--c-tint) px-2.5 py-2 font-bold text-balance text-(--c-tint-ink)">
+            <div className="rounded-md border-2 border-dashed border-(--c-accent) bg-(--c-tint) px-2.5 py-2 font-bold text-balance text-(--c-tint-ink)">
               🍽 + ваучер 150K ₫ на рестораны парка
             </div>
           </TicketCard>
@@ -77,14 +77,14 @@ export function VinWondersContent() {
             <p className="text-(--c-muted)">
               <b className="text-(--c-ink)">Второй день — любой</b> в течение 14 дней
             </p>
-            <div className="rounded-xl bg-[#f3f3f1] px-2.5 py-2 text-[11.5px] text-(--c-muted)">
+            <div className="rounded-md bg-[#f3f3f1] px-2.5 py-2 text-[11.5px] text-(--c-muted)">
               Ваучер на 2-дневные билеты не распространяется
             </div>
           </TicketCard>
         </section>
 
         <section className="grid grid-cols-2 gap-3">
-          <div className="flex items-center gap-2.5 rounded-[20px] bg-(--c-bg-2) p-3.5">
+          <div className="flex items-center gap-2.5 rounded-lg bg-(--c-bg-2) p-3.5">
             <span className="text-[24px] leading-none">🚡</span>
             <div>
               <b className="block text-[13.5px] leading-tight font-extrabold text-(--c-primary)">
@@ -95,7 +95,7 @@ export function VinWondersContent() {
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2.5 rounded-[20px] bg-(--c-bg-2) p-3.5">
+          <div className="flex items-center gap-2.5 rounded-lg bg-(--c-bg-2) p-3.5">
             <span className="text-[24px] leading-none">🕗</span>
             <div>
               <b className="block text-[13.5px] leading-tight font-extrabold whitespace-nowrap text-(--c-primary)">
@@ -138,7 +138,7 @@ export function VinWondersContent() {
                 key={c.key}
                 className={`flex items-center gap-2.5 px-3.5 py-3 ${
                   c.free
-                    ? "rounded-[20px] border-2 border-dashed border-(--c-accent) bg-(--c-tint)"
+                    ? "rounded-lg border-2 border-dashed border-(--c-accent) bg-(--c-tint)"
                     : CARD
                 }`}
               >
@@ -211,7 +211,7 @@ export function VinWondersContent() {
 
         <Link
           href="/park/pamyatka"
-          className="flex items-center gap-3.5 rounded-[20px] border-2 border-(--c-primary) bg-white p-4 active:scale-[0.99]"
+          className="flex items-center gap-3.5 rounded-lg border-2 border-(--c-primary) bg-white p-4 active:scale-[0.99]"
         >
           <span className="text-[30px] leading-none">📄</span>
           <span className="flex-1">

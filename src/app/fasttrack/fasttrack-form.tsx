@@ -17,7 +17,7 @@ import { WhatsAppIcon } from "../park/whatsapp-icon"
 
 const LABEL = "mb-1.5 block text-[14px] font-bold text-(--c-primary)"
 const FIELD =
-  "h-12 w-full rounded-2xl border-2 border-(--c-border) bg-white px-4 text-[16px] text-(--c-ink) outline-none placeholder:text-[#9aa3a8] focus:border-(--c-primary)"
+  "h-12 w-full rounded-md border-2 border-(--c-border) bg-white px-4 text-[16px] text-(--c-ink) outline-none placeholder:text-[#9aa3a8] focus:border-(--c-primary)"
 
 type Passport = { id: string; file: File; preview: string | null }
 type Status = "idle" | "sending" | "uploading" | "done" | "failed" | "rate_limited"
@@ -45,7 +45,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`rounded-2xl border-2 px-3 py-2.5 text-left text-[14px] leading-tight font-bold transition-colors ${
+      className={`rounded-md border-2 px-3 py-2.5 text-left text-[14px] leading-tight font-bold transition-colors ${
         active ? "border-(--c-primary) bg-(--c-primary) text-white" : "border-(--c-border) bg-white text-(--c-ink)"
       }`}
     >
@@ -153,7 +153,7 @@ export function FasttrackForm() {
   if (status === "done") {
     const wa = `${PARK_WHATSAPP.href}?text=${encodeURIComponent(summary)}`
     return (
-      <div className="space-y-3 rounded-[28px] bg-(--c-primary) p-5 text-white">
+      <div className="space-y-3 rounded-lg bg-(--c-primary) p-5 text-white">
         <p className="text-[26px] leading-none">✅</p>
         <h3 className="text-[20px] font-extrabold">Заявка у Виктора</h3>
         <p className="text-[15px] leading-snug opacity-95">
@@ -161,16 +161,16 @@ export function FasttrackForm() {
           {passports.length > 0 && progress.failed === 0 && ` Паспорта получены: ${progress.done}.`}
         </p>
         {progress.failed > 0 && (
-          <p className="rounded-2xl bg-white/15 px-4 py-3 text-[14px]">
+          <p className="rounded-md bg-white/15 px-4 py-3 text-[14px]">
             Не все паспорта дошли ({progress.done} из {passports.length}). Пришлите остальные в WhatsApp.
           </p>
         )}
-        {summary && <pre className="rounded-2xl bg-white/12 px-4 py-3 font-sans text-[13.5px] leading-snug whitespace-pre-wrap">{summary}</pre>}
+        {summary && <pre className="rounded-md bg-white/12 px-4 py-3 font-sans text-[13.5px] leading-snug whitespace-pre-wrap">{summary}</pre>}
         <a
           href={wa}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex h-13 items-center justify-center gap-2 rounded-full bg-[#25d366] text-[16px] font-extrabold text-white"
+          className="flex h-13 items-center justify-center gap-2 rounded-md bg-[#25d366] text-[16px] font-extrabold text-white"
         >
           <WhatsAppIcon className="size-5 fill-white" /> Продублировать в WhatsApp
         </a>
@@ -179,7 +179,7 @@ export function FasttrackForm() {
   }
 
   return (
-    <form id="ft-form" onSubmit={submit} noValidate className="space-y-4 rounded-[28px] bg-(--c-bg-2) p-4 sm:p-5">
+    <form id="ft-form" onSubmit={submit} noValidate className="space-y-4 rounded-lg bg-(--c-bg-2) p-4 sm:p-5">
       <input
         type="text"
         tabIndex={-1}
@@ -218,7 +218,7 @@ export function FasttrackForm() {
         <Err text={errors.flight} />
       </div>
 
-      <div id="ft-people" className="flex items-center justify-between gap-3 rounded-2xl border-2 border-(--c-border) bg-white px-4 py-2.5">
+      <div id="ft-people" className="flex items-center justify-between gap-3 rounded-md border-2 border-(--c-border) bg-white px-4 py-2.5">
         <span className="text-[15px] font-bold text-(--c-primary)">
           Сколько человек
           <span className="block text-[12px] font-normal text-(--c-muted)">все, кто летит, включая детей</span>
@@ -304,7 +304,7 @@ export function FasttrackForm() {
         {passports.length > 0 && (
           <div className="mb-2 grid grid-cols-3 gap-2 min-[400px]:grid-cols-4">
             {passports.map((p, i) => (
-              <div key={p.id} className="relative aspect-[3/4] overflow-hidden rounded-xl border-2 border-(--c-border) bg-white">
+              <div key={p.id} className="relative aspect-[3/4] overflow-hidden rounded-md border-2 border-(--c-border) bg-white">
                 {p.preview ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={p.preview} alt={`Паспорт ${i + 1}`} className="size-full object-cover" />
@@ -327,7 +327,7 @@ export function FasttrackForm() {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-(--c-primary) bg-white text-[15px] font-bold text-(--c-primary)"
+            className="flex h-14 w-full items-center justify-center gap-2 rounded-md border-2 border-dashed border-(--c-primary) bg-white text-[15px] font-bold text-(--c-primary)"
           >
             📎 {passports.length ? "Добавить ещё" : "Прикрепить фото паспортов"}
           </button>
@@ -355,11 +355,11 @@ export function FasttrackForm() {
           onChange={(e) => setComment(e.target.value)}
           rows={2}
           placeholder="Дети, коляска, много багажа"
-          className="w-full rounded-2xl border-2 border-(--c-border) bg-white px-4 py-3 text-[16px] outline-none focus:border-(--c-primary)"
+          className="w-full rounded-md border-2 border-(--c-border) bg-white px-4 py-3 text-[16px] outline-none focus:border-(--c-primary)"
         />
       </div>
 
-      <div aria-live="polite" className="rounded-2xl border-2 border-(--c-border) bg-white px-4 py-3 text-[14px] leading-snug">
+      <div aria-live="polite" className="rounded-md border-2 border-(--c-border) bg-white px-4 py-3 text-[14px] leading-snug">
         <p className="text-[12px] font-bold tracking-[0.12em] text-(--c-primary)">🧾 ВАШ ЗАКАЗ · {people} ЧЕЛ.</p>
         <div className="mt-2 flex items-baseline justify-between gap-3">
           <span>Фаст-трек × {people}</span>
@@ -385,7 +385,7 @@ export function FasttrackForm() {
       <button
         type="submit"
         disabled={status === "sending" || status === "uploading"}
-        className="h-14 w-full rounded-full bg-(--c-accent) text-[16px] font-extrabold text-white shadow-[0_8px_20px_rgb(0_0_0/0.18)] transition active:scale-[0.99] disabled:opacity-60"
+        className="h-14 w-full rounded-md bg-(--c-accent) text-[16px] font-extrabold text-white shadow-[0_8px_20px_rgb(0_0_0/0.18)] transition active:scale-[0.99] disabled:opacity-60"
       >
         {status === "sending"
           ? "Отправляем…"
@@ -415,5 +415,5 @@ function Err({ text }: { text?: string }) {
 }
 
 function Problem({ text }: { text: string }) {
-  return <p className="rounded-2xl bg-[#fbe4dc] px-4 py-3 text-[14px] font-semibold text-[#8a2f16]">{text}</p>
+  return <p className="rounded-md bg-[#fbe4dc] px-4 py-3 text-[14px] font-semibold text-[#8a2f16]">{text}</p>
 }

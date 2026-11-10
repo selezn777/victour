@@ -76,13 +76,13 @@ const PQ_THEMES = {
 
 export const THEMES: Record<DestinationId, Record<string, string>> = { ...NT_THEMES, ...PQ_THEMES }
 
-export const CARD ="rounded-[20px] bg-white shadow-[0_8px_24px_rgb(60_60_40/0.11)]"
+export const CARD ="rounded-lg bg-white shadow-[0_8px_24px_rgb(60_60_40/0.11)]"
 export const SERIF = "font-(family-name:--font-park-serif)"
 
 export function Pill({ children, accent }: { children: React.ReactNode; accent?: boolean }) {
   return (
     <span
-      className={`rounded-full px-3.5 py-1.5 text-[11px] font-bold tracking-[0.18em] ${
+      className={`rounded-md px-3.5 py-1.5 text-[11px] font-bold tracking-[0.18em] ${
         accent ? "bg-(--c-accent) text-white" : "bg-white/92 text-(--c-primary)"
       }`}
     >
@@ -134,7 +134,7 @@ export function Hero({
       <div className="absolute inset-x-4 bottom-20 text-white">
         {children}
         {/* Не ссылка: турист должен пролистать и прочитать всё до формы */}
-        <div className="mt-4 inline-flex h-12 items-center gap-2 rounded-full bg-(--c-accent) px-6 text-[15px] font-bold text-white shadow-[0_8px_20px_rgb(0_0_0/0.25)] select-none">
+        <div className="mt-4 inline-flex h-12 items-center gap-2 rounded-md bg-(--c-accent) px-6 text-[15px] font-bold text-white shadow-[0_8px_20px_rgb(0_0_0/0.25)] select-none">
           {ctaLabel} <span aria-hidden>⬇️</span>
         </div>
       </div>
@@ -156,7 +156,7 @@ export function BookingConditions() {
   return (
     <section>
       <SectionTitle>Условия бронирования</SectionTitle>
-      <div className="flex flex-col gap-3 rounded-[20px] bg-(--c-bg-2) px-4 py-3.5 text-[14px] leading-snug">
+      <div className="flex flex-col gap-3 rounded-lg bg-(--c-bg-2) px-4 py-3.5 text-[14px] leading-snug">
         <div className="flex gap-2.5">
           <span className="text-[20px] leading-none">🛡️</span>
           <span>

@@ -23,7 +23,7 @@ import { CARD, SERIF, SectionTitle } from "./ui"
 const AVATARS = ["😊", "😎", "🥰", "🤩", "🌴", "🏝️", "🌊", "☀️", "🐬", "🎢", "🚡", "🙌"]
 const PAGE = 3
 const INPUT =
-  "w-full rounded-2xl border border-(--c-border) bg-white px-3.5 text-[16px] text-(--c-ink) outline-none placeholder:text-(--c-muted)/60 focus:border-(--c-primary-2) focus:ring-2 focus:ring-(--c-primary-2)/25"
+  "w-full rounded-md border border-(--c-border) bg-white px-3.5 text-[16px] text-(--c-ink) outline-none placeholder:text-(--c-muted)/60 focus:border-(--c-primary-2) focus:ring-2 focus:ring-(--c-primary-2)/25"
 const LABEL = "mb-1.5 block text-[13px] font-bold text-(--c-primary)"
 
 function Stars({ value, size = "size-4" }: { value: number; size?: string }) {
@@ -94,7 +94,7 @@ export function ParkReviews({ destination }: { destination: DestinationId }) {
         <button
           type="button"
           onClick={() => setFormOpen(true)}
-          className="mt-3 flex h-13 w-full items-center justify-center gap-2 rounded-full border-2 border-(--c-primary) bg-white text-[15px] font-bold text-(--c-primary) transition active:scale-[0.99]"
+          className="mt-3 flex h-13 w-full items-center justify-center gap-2 rounded-md border-2 border-(--c-primary) bg-white text-[15px] font-bold text-(--c-primary) transition active:scale-[0.99]"
         >
           ✍️ Оставить отзыв
         </button>
@@ -120,7 +120,7 @@ export function ParkReviews({ destination }: { destination: DestinationId }) {
             <button
               type="button"
               onClick={() => setShown((n) => n + PAGE * 2)}
-              className="mx-auto h-10 rounded-full bg-(--c-bg-2) px-5 text-[14px] font-bold text-(--c-primary)"
+              className="mx-auto h-10 rounded-md bg-(--c-bg-2) px-5 text-[14px] font-bold text-(--c-primary)"
             >
               Показать ещё ({reviews.length - shown})
             </button>
@@ -167,7 +167,7 @@ function ParkReviewCard({ review }: { review: Review }) {
       {review.audioUrl && <audio controls preload="none" src={review.audioUrl} className="h-10 w-full" />}
 
       {review.photoUrl && (
-        <button type="button" onClick={() => setZoom((z) => !z)} className="block overflow-hidden rounded-2xl">
+        <button type="button" onClick={() => setZoom((z) => !z)} className="block overflow-hidden rounded-md">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={review.photoUrl}
@@ -280,14 +280,14 @@ function ParkReviewForm({
 
   if (done) {
     return (
-      <div className="mt-3 rounded-[20px] bg-(--c-primary) px-4 py-4 text-center text-[15px] font-bold text-white">
+      <div className="mt-3 rounded-lg bg-(--c-primary) px-4 py-4 text-center text-[15px] font-bold text-white">
         🙏 Спасибо! Отзыв уже опубликован.
       </div>
     )
   }
 
   return (
-    <form onSubmit={submit} className="mt-3 flex flex-col gap-4 rounded-[24px] bg-(--c-tint) p-4 shadow-[0_8px_24px_rgb(60_60_40/0.11)]">
+    <form onSubmit={submit} className="mt-3 flex flex-col gap-4 rounded-lg bg-(--c-tint) p-4 shadow-[0_8px_24px_rgb(60_60_40/0.11)]">
       <div className="flex items-center justify-between">
         <h3 className={`${SERIF} text-[20px] font-bold text-(--c-primary)`}>Ваш отзыв</h3>
         <button type="button" onClick={onCancel} className="text-[13px] font-bold text-(--c-muted)">
@@ -339,7 +339,7 @@ function ParkReviewForm({
               type="button"
               aria-pressed={a === emoji}
               onClick={() => setEmoji(a)}
-              className={`flex aspect-square items-center justify-center rounded-full text-[22px] leading-none transition ${
+              className={`flex aspect-square items-center justify-center rounded-md text-[22px] leading-none transition ${
                 a === emoji ? "bg-(--c-primary) ring-2 ring-(--c-accent) ring-offset-2 ring-offset-(--c-tint)" : "bg-white"
               }`}
             >
@@ -365,7 +365,7 @@ function ParkReviewForm({
         <div className="mt-2">
           <AudioRecorder
             onChange={setAudio}
-            buttonClassName="h-10 rounded-full border-(--c-border) bg-white px-4 text-[14px] font-bold text-(--c-primary) hover:bg-(--c-bg-2) hover:text-(--c-primary) dark:border-(--c-border) dark:bg-white dark:hover:bg-(--c-bg-2)"
+            buttonClassName="h-10 rounded-md border-(--c-border) bg-white px-4 text-[14px] font-bold text-(--c-primary) hover:bg-(--c-bg-2) hover:text-(--c-primary) dark:border-(--c-border) dark:bg-white dark:hover:bg-(--c-bg-2)"
           />
         </div>
       </div>
@@ -374,7 +374,7 @@ function ParkReviewForm({
         {preview ? (
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={preview} alt="" className="size-16 rounded-xl object-cover" />
+            <img src={preview} alt="" className="size-16 rounded-md object-cover" />
             <button
               type="button"
               onClick={() => {
@@ -382,7 +382,7 @@ function ParkReviewForm({
                 setPreview(null)
                 if (fileRef.current) fileRef.current.value = ""
               }}
-              className="h-10 rounded-full bg-white px-4 text-[14px] font-bold text-(--c-muted)"
+              className="h-10 rounded-md bg-white px-4 text-[14px] font-bold text-(--c-muted)"
             >
               Убрать фото
             </button>
@@ -391,7 +391,7 @@ function ParkReviewForm({
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="h-10 rounded-full border border-(--c-border) bg-white px-4 text-[14px] font-bold text-(--c-primary)"
+            className="h-10 rounded-md border border-(--c-border) bg-white px-4 text-[14px] font-bold text-(--c-primary)"
           >
             📷 Добавить фото
           </button>
@@ -414,7 +414,7 @@ function ParkReviewForm({
       <button
         type="submit"
         disabled={sending}
-        className="h-14 w-full rounded-full bg-(--c-accent) text-[16px] font-extrabold text-white shadow-[0_8px_20px_rgb(0_0_0/0.18)] transition active:scale-[0.99] disabled:opacity-60"
+        className="h-14 w-full rounded-md bg-(--c-accent) text-[16px] font-extrabold text-white shadow-[0_8px_20px_rgb(0_0_0/0.18)] transition active:scale-[0.99] disabled:opacity-60"
       >
         {sending ? "Отправляем…" : "Опубликовать отзыв"}
       </button>

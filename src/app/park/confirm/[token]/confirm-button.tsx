@@ -23,7 +23,7 @@ export function ConfirmButton({ token, afterDone }: { token: string; afterDone?:
   if (status === "done") {
     return (
       <>
-      <div className="rounded-[24px] bg-white p-5 text-center shadow-[0_8px_24px_rgb(60_60_40/0.11)]">
+      <div className="rounded-lg bg-white p-5 text-center shadow-[0_8px_24px_rgb(60_60_40/0.11)]">
         <div className="text-[40px] leading-none">✅</div>
         <p className="mt-2 font-(family-name:--font-park-serif) text-[22px] font-bold text-(--c-primary)">
           Выезд подтверждён!
@@ -41,7 +41,7 @@ export function ConfirmButton({ token, afterDone }: { token: string; afterDone?:
         type="button"
         onClick={confirm}
         disabled={status === "sending"}
-        className="h-16 w-full rounded-full bg-(--c-accent) text-[18px] font-extrabold text-white shadow-[0_10px_24px_rgb(0_0_0/0.2)] active:scale-[0.99] disabled:opacity-60"
+        className="h-16 w-full rounded-md bg-(--c-accent) text-[18px] font-extrabold text-white shadow-[0_10px_24px_rgb(0_0_0/0.2)] active:scale-[0.99] disabled:opacity-60"
       >
         {status === "sending" ? "Отправляем…" : "✅ Подтверждаю выезд"}
       </button>

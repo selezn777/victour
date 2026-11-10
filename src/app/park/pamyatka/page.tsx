@@ -20,7 +20,7 @@ const PDF_HREF = "/park/vinwonders-pamyatka.pdf"
 
 function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="break-inside-avoid rounded-[20px] bg-white p-4 shadow-[0_6px_18px_rgb(60_60_40/0.09)]">
+    <section className="break-inside-avoid rounded-lg bg-white p-4 shadow-[0_6px_18px_rgb(60_60_40/0.09)]">
       <h2 className="mb-2.5 text-[17px] font-extrabold text-(--c-primary)">{title}</h2>
       <div className="space-y-2 text-[14px] leading-snug">{children}</div>
     </section>
@@ -54,7 +54,7 @@ export default function MemoPage() {
           <a
             href={PDF_HREF}
             download
-            className="flex h-11 items-center gap-2 rounded-full bg-(--c-accent) px-4 text-[14px] font-extrabold text-white"
+            className="flex h-11 items-center gap-2 rounded-md bg-(--c-accent) px-4 text-[14px] font-extrabold text-white"
           >
             ⬇ Скачать PDF
           </a>
@@ -106,7 +106,7 @@ export default function MemoPage() {
           <p>
             <b>Что не входит:</b> зиплайн, еда, шкафчики, Premium-места на Tata Show.
           </p>
-          <p className="rounded-xl bg-(--c-tint) p-3 text-[13px] text-(--c-tint-ink)">
+          <p className="rounded-md bg-(--c-tint) p-3 text-[13px] text-(--c-tint-ink)">
             ⚠️ Горки в аквапарке: рост от 130 см, вес до 100 кг, возраст до 50 лет. Дети ниже 140 см
             и младше 14 лет — только со взрослым.
           </p>

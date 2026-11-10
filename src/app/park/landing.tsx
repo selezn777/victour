@@ -189,7 +189,7 @@ export function Landing({
             href={PARK_WHATSAPP.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3.5 rounded-[24px] border-[3px] border-[#25d366] bg-white px-4 py-3.5 shadow-[0_8px_24px_rgb(60_60_40/0.14)] active:scale-[0.99]"
+            className="flex items-center gap-3.5 rounded-lg border-[3px] border-[#25d366] bg-white px-4 py-3.5 shadow-[0_8px_24px_rgb(60_60_40/0.14)] active:scale-[0.99]"
           >
             <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#25d366]">
               <WhatsAppIcon className="size-7 fill-white" />

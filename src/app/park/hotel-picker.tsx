@@ -52,7 +52,7 @@ export function HotelPicker({
   return (
     <div>
       {value.place ? (
-        <div className="flex items-start gap-3 rounded-2xl border-2 border-(--c-primary) bg-white px-3.5 py-3">
+        <div className="flex items-start gap-3 rounded-md border-2 border-(--c-primary) bg-white px-3.5 py-3">
           <span className="text-[22px] leading-none">🏨</span>
           <div className="min-w-0 flex-1">
             <b className="block text-[15px] leading-tight">{value.name}</b>
@@ -86,7 +86,7 @@ export function HotelPicker({
         <button
           type="button"
           onClick={() => setMapOpen(true)}
-          className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-(--c-primary) bg-white/60 text-[15px] font-bold text-(--c-primary) active:scale-[0.99]"
+          className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-md border-2 border-dashed border-(--c-primary) bg-white/60 text-[15px] font-bold text-(--c-primary) active:scale-[0.99]"
         >
           <span className="text-[18px]">📍</span> Найти отель на Google Картах
         </button>
@@ -257,10 +257,10 @@ function HotelMapSheet({
             if (e.target.value.trim().length < 2) setSuggestions([])
           }}
           placeholder="Введите название отеля"
-          className="h-11 min-w-0 flex-1 rounded-full border border-black/10 bg-white px-4 text-[16px] outline-none focus:border-(--c-primary)"
+          className="h-11 min-w-0 flex-1 rounded-md border border-black/10 bg-white px-4 text-[16px] outline-none focus:border-(--c-primary)"
         />
         {suggestions.length > 0 && (
-          <ul className="absolute inset-x-3 top-full mt-1 max-h-[50vh] overflow-y-auto rounded-2xl bg-white py-1 shadow-[0_12px_32px_rgb(0_0_0/0.18)]">
+          <ul className="absolute inset-x-3 top-full mt-1 max-h-[50vh] overflow-y-auto rounded-md bg-white py-1 shadow-[0_12px_32px_rgb(0_0_0/0.18)]">
             {suggestions.map((s) => (
               <li key={s.placeId}>
                 <button
@@ -299,7 +299,7 @@ function HotelMapSheet({
             <button
               type="button"
               onClick={onClose}
-              className="h-11 rounded-full bg-(--c-primary) px-5 font-bold text-white"
+              className="h-11 rounded-md bg-(--c-primary) px-5 font-bold text-white"
             >
               Вписать вручную
             </button>
@@ -316,7 +316,7 @@ function HotelMapSheet({
           <button
             type="button"
             onClick={() => onSelect(selected)}
-            className="mt-3 h-13 w-full rounded-full bg-(--c-accent) text-[16px] font-extrabold text-white"
+            className="mt-3 h-13 w-full rounded-md bg-(--c-accent) text-[16px] font-extrabold text-white"
           >
             ✓ Это мой отель
           </button>

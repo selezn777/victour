@@ -78,7 +78,7 @@ export default function FasttrackPage() {
         </Hero>
 
         <div className="relative z-10 -mt-12 space-y-3.5 px-4">
-          <section className="rounded-[28px] bg-(--c-primary) p-5 text-white shadow-(--c-shadow-primary)">
+          <section className="rounded-lg bg-(--c-primary) p-5 text-white shadow-(--c-shadow-primary)">
             <p className="text-[16px] leading-snug font-medium text-balance opacity-95">
               Прилетаете, а вас уже ждут: <b className="text-(--c-on-primary)">паспортный контроль по отдельному коридору</b>,
               помощь с багажом и выход прямо к машине.
@@ -89,7 +89,7 @@ export default function FasttrackPage() {
                 <b className={`${SERIF} text-[40px] leading-none`}>${FT_PRICE_USD}</b>
                 <span className="ml-1.5 text-[15px] opacity-90">за человека</span>
               </div>
-              <span className="rounded-full bg-(--c-accent) px-3 py-1.5 text-[12px] font-extrabold tracking-wide">
+              <span className="rounded-md bg-(--c-accent) px-3 py-1.5 text-[12px] font-extrabold tracking-wide">
                 🚐 ТРАНСФЕР БОНУСОМ
               </span>
             </div>
@@ -119,7 +119,7 @@ export default function FasttrackPage() {
             </ol>
           </section>
 
-          <div className="relative h-[220px] overflow-hidden rounded-[24px]">
+          <div className="relative h-[220px] overflow-hidden rounded-lg">
             <Image src={hall} alt="Зал аэропорта Фукуока" fill placeholder="blur" sizes="(max-width: 560px) 100vw, 560px" className="object-cover object-[center_40%]" />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(10_30_55/0.1)_30%,rgb(10_30_55/0.75)_100%)]" />
             <p className={`${SERIF} absolute inset-x-4 bottom-4 text-[24px] leading-tight font-bold text-white`}>
@@ -163,7 +163,7 @@ export default function FasttrackPage() {
             </div>
           </section>
 
-          <div className="relative h-[200px] overflow-hidden rounded-[24px]">
+          <div className="relative h-[200px] overflow-hidden rounded-lg">
             <Image src={front} alt="Терминал аэропорта Фукуока" fill placeholder="blur" sizes="(max-width: 560px) 100vw, 560px" className="object-cover object-[center_80%]" />
             <div className="absolute inset-x-4 top-4 flex items-center justify-between gap-2">
               <Pill>ВЫХОД ИЗ ТЕРМИНАЛА</Pill>
@@ -206,7 +206,7 @@ export default function FasttrackPage() {
             href={PARK_WHATSAPP.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3.5 rounded-[24px] border-[3px] border-[#25d366] bg-white px-4 py-3.5 shadow-[0_8px_24px_rgb(60_60_40/0.14)] active:scale-[0.99]"
+            className="flex items-center gap-3.5 rounded-lg border-[3px] border-[#25d366] bg-white px-4 py-3.5 shadow-[0_8px_24px_rgb(60_60_40/0.14)] active:scale-[0.99]"
           >
             <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#25d366]">
               <WhatsAppIcon className="size-7 fill-white" />

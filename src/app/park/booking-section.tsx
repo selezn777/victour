@@ -46,7 +46,7 @@ import {
 type Status = "idle" | "sending" | "success" | "failed" | "rate_limited";
 
 const INPUT =
-  "h-12 w-full rounded-2xl border border-(--c-border) bg-white px-3.5 text-[16px] text-(--c-ink) outline-none placeholder:text-(--c-muted)/60 focus:border-(--c-primary-2) focus:ring-2 focus:ring-(--c-primary-2)/25";
+  "h-12 w-full rounded-md border border-(--c-border) bg-white px-3.5 text-[16px] text-(--c-ink) outline-none placeholder:text-(--c-muted)/60 focus:border-(--c-primary-2) focus:ring-2 focus:ring-(--c-primary-2)/25";
 const LABEL = "mb-1.5 block text-[13px] font-bold text-(--c-primary)";
 
 const noopSubscribe = () => () => {};
@@ -341,7 +341,7 @@ function BookingForm({
   return (
     <section
       id="booking"
-      className="scroll-mt-16 rounded-[28px] bg-(--c-primary) p-4 text-white shadow-(--c-shadow-primary) transition-colors duration-500"
+      className="scroll-mt-16 rounded-lg bg-(--c-primary) p-4 text-white shadow-(--c-shadow-primary) transition-colors duration-500"
     >
       <h2 className="px-1 font-(family-name:--font-park-serif) text-[24px] font-bold text-(--c-on-primary)">
         {dest.bookingTitle}
@@ -353,7 +353,7 @@ function BookingForm({
       <form
         onSubmit={handleSubmit}
         noValidate
-        className="relative space-y-5 rounded-[22px] bg-(--c-bg) p-4 text-(--c-ink) transition-colors duration-500"
+        className="relative space-y-5 rounded-lg bg-(--c-bg) p-4 text-(--c-ink) transition-colors duration-500"
       >
         {/* Honeypot: скрыто от людей, боты заполняют */}
         <div
@@ -411,7 +411,7 @@ function BookingForm({
                       Справа от цены — названия длинные, а строка цены короткая */}
                     <span
                       aria-hidden
-                      className={`flex shrink-0 h-[18px] w-[18px] items-center justify-center rounded-full border-2 text-[10px] font-black ${
+                      className={`flex shrink-0 h-[18px] w-[18px] items-center justify-center rounded-md border-2 text-[10px] font-black ${
                         active
                           ? "border-white bg-white text-(--c-primary)"
                           : "border-(--c-border) bg-white"
@@ -503,7 +503,7 @@ function BookingForm({
                     type="button"
                     onClick={() => setDepartureTime(key)}
                     aria-pressed={active}
-                    className={`rounded-2xl border-2 py-2 transition-colors ${compactSlots ? "px-1 text-center" : "px-3 text-left"} ${
+                    className={`rounded-md border-2 py-2 transition-colors ${compactSlots ? "px-1 text-center" : "px-3 text-left"} ${
                       active
                         ? "border-(--c-primary) bg-(--c-primary) text-white"
                         : "border-(--c-border) bg-white"
@@ -532,7 +532,7 @@ function BookingForm({
 
         <div id="park-field-guests">
           <span className={LABEL}>Сколько вас</span>
-          <div className="divide-y divide-(--c-bg-2) rounded-2xl bg-white">
+          <div className="divide-y divide-(--c-bg-2) rounded-md bg-white">
             {dest.guests.map((g) => (
               <div
                 key={g.key}
@@ -626,7 +626,7 @@ function BookingForm({
                 type="button"
                 onClick={() => setContactChannel(ch)}
                 aria-pressed={contactChannel === ch}
-                className={`h-10 rounded-xl text-[13px] font-bold transition-colors ${
+                className={`h-10 rounded-md text-[13px] font-bold transition-colors ${
                   contactChannel === ch
                     ? "bg-(--c-primary) text-white"
                     : "border border-(--c-border) bg-white text-(--c-ink)"
@@ -701,7 +701,7 @@ function BookingForm({
 
         {dest.extras.length > 0 && (
           <details
-            className="group rounded-2xl bg-white"
+            className="group rounded-md bg-white"
             open={destination === "hontam" || destination === "pq_honthom"}
           >
             <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 px-3.5 py-2.5 text-[14px] font-bold text-(--c-primary) [&::-webkit-details-marker]:hidden">
@@ -775,13 +775,13 @@ function BookingForm({
         <button
           type="submit"
           disabled={status === "sending"}
-          className="h-14 w-full rounded-full bg-(--c-accent) text-[16px] font-extrabold text-white shadow-[0_8px_20px_rgb(0_0_0/0.18)] transition active:scale-[0.99] disabled:opacity-60"
+          className="h-14 w-full rounded-md bg-(--c-accent) text-[16px] font-extrabold text-white shadow-[0_8px_20px_rgb(0_0_0/0.18)] transition active:scale-[0.99] disabled:opacity-60"
         >
           {status === "sending" ? "Отправляем…" : dest.submitLabel}
         </button>
       </form>
 
-      <div className="mt-3.5 rounded-2xl bg-white/12 px-4 py-3 text-[14px]">
+      <div className="mt-3.5 rounded-md bg-white/12 px-4 py-3 text-[14px]">
         ☀️ Утром <b className="text-(--c-on-primary)">за час до выезда</b>{" "}
         подтвердите бронь
       </div>
@@ -819,7 +819,7 @@ function ReceiptBox({ receipt: r }: { receipt: Receipt }) {
   return (
     <div
       aria-live="polite"
-      className="rounded-2xl border-2 border-(--c-border) bg-white px-4 py-3 text-[14px] leading-snug text-(--c-ink)"
+      className="rounded-md border-2 border-(--c-border) bg-white px-4 py-3 text-[14px] leading-snug text-(--c-ink)"
     >
       <p className="text-[12px] font-bold tracking-[0.12em] text-(--c-primary)">
         🧾 ВАШ ЗАКАЗ · {r.people} ЧЕЛ.
@@ -874,7 +874,7 @@ function CountryChip({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`h-10 rounded-full px-1 text-[13.5px] font-bold whitespace-nowrap transition-colors ${
+      className={`h-10 rounded-md px-1 text-[13.5px] font-bold whitespace-nowrap transition-colors ${
         active
           ? "bg-(--c-primary-2) text-white"
           : "border border-(--c-border) bg-white text-(--c-ink)"
@@ -929,7 +929,7 @@ function Stepper({
 function SendProblem({ text }: { text: string }) {
   return (
     <div
-      className="rounded-2xl border-2 border-[#b3402a]/40 bg-white p-3.5"
+      className="rounded-md border-2 border-[#b3402a]/40 bg-white p-3.5"
       role="alert"
     >
       <p className="text-[14px] leading-snug font-semibold text-[#b3402a]">
@@ -939,7 +939,7 @@ function SendProblem({ text }: { text: string }) {
         href={PARK_WHATSAPP.href}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-2.5 flex h-11 items-center justify-center gap-2 rounded-full bg-[#25d366] text-[15px] font-bold text-white"
+        className="mt-2.5 flex h-11 items-center justify-center gap-2 rounded-md bg-[#25d366] text-[15px] font-bold text-white"
       >
         <WhatsAppIcon className="size-5 fill-white" />
         Написать в WhatsApp
@@ -993,7 +993,7 @@ function SuccessScreen({
       className="fixed inset-0 z-50 overflow-y-auto bg-(--c-bg) text-(--c-ink)"
     >
       <div className="mx-auto max-w-[560px] px-4 pt-[calc(env(safe-area-inset-top)+16px)] pb-10">
-        <div className="rounded-[28px] bg-(--c-primary) p-5 text-white shadow-(--c-shadow-primary)">
+        <div className="rounded-lg bg-(--c-primary) p-5 text-white shadow-(--c-shadow-primary)">
           <p className="text-[13px] font-bold tracking-[0.14em] text-(--c-on-primary)">
             {waSent ? "✅ ГОТОВО" : "✅ ЗАЯВКА ПРИНЯТА · ШАГ 2 ИЗ 2"}
           </p>
@@ -1027,7 +1027,7 @@ function SuccessScreen({
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => setWaSent(true)}
-            className={`mt-4 flex h-15 items-center justify-center gap-2.5 rounded-full bg-[#25d366] text-[17px] font-extrabold text-white shadow-[0_8px_20px_rgb(0_0_0/0.25)] active:scale-[0.99] ${waSent ? "" : "park-wa-pulse"}`}
+            className={`mt-4 flex h-15 items-center justify-center gap-2.5 rounded-md bg-[#25d366] text-[17px] font-extrabold text-white shadow-[0_8px_20px_rgb(0_0_0/0.25)] active:scale-[0.99] ${waSent ? "" : "park-wa-pulse"}`}
           >
             <WhatsAppIcon className="size-7 fill-white" />
             {waSent ? "Открыть чат ещё раз" : "Отправить заявку в WhatsApp"}
@@ -1046,7 +1046,7 @@ function SuccessScreen({
                 <button
                   type="button"
                   onClick={() => setStayed(true)}
-                  className="h-9 rounded-full bg-white/15 px-4 font-bold"
+                  className="h-9 rounded-md bg-white/15 px-4 font-bold"
                 >
                   Остаться
                 </button>
@@ -1066,7 +1066,7 @@ function SuccessScreen({
           <a
             href={`/api/park-booking/ics?token=${encodeURIComponent(token)}`}
             onClick={() => setStayed(true)}
-            className="mt-3 flex h-12 items-center justify-center gap-2 rounded-full border-2 border-(--c-primary) bg-white text-[15px] font-bold text-(--c-primary)"
+            className="mt-3 flex h-12 items-center justify-center gap-2 rounded-md border-2 border-(--c-primary) bg-white text-[15px] font-bold text-(--c-primary)"
           >
             🔔 Поставить напоминание в календарь
           </a>
@@ -1075,7 +1075,7 @@ function SuccessScreen({
           <Link
             href="/trips"
             onClick={() => setStayed(true)}
-            className="mt-2 flex h-12 items-center justify-center gap-2 rounded-full bg-white/90 text-[15px] font-bold text-(--c-ink)"
+            className="mt-2 flex h-12 items-center justify-center gap-2 rounded-md bg-white/90 text-[15px] font-bold text-(--c-ink)"
           >
             🧳 Моя поездка: детали и изменения
           </Link>
@@ -1089,7 +1089,7 @@ function SuccessScreen({
             <Link
               key={tour.slug}
               href={`/tours/${tour.slug}`}
-              className="group overflow-hidden rounded-[20px] bg-white shadow-[0_8px_24px_rgb(60_60_40/0.12)]"
+              className="group overflow-hidden rounded-lg bg-white shadow-[0_8px_24px_rgb(60_60_40/0.12)]"
             >
               <div className="relative aspect-[3/2]">
                 <Image
@@ -1109,7 +1109,7 @@ function SuccessScreen({
 
         <Link
           href="/tours"
-          className="mt-5 flex h-14 items-center justify-center rounded-full bg-(--c-accent) text-[16px] font-extrabold text-white shadow-[0_8px_20px_rgb(0_0_0/0.18)]"
+          className="mt-5 flex h-14 items-center justify-center rounded-md bg-(--c-accent) text-[16px] font-extrabold text-white shadow-[0_8px_20px_rgb(0_0_0/0.18)]"
         >
           Смотреть все туры
         </Link>

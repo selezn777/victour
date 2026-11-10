@@ -27,7 +27,7 @@ export function GuideItem({
 
 export function InfoTile({ emoji, title, note }: { emoji: string; title: string; note: string }) {
   return (
-    <div className="flex items-center gap-2.5 rounded-[20px] bg-(--c-bg-2) p-3.5">
+    <div className="flex items-center gap-2.5 rounded-lg bg-(--c-bg-2) p-3.5">
       <span className="text-[24px] leading-none">{emoji}</span>
       <div>
         <b className="block text-[13.5px] leading-tight font-extrabold text-(--c-primary)">{title}</b>

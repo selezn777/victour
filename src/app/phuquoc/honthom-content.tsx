@@ -29,7 +29,7 @@ export function PqHonThomContent() {
       </Hero>
 
       <div className="relative z-10 -mt-12 space-y-3.5 px-4">
-        <section className="rounded-[28px] bg-(--c-primary) p-5 text-white shadow-(--c-shadow-primary)">
+        <section className="rounded-lg bg-(--c-primary) p-5 text-white shadow-(--c-shadow-primary)">
           <p className="text-[16px] leading-snug font-medium text-balance opacity-95">
             <b className="text-(--c-on-primary)">Самая длинная морская канатная дорога в мире</b>{" "}
             (рекорд Гиннесса, почти 8 км). Минут пятнадцать летите над островами и бирюзовой водой
@@ -120,7 +120,7 @@ export function PqHonThomContent() {
               <div
                 key={c.key}
                 className={`flex items-center gap-2.5 px-3.5 py-3 ${
-                  c.free ? "rounded-[20px] border-2 border-dashed border-(--c-accent) bg-(--c-tint)" : CARD
+                  c.free ? "rounded-lg border-2 border-dashed border-(--c-accent) bg-(--c-tint)" : CARD
                 }`}
               >
                 <span className="text-[26px] leading-none">{c.emoji}</span>

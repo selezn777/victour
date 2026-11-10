@@ -33,7 +33,7 @@ export function HonTamContent() {
       </Hero>
 
       <div className="relative z-10 -mt-12 space-y-3.5 px-4">
-        <section className="rounded-[28px] bg-(--c-primary) p-5 text-white shadow-(--c-shadow-primary)">
+        <section className="rounded-lg bg-(--c-primary) p-5 text-white shadow-(--c-shadow-primary)">
           <div className="flex gap-3">
             <span className="text-[32px] leading-none">🚐</span>
             <div>
@@ -46,14 +46,14 @@ export function HonTamContent() {
               </p>
             </div>
           </div>
-          <div className="mt-3.5 rounded-2xl bg-white/12 px-3.5 py-3 text-[14px] leading-snug">
+          <div className="mt-3.5 rounded-md bg-white/12 px-3.5 py-3 text-[14px] leading-snug">
             🚤 Катер в <b className="text-(--c-on-primary)">9:00, 10:00 или 12:00</b> —
             выезжаем от отеля за 45 минут до катера. На острове — до 16:20.
           </div>
         </section>
 
         <section className="grid grid-cols-2 gap-3">
-          <div className="flex items-center gap-2.5 rounded-[20px] bg-(--c-bg-2) p-3.5">
+          <div className="flex items-center gap-2.5 rounded-lg bg-(--c-bg-2) p-3.5">
             <span className="text-[24px] leading-none">🚤</span>
             <div>
               <b className="block text-[13.5px] leading-tight font-extrabold text-(--c-primary)">
@@ -64,7 +64,7 @@ export function HonTamContent() {
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2.5 rounded-[20px] bg-(--c-bg-2) p-3.5">
+          <div className="flex items-center gap-2.5 rounded-lg bg-(--c-bg-2) p-3.5">
             <span className="text-[24px] leading-none">🕓</span>
             <div>
               <b className="block text-[13.5px] leading-tight font-extrabold whitespace-nowrap text-(--c-primary)">
@@ -79,7 +79,7 @@ export function HonTamContent() {
 
         <section
           id="seawalking"
-          className="scroll-mt-16 overflow-hidden rounded-[24px] bg-white shadow-(--c-shadow-primary)"
+          className="scroll-mt-16 overflow-hidden rounded-lg bg-white shadow-(--c-shadow-primary)"
         >
           {HONTAM_PROMO.videoSrc && (
             <video
@@ -95,7 +95,7 @@ export function HonTamContent() {
             />
           )}
           <div className="p-4">
-            <span className="inline-block rounded-full bg-(--c-accent) px-2.5 py-1 text-[11px] font-bold tracking-wider text-white uppercase">
+            <span className="inline-block rounded-md bg-(--c-accent) px-2.5 py-1 text-[11px] font-bold tracking-wider text-white uppercase">
               🤿 Акция
             </span>
             <h3 className="mt-2 text-[18px] leading-tight font-extrabold text-balance text-(--c-primary)">
@@ -166,7 +166,7 @@ export function HonTamContent() {
           </div>
         </section>
 
-        <section className={`${CARD} overflow-hidden rounded-[24px]`}>
+        <section className={`${CARD} overflow-hidden rounded-lg`}>
           <div className="relative aspect-[4/3]">
             <Image
               src={boat}
@@ -240,7 +240,7 @@ export function HonTamContent() {
                 key={c.key}
                 className={`flex items-center gap-2.5 px-3.5 py-3 ${
                   c.free
-                    ? "rounded-[20px] border-2 border-dashed border-(--c-accent) bg-(--c-tint)"
+                    ? "rounded-lg border-2 border-dashed border-(--c-accent) bg-(--c-tint)"
                     : CARD
                 }`}
               >

@@ -29,7 +29,7 @@ export function PqVinContent() {
       </Hero>
 
       <div className="relative z-10 -mt-12 space-y-3.5 px-4">
-        <section className="rounded-[28px] bg-(--c-primary) p-5 text-white shadow-(--c-shadow-primary)">
+        <section className="rounded-lg bg-(--c-primary) p-5 text-white shadow-(--c-shadow-primary)">
           <p className="text-[16px] leading-snug font-medium text-balance opacity-95">
             Билеты <b className="text-(--c-on-primary)">по официальным ценам</b>, выкупаем заранее:
             приезжаете и сразу идёте на вход.
@@ -52,7 +52,7 @@ export function PqVinContent() {
           <TicketCard label="Сафари днём" price={pkg("safari").price} secondary={pkg("safari").childPrice} />
         </section>
         <TicketCard label="Комбо: оба парка в один день" price={pkg("combo").price} secondary={pkg("combo").childPrice}>
-          <div className="rounded-xl border-2 border-dashed border-(--c-accent) bg-(--c-tint) px-2.5 py-2 font-bold text-balance text-(--c-tint-ink)">
+          <div className="rounded-md border-2 border-dashed border-(--c-accent) bg-(--c-tint) px-2.5 py-2 font-bold text-balance text-(--c-tint-ink)">
             Выгоднее, чем по отдельности. Утром сафари, после обеда VinWonders
           </div>
         </TicketCard>
@@ -125,7 +125,7 @@ export function PqVinContent() {
               <div
                 key={c.key}
                 className={`flex items-center gap-2.5 px-3.5 py-3 ${
-                  c.free ? "rounded-[20px] border-2 border-dashed border-(--c-accent) bg-(--c-tint)" : CARD
+                  c.free ? "rounded-lg border-2 border-dashed border-(--c-accent) bg-(--c-tint)" : CARD
                 }`}
               >
                 <span className="text-[26px] leading-none">{c.emoji}</span>
