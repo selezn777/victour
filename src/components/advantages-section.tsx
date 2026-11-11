@@ -386,6 +386,10 @@ function useRevealCycle(
       Promise.all([bandLoadedOrTimeout, wait(PRIME_MS)]).then(() => {
         if (generation !== generationRef.current) return
         setPhase("open")
+        // Виктор 2026-11-11: фото открывается только по тапу и остаётся
+        // открытым, пока гость не тапнет ещё раз (см. triggerClose) - без
+        // автозакрытия по таймеру.
+        if (forcedIdx != null) return
         after(() => {
           if (generation !== generationRef.current) return
           setPhase("closing")
@@ -420,7 +424,23 @@ function useRevealCycle(
     [clearTimers, runCycle],
   )
 
+  // Повторный тап по открытому фото - стягиваем его обратно в плитку.
+  const triggerClose = useCallback(() => {
+    clearTimers()
+    generationRef.current += 1
+    const generation = generationRef.current
+    setPhase("closing")
+    after(() => {
+      if (generation !== generationRef.current) return
+      setPhase("idle")
+      setForced(false)
+    }, TRANSITION_MS)
+  }, [after, clearTimers])
+
   useEffect(() => {
+    // Виктор 2026-11-11: «не нравится, что фотки сами выезжают» - автопоказ
+    // отключён, раскрытие только по тапу (triggerOpen).
+    if (AUTO_REVEAL_DISABLED) return
     // Не стартуем раскрытие, пока мозаика сама ещё не прогрузилась целиком —
     // Виктор: одна плитка раскрывалась крупно поверх сетки, пока остальные
     // плитки ещё были плейсхолдерами, выглядело как два конкурирующих слоя.
@@ -462,8 +482,10 @@ function useRevealCycle(
     }
   }, [after, bandIndex, clearTimers, ready, runCycle])
 
-  return { phase, target, origin, closedScale, forced, notifyBandLoaded, triggerOpen }
+  return { phase, target, origin, closedScale, forced, notifyBandLoaded, triggerOpen, triggerClose }
 }
+
+const AUTO_REVEAL_DISABLED = true
 
 function PhotoCollage({ size }: { size: number }) {
   // Отдельные плитки не грузятся (см. COMPOSITE_VERSION) — автопоказ ждёт
@@ -569,11 +591,19 @@ function PhotoCollage({ size }: { size: number }) {
     const b = bandForTile(i)
     if (b == null) return
     const reveal = reveals[b]
-    // Виктор 2026-11-06: тап должен открывать фото сразу — автопоказ
-    // прерываем, а повторный тап блокируем только пока идёт раскрытие,
-    // запущенное самим гостем.
-    if (reveal.phase !== "idle" && reveal.forced) return
+    // Виктор 2026-11-11: тап открывает фото, повторный тап сворачивает.
+    // Полоса pointer-events-none, так что тап по открытому фото приходит
+    // сюда как тап по плитке под ним.
+    if (reveal.phase === "open") {
+      reveal.triggerClose()
+      return
+    }
+    if (reveal.phase !== "idle") return
     userTookOverRef.current = true
+    // Одно открытое фото за раз: остальные полосы (sm/lg) сворачиваем.
+    reveals.forEach((r, k) => {
+      if (k !== b && r.phase === "open") r.triggerClose()
+    })
     reveal.triggerOpen(i)
   }
 
