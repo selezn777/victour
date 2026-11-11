@@ -484,6 +484,11 @@ export const PROMO_TOURS_PQ = [
     imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-dikiy/v1-07.webp",
   },
   {
+    slug: "phuquoc-utro",
+    title: "Морские звёзды и рыба на сваях",
+    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-utro/v2-24.webp",
+  },
+  {
     slug: "phuquoc-nastoyashchiy",
     title: "Настоящий Фукуок",
     imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-nastoyashchiy/11.webp",

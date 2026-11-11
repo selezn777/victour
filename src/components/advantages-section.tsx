@@ -1044,6 +1044,12 @@ const PHUQUOC_TOURS: typeof CATALOG_TOURS = [
     annotation: "Питон на плечах, Будда, который исполняет желания, водопад в джунглях и круглые лодки.",
   },
   {
+    slug: "phuquoc-utro",
+    title: "Морские звёзды",
+    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-utro/v2-24.webp",
+    annotation: "Мёд с сот, круглые лодки, рыба из садка в ресторане на сваях и пляж с морскими звёздами.",
+  },
+  {
     slug: "phuquoc-hoian-danang",
     title: "Хойан + Дананг, 3 дня",
     imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-hoian-danang/01.webp",
@@ -1187,6 +1193,7 @@ const PQ_TOUR_LINES = [
   { icon: "🌙", name: "Вечерний", text: "звёзды на пляже, Венеция на закате и ночное сафари" },
   { icon: "🌿", name: "Настоящий", text: "дикий мёд, пагода над морем и самолёты над головой, к 15:00 в отеле" },
   { icon: "🐍", name: "Дикий", text: "питон на плечах, водопад в джунглях и круглые лодки" },
+  { icon: "⭐", name: "Морские звёзды", text: "мёд с сот, рыба из садка на сваях и пляж со звёздами" },
   { icon: "✈️", name: "Хойан + Дананг", text: "3 дня с перелётом, две ночи в городе ЮНЕСКО" },
 ]
 
@@ -1221,7 +1228,7 @@ function ToursSlide() {
                 фото, а внутренний скролл в слайде деки на телефоне не
                 работает - там остаётся прежний короткий абзац. */}
             <p className="mt-2 max-w-md text-base leading-snug text-muted-foreground [@media(min-height:820px)]:hidden">
-              Вечер с ночным сафари, утро по главным местам, день в джунглях и Хойан с Данангом на три дня.
+              Вечер с ночным сафари, утро по главным местам, день в джунглях, пляж с морскими звёздами и Хойан с Данангом на три дня.
             </p>
             <ul className="mt-3 hidden w-full max-w-md divide-y divide-border rounded-md border border-border bg-card/60 text-left sm:mt-5 sm:max-w-xl [@media(min-height:820px)]:block">
               {PQ_TOUR_LINES.map((l) => (
