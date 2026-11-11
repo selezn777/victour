@@ -778,6 +778,7 @@ function PhotoSlide({
   imageAlt,
   imagePosition,
   stackImages,
+  note,
 }: {
   title: string
   /** Короткая акцентная строка между заголовком и описанием — тот же приём,
@@ -790,6 +791,8 @@ function PhotoSlide({
   /** Если задано (2+ фото) — вместо статичного фото рендерится интерактивная
    * стопка (PhotoStack): листается стрелками, свайпом вбок и тапом. */
   stackImages?: string[]
+  /** Мелкая плашка-допуслуга под описанием (Нячанг: VIP-минивэн за доплату). */
+  note?: string
 }) {
   const photoWrapRef = useRef<HTMLDivElement>(null)
   const photoSize = useContainedSquareSize(photoWrapRef)
@@ -842,6 +845,12 @@ function PhotoSlide({
         <p className="mt-2 max-w-full text-base leading-snug text-muted-foreground sm:max-w-xl sm:text-xl sm:leading-relaxed">
           {body}
         </p>
+        {note && (
+          <p className="mt-3 inline-flex max-w-full items-center gap-2 rounded-full border border-border bg-muted/60 px-3.5 py-1.5 text-xs leading-snug text-muted-foreground sm:text-sm">
+            <span aria-hidden className="text-primary">✦</span>
+            <span>{note}</span>
+          </p>
+        )}
       </div>
     </div>
   )
@@ -1528,9 +1537,12 @@ function TransportSlide() {
     <PhotoSlide
       key="nt"
       title="Трансфер, после которого не нужно восстанавливаться"
-      body="Ни тесноты, ни духоты, ни нервотрёпки за рулём. Кожаные кресла с массажем, климат-контроль и просто аккуратный, спокойный водитель."
+      body="Ни тесноты, ни духоты, ни нервотрёпки за рулём. Комфортный минивэн, климат-контроль и аккуратный, спокойный водитель."
+      // Виктор 2026-11-11: цены снизили, а VIP-машина с кожаными креслами
+      // дороже ~на $50 - теперь это допуслуга, а не стандарт.
+      note="По желанию VIP-минивэн с кожаными массажными креслами: +$50 на компанию"
       imageSrc="/images/hero/premium-van-interior.jpg"
-      imageAlt="Салон премиального минивэна с кожаными креслами"
+      imageAlt="Салон VIP-минивэна с кожаными креслами"
       imagePosition="30% 50%"
       stackImages={NT_TRANSFER_PHOTOS}
     />

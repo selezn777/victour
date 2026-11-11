@@ -42,6 +42,28 @@ function isoDatePlusOne(iso: string, days = 1): string {
   return `${y}-${m}-${day}`
 }
 
+// Доплаты (таблица surcharges). unit:
+//  per_group_roundtrip / per_group - фикс на компанию;
+//  per_person_per_tour - на каждого гостя в каждом туре заявки (обед $10/чел,
+//  Виктор 2026-11-11: "заранее бронировать за $10 обед на человека, или
+//  чтобы сами оплачивали и выбирали").
+// Доплаты, которые есть только в Нячанге/Камрани (VIP-минивэн, дальний
+// трансфер), не показываем в заявке только из туров Фукуока - и наоборот.
+const NT_ONLY_SURCHARGES = new Set(["long_transfer_cam_ranh_amiana", "vip_van_nt"])
+const SURCHARGE_HINTS: Record<string, string> = {
+  lunch_prebook: "Без галочки обед оплачиваете на месте сами и выбираете что хотите",
+  vip_van_nt: "Кожаные массажные кресла, на всю компанию",
+}
+function isPhuQuocSlug(slug: string): boolean {
+  return slug.startsWith("phuquoc")
+}
+function surchargeMultiplier(unit: string, items: PackageItem[]): number {
+  if (unit === "per_person_per_tour") {
+    return items.filter(isConfigured).reduce((n, i) => n + (i.adults ?? 0), 0)
+  }
+  return 1
+}
+
 function itemGroupTotalUsd(item: PackageItem): number {
   return (item.priceAdultUsd ?? 0) * (item.adults ?? 0)
 }
@@ -397,13 +419,18 @@ export function RequestPageClient({
     [items],
   )
 
+  const visibleSurcharges = useMemo(() => {
+    const hasNt = items.some((i) => !isPhuQuocSlug(i.tourSlug))
+    return surcharges.filter((s) => hasNt || !NT_ONLY_SURCHARGES.has(s.code))
+  }, [surcharges, items])
+
   const surchargeUsd = useMemo(() => {
     let vnd = 0
-    for (const s of surcharges) {
-      if (selectedSurcharges.has(s.code)) vnd += s.amountVnd
+    for (const s of visibleSurcharges) {
+      if (selectedSurcharges.has(s.code)) vnd += s.amountVnd * surchargeMultiplier(s.unit, items)
     }
     return vnd / settings.usdVndRate
-  }, [surcharges, selectedSurcharges, settings.usdVndRate])
+  }, [visibleSurcharges, selectedSurcharges, settings.usdVndRate, items])
 
   const totals = useMemo(
     () => calculatePackageTotal({ itemsSubtotalUsd, surchargeUsd }),
@@ -455,7 +482,15 @@ export function RequestPageClient({
         hotel: hotel.trim(),
         adults_total: maxAdults,
         children_total: 0,
-        notes: notes.trim() || null,
+        // Какие именно доплаты выбраны, в БД отдельно не хранится (только
+        // сумма surcharge_usd) - дописываем их в пожелания, чтобы гид видел.
+        notes:
+          [
+            visibleSurcharges.filter((x) => selectedSurcharges.has(x.code)).map((x) => `+ ${x.name}`).join("\n"),
+            notes.trim(),
+          ]
+            .filter(Boolean)
+            .join("\n") || null,
         currency: "USD",
         subtotal_usd: totals.subtotalUsd,
         discount_pct: 0,
@@ -589,11 +624,11 @@ export function RequestPageClient({
                 />
               ))}
 
-              {surcharges.length > 0 && (
+              {visibleSurcharges.length > 0 && (
                 <div className="p-4 sm:p-5">
                   <span className="text-sm font-medium">Доплаты</span>
-                  <div className="mt-2 flex flex-col gap-2">
-                    {surcharges.map((s) => (
+                  <div className="mt-2 flex flex-col gap-2.5">
+                    {visibleSurcharges.map((s) => (
                       // min-w-0 на левой части + shrink-0 на цене — без этого
                       // длинное название доплаты не переносилось, а толкало
                       // всю строку вправо за край экрана (Виктор с телефона:
@@ -606,9 +641,22 @@ export function RequestPageClient({
                             onChange={() => toggleSurcharge(s.code)}
                             className="mt-0.5 size-4 shrink-0 rounded border-input"
                           />
-                          <span>{s.name}</span>
+                          <span className="min-w-0">
+                            <span className="block">{s.name}</span>
+                            {SURCHARGE_HINTS[s.code] && (
+                              <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+                                {SURCHARGE_HINTS[s.code]}
+                              </span>
+                            )}
+                          </span>
                         </span>
-                        <span className="shrink-0 text-right text-muted-foreground">{formatVnd(s.amountVnd)}</span>
+                        <span className="shrink-0 text-right text-muted-foreground">
+                          {s.unit === "per_person_per_tour"
+                            ? `${formatUsd(Math.round(s.amountVnd / settings.usdVndRate))} × ${surchargeMultiplier(s.unit, items)}`
+                            : s.code === "long_transfer_cam_ranh_amiana"
+                              ? formatVnd(s.amountVnd)
+                              : formatUsd(Math.round(s.amountVnd / settings.usdVndRate))}
+                        </span>
                       </label>
                     ))}
                   </div>
