@@ -486,7 +486,12 @@ export const PROMO_TOURS_PQ = [
   {
     slug: "phuquoc-utro",
     title: "Морские звёзды и рыба на сваях",
-    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-utro/v2-24.webp",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-utro/v2-28.webp",
+  },
+  {
+    slug: "phuquoc-sunset-town",
+    title: "Сансет Таун: два шоу и салют",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-sunset-town/r2-12.webp",
   },
   {
     slug: "phuquoc-nastoyashchiy",

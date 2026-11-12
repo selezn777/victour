@@ -1046,8 +1046,14 @@ const PHUQUOC_TOURS: typeof CATALOG_TOURS = [
   {
     slug: "phuquoc-utro",
     title: "Морские звёзды",
-    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-utro/v2-24.webp",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-utro/v2-28.webp",
     annotation: "Мёд с сот, круглые лодки, рыба из садка в ресторане на сваях и пляж с морскими звёздами.",
+  },
+  {
+    slug: "phuquoc-sunset-town",
+    title: "Сансет Таун",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-sunset-town/r2-12.webp",
+    annotation: "Канатка над морем, Мост Поцелуев на закате и свой стол напротив сцены: два шоу и салют без толпы.",
   },
   {
     slug: "phuquoc-hoian-danang",
@@ -1194,6 +1200,7 @@ const PQ_TOUR_LINES = [
   { icon: "🌿", name: "Настоящий", text: "дикий мёд, пагода над морем и самолёты над головой, к 15:00 в отеле" },
   { icon: "🐍", name: "Дикий", text: "питон на плечах, водопад в джунглях и круглые лодки" },
   { icon: "⭐", name: "Морские звёзды", text: "мёд с сот, рыба из садка на сваях и пляж со звёздами" },
+  { icon: "🎆", name: "Сансет Таун", text: "канатка над морем, закат на Мосту Поцелуев и два шоу из-за своего стола" },
   { icon: "✈️", name: "Хойан + Дананг", text: "3 дня с перелётом, две ночи в городе ЮНЕСКО" },
 ]
 
@@ -1228,7 +1235,7 @@ function ToursSlide() {
                 фото, а внутренний скролл в слайде деки на телефоне не
                 работает - там остаётся прежний короткий абзац. */}
             <p className="mt-2 max-w-md text-base leading-snug text-muted-foreground [@media(min-height:820px)]:hidden">
-              Вечер с ночным сафари, утро по главным местам, день в джунглях, пляж с морскими звёздами и Хойан с Данангом на три дня.
+              Вечер с ночным сафари, утро по главным местам, день в джунглях, пляж с морскими звёздами, вечер в Сансет Тауне с двумя шоу и Хойан с Данангом на три дня.
             </p>
             <ul className="mt-3 hidden w-full max-w-md divide-y divide-border rounded-md border border-border bg-card/60 text-left sm:mt-5 sm:max-w-xl [@media(min-height:820px)]:block">
               {PQ_TOUR_LINES.map((l) => (
