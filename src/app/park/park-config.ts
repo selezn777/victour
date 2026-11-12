@@ -452,7 +452,7 @@ export const PROMO_TOURS = [
     slug: "nyachang-avtorskiy",
     title: "Авторский Нячанг",
     imageSrc:
-      "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/nyachang-avtorskiy-pagoda.jpg",
+      "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/nyachang-avtorskiy/r1-10.webp",
   },
   {
     slug: "fanrang-avtorskiy",
