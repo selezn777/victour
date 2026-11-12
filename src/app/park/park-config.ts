@@ -452,7 +452,7 @@ export const PROMO_TOURS = [
     slug: "nyachang-avtorskiy",
     title: "Авторский Нячанг",
     imageSrc:
-      "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/nyachang-avtorskiy-pagoda.jpg",
+      "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/nyachang-avtorskiy-pagoda.jpg",
   },
   {
     slug: "fanrang-avtorskiy",
@@ -476,28 +476,28 @@ export const PROMO_TOURS_PQ = [
   {
     slug: "phuquoc-hoian-danang",
     title: "Хойан + Дананг, 3 дня",
-    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-hoian-danang/01.webp",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-hoian-danang/01.webp",
   },
   {
     slug: "phuquoc-dikiy",
     title: "Дикий Фукуок",
-    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-dikiy/v1-07.webp",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-dikiy/v1-07.webp",
   },
   {
     slug: "phuquoc-utro",
     title: "Морские звёзды и рыба на сваях",
-    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-utro/v2-24.webp",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-utro/v2-24.webp",
   },
   {
     slug: "phuquoc-nastoyashchiy",
     title: "Настоящий Фукуок",
-    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-nastoyashchiy/11.webp",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-nastoyashchiy/11.webp",
   },
   {
     slug: "phuquoc-vecher-safari",
     title: "Вечерний Фукуок + ночное сафари",
     imageSrc:
-      "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-vecher-safari/v3/06.webp",
+      "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-vecher-safari/v3/06.webp",
   },
 ]
 
@@ -676,8 +676,8 @@ export const HONTAM_PROMO: {
   price: string
   text: string
 } = {
-  videoSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/park/seawalking.mp4",
-  posterSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/park/seawalking-poster.jpg",
+  videoSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/park/seawalking.mp4",
+  posterSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/park/seawalking-poster.jpg",
   title: "Seawalking — прогулка по дну моря",
   oldPrice: "$50",
   price: "$42",

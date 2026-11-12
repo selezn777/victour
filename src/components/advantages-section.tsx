@@ -1009,7 +1009,7 @@ const CATALOG_TOURS: { slug: string; title: string; imageSrc: string; annotation
   {
     slug: "nyachang-avtorskiy",
     title: "Авторский Нячанг",
-    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/nyachang-avtorskiy-pagoda.jpg",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/nyachang-avtorskiy-pagoda.jpg",
     annotation: "Один гид и один водитель весь день - рядом с вами никого чужого.",
   },
   {
@@ -1028,31 +1028,31 @@ const PHUQUOC_TOURS: typeof CATALOG_TOURS = [
     slug: "phuquoc-vecher-safari",
     title: "Вечерний Фукуок + ночное сафари",
     imageSrc:
-      "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-vecher-safari/v3/06.webp",
+      "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-vecher-safari/v3/06.webp",
     annotation: "Звёзды на пляже, Венеция на закате и ночное сафари за один вечер.",
   },
   {
     slug: "phuquoc-nastoyashchiy",
     title: "Настоящий Фукуок",
-    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-nastoyashchiy/11.webp",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-nastoyashchiy/11.webp",
     annotation: "Дикий мёд, пагода над морем, кокосовая тюрьма и самолёты над головой. К 15:00 вы в отеле.",
   },
   {
     slug: "phuquoc-dikiy",
     title: "Дикий Фукуок",
-    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-dikiy/v1-07.webp",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-dikiy/v1-07.webp",
     annotation: "Питон на плечах, Будда, который исполняет желания, водопад в джунглях и круглые лодки.",
   },
   {
     slug: "phuquoc-utro",
     title: "Морские звёзды",
-    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-utro/v2-24.webp",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-utro/v2-24.webp",
     annotation: "Мёд с сот, круглые лодки, рыба из садка в ресторане на сваях и пляж с морскими звёздами.",
   },
   {
     slug: "phuquoc-hoian-danang",
     title: "Хойан + Дананг, 3 дня",
-    imageSrc: "https://our41hywrmbsqagk.public.blob.vercel-storage.com/tours/phuquoc-hoian-danang/01.webp",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-hoian-danang/01.webp",
     annotation: "Приключение с перелётом: пиво на вершине горы, фонарики на реке и две ночи в городе ЮНЕСКО.",
   },
 ]

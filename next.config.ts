@@ -28,6 +28,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "*.public.blob.vercel-storage.com",
       },
+      {
+        protocol: "https",
+        hostname: "vocavnmriasslbxmpccw.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
     ],
     // Коллаж на главной шлёт src с ?v=N (cache-bust при замене/переименовании
     // фото в public/images/collage — имя файла не меняется, а содержимое

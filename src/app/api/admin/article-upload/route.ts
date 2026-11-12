@@ -1,4 +1,4 @@
-import { put } from "@vercel/blob"
+import { putMedia } from "@/lib/media-upload"
 import { createClient } from "@/lib/supabase/server"
 
 const MAX_PHOTO_BYTES = 8 * 1024 * 1024
@@ -26,10 +26,7 @@ export async function POST(request: Request) {
   }
 
   const ext = file.type.split("/")[1] ?? "jpg"
-  const blob = await put(`articles/${crypto.randomUUID()}.${ext}`, file, {
-    access: "public",
-    token: process.env.BLOB_READ_WRITE_TOKEN,
-  })
+  const blob = await putMedia(`articles/${crypto.randomUUID()}.${ext}`, file)
 
   return Response.json({ ok: true, url: blob.url })
 }

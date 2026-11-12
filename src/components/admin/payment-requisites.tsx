@@ -9,7 +9,7 @@ import Image from "@/components/img"
 const ADMIN_PHONE = "+79028651113"
 const ADMIN_NAME = "Селезнев Виктор Владимирович"
 const ADMIN_QR_URL =
-  "https://our41hywrmbsqagk.public.blob.vercel-storage.com/admin/payment-qr-v7R0nr5aGBgJoUQmgAiOI6FUI03d1y.jpg"
+  "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/admin/payment-qr-v7R0nr5aGBgJoUQmgAiOI6FUI03d1y.jpg"
 
 export function PaymentRequisites({ amountRub }: { amountRub: number }) {
   const [copied, setCopied] = useState(false)

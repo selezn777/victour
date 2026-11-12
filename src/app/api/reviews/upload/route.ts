@@ -1,4 +1,4 @@
-import { put } from "@vercel/blob"
+import { putMedia } from "@/lib/media-upload"
 
 const MAX_PHOTO_BYTES = 8 * 1024 * 1024
 const MAX_AUDIO_BYTES = 6 * 1024 * 1024
@@ -18,10 +18,7 @@ export async function POST(request: Request) {
   }
 
   const ext = kind === "audio" ? "webm" : (file.type.split("/")[1] ?? "jpg")
-  const blob = await put(`reviews/${kind}/${crypto.randomUUID()}.${ext}`, file, {
-    access: "public",
-    token: process.env.BLOB_READ_WRITE_TOKEN,
-  })
+  const blob = await putMedia(`reviews/${kind}/${crypto.randomUUID()}.${ext}`, file)
 
   return Response.json({ ok: true, url: blob.url })
 }
