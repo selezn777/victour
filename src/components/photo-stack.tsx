@@ -3,6 +3,14 @@
 import Image from "@/components/img"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useRef, useState } from "react"
+import { variantUrl } from "@/lib/image-variant-url"
+
+// Готовые квадраты из public/ отдаём готовой webp-копией из Supabase (бакет media, ближе к
+// Вьетнаму и почти вдвое легче jpg с Vercel). Виктор 2026-11-13: 2-е и 3-е фото машин
+// Фукуока на роуминге так и оставались серыми. Тот же URL греет usePreload на главной.
+export function stackSrc(src: string) {
+  return src.startsWith("/") ? variantUrl(src, 1080) ?? src : src
+}
 
 // Три позиции в стопке: 0 — сверху (лицом), 1 — средняя, 2 — самая нижняя.
 // Каждое фото хранит СВОЮ текущую позицию (не индекс в массиве) — так CSS
@@ -55,7 +63,7 @@ function StackPhoto({ src, alt, unoptimized }: { src: string; alt: string; unopt
   return (
     <Image
       key={attempt}
-      src={src}
+      src={unoptimized ? stackSrc(src) : src}
       alt={alt}
       fill
       draggable={false}

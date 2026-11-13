@@ -5,7 +5,7 @@ import { variantUrl } from "@/lib/image-variant-url"
 import Link from "next/link"
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import { SlideDeck } from "@/components/slide-deck"
-import { PhotoStack } from "@/components/photo-stack"
+import { PhotoStack, stackSrc } from "@/components/photo-stack"
 import { useVanOnRoad, VanShape } from "@/components/van-on-road"
 import { cn } from "@/lib/utils"
 import { useResort } from "@/hooks/use-resort"
@@ -1556,11 +1556,25 @@ const NT_TRANSFER_PHOTOS = [
 
 // Фото трансфера прогреваем сразу при открытии главной (пока гость на первом
 // слайде), чтобы ко второму слайду стопка уже была с картинками.
+// Греем фото стопки по порядку, по два за раз: верхние карточки приходят первыми, а не
+// делят канал поровну с нижними (на медленном роуминге 7 параллельных загрузок
+// оставляли 2-ю и 3-ю серыми). URL тот же, что рисует PhotoStack (stackSrc).
 function usePreload(urls: string[]) {
   useEffect(() => {
-    for (const u of urls) {
+    let cancelled = false
+    const queue = urls.map(stackSrc)
+    const next = () => {
+      if (cancelled) return
+      const u = queue.shift()
+      if (!u) return
       const img = new window.Image()
+      img.onload = img.onerror = next
       img.src = u
+    }
+    next()
+    next()
+    return () => {
+      cancelled = true
     }
   }, [urls])
 }

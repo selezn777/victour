@@ -4,6 +4,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { CookieConsent } from "@/components/cookie-consent";
 import { NavigationTracker } from "@/components/navigation-tracker";
 import { UrlCleaner } from "@/components/url-cleaner";
+import { NavProgress } from "@/components/nav-progress";
+import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
@@ -56,6 +58,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <CookieConsent gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
         <NavigationTracker />
         <UrlCleaner />
+        {/* useSearchParams внутри - нужен Suspense, иначе страницы уходят из статики */}
+        <Suspense fallback={null}>
+          <NavProgress />
+        </Suspense>
         {/* Vercel Web Analytics: без cookie, баннер согласия не нужен (Виктор 2026-11-09: «только не Яндекс») */}
         <Analytics />
       </body>

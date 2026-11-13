@@ -493,3 +493,14 @@
   animation: park-wa-pulse 2.2s ease-in-out infinite;
 }
 
+
+/* Полоска перехода между страницами (components/nav-progress.tsx): быстро до ~70%,
+   дальше медленно ползёт, пока не сменится адрес. */
+@keyframes nav-progress {
+  0% { transform: translateX(-100%); }
+  30% { transform: translateX(-35%); }
+  100% { transform: translateX(-8%); }
+}
+.nav-progress-bar {
+  animation: nav-progress 8s cubic-bezier(0.1, 0.7, 0.2, 1) forwards;
+}
