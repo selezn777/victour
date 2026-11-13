@@ -1032,6 +1032,12 @@ const PHUQUOC_TOURS: typeof CATALOG_TOURS = [
     annotation: "Звёзды на пляже, Венеция на закате и ночное сафари за один вечер.",
   },
   {
+    slug: "phuquoc-utro-safari",
+    title: "Утренний Фукуок + сафари",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-utro-safari/r2-01.webp",
+    annotation: "Жираф с руки, Венеция днём, рыба из садка на сваях и пляж со звёздами. К 16:00 в отеле.",
+  },
+  {
     slug: "phuquoc-nastoyashchiy",
     title: "Настоящий Фукуок",
     imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-nastoyashchiy/11.webp",
@@ -1048,6 +1054,12 @@ const PHUQUOC_TOURS: typeof CATALOG_TOURS = [
     title: "Морские звёзды",
     imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-utro/v2-28.webp",
     annotation: "Мёд с сот, круглые лодки, рыба из садка в ресторане на сваях и пляж с морскими звёздами.",
+  },
+  {
+    slug: "phuquoc-ostrova",
+    title: "Южные острова",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-ostrova/r2-01.webp",
+    annotation: "Свой катер, остров-ноготь без толпы, лучший риф архипелага и канатка над морем обратно.",
   },
   {
     slug: "phuquoc-sunset-town",
@@ -1145,17 +1157,31 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
     }
   }, [tours.length])
 
+  // Виктор 2026-11-13: на Фукуоке 8 туров в одну линию не влезают - больше
+  // 4 карточек раскладываем в две линии поровну, фото ниже, чтобы обе линии
+  // с подписями помещались на слайд. Шахматный сдвиг - внутри каждой линии.
+  const multiRow = tours.length > 4
+  const perRow = multiRow ? Math.ceil(tours.length / 2) : tours.length
+  const rows = multiRow ? [tours.slice(0, perRow), tours.slice(perRow)] : [tours]
+
   return (
     <div
       ref={rootRef}
-      className={`flex w-full items-start gap-1 ${
+      className={`flex w-full flex-col gap-2 sm:gap-3 ${
         tours.length === 1
           ? "max-w-[15rem] sm:max-w-xs"
-          : "max-w-3xl sm:max-w-4xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl"
+          : multiRow
+            ? "max-w-3xl sm:max-w-4xl md:max-w-5xl lg:max-w-6xl"
+            : "max-w-3xl sm:max-w-4xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl"
       }`}
     >
-      {tours.map((tour, i) => (
-        <div key={tour.slug} className={`flex min-w-0 flex-1 flex-col items-center ${STAGGER[i % STAGGER.length]}`}>
+      {rows.map((row, r) => (
+      <div key={r} className="flex w-full items-start gap-1 sm:gap-1.5">
+      {row.map((tour, j) => { const i = r * perRow + j; return (
+        <div
+          key={tour.slug}
+          className={`flex min-w-0 flex-1 flex-col items-center ${multiRow ? (j % 2 ? "mt-2.5" : "") : STAGGER[i % STAGGER.length]}`}
+        >
           {/* h-36 на мобиле было уменьшено, когда под фотополосой ещё был
               длинный абзац (кнопка обрезалась снизу) — с тех пор текст
               сильно сократили (см. историю задач), а Виктор пожаловался на
@@ -1165,21 +1191,25 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
             href={`/tours/${tour.slug}`}
             onMouseEnter={() => setActive(i)}
             onMouseLeave={() => setActive(null)}
-            className={`relative h-64 w-full overflow-hidden rounded-[1px] bg-muted ring-1 ring-white/10 transition-shadow duration-500 ease-out lg:h-72 ${
-              i === active ? "shadow-[0_10px_28px_-6px_rgba(0,0,0,0.55)]" : ""
-            }`}
+            className={`relative w-full overflow-hidden rounded-[1px] bg-muted ring-1 ring-white/10 transition-shadow duration-500 ease-out ${
+              multiRow ? "h-36 [@media(max-height:700px)]:h-24 sm:h-40 lg:h-44" : "h-64 lg:h-72"
+            } ${i === active ? "shadow-[0_10px_28px_-6px_rgba(0,0,0,0.55)]" : ""}`}
           >
             <div className={`absolute inset-0 ${i === blinking ? "tour-priming" : ""}`}>
               <Image
                 src={tour.imageSrc}
                 alt={tour.title}
                 fill
-                sizes="(min-width: 1024px) 700px, (min-width: 640px) 400px, 60vw"
+                sizes={
+                  multiRow
+                    ? "(min-width: 1024px) 300px, (min-width: 640px) 220px, 25vw"
+                    : "(min-width: 1024px) 700px, (min-width: 640px) 400px, 60vw"
+                }
                 className="object-cover brightness-100"
               />
             </div>
           </Link>
-          <div className="relative mt-1.5 h-3 w-px shrink-0 bg-primary/40">
+          <div className={`relative w-px shrink-0 bg-primary/40 ${multiRow ? "mt-1 h-2" : "mt-1.5 h-3"}`}>
             <span className="absolute -bottom-px left-1/2 size-1.5 -translate-x-1/2 rounded-full bg-primary/70" />
           </div>
           <span
@@ -1190,6 +1220,8 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
             {tour.title}
           </span>
         </div>
+      )})}
+      </div>
       ))}
     </div>
   )
@@ -1197,9 +1229,11 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
 
 const PQ_TOUR_LINES = [
   { icon: "🌙", name: "Вечерний", text: "звёзды на пляже, Венеция на закате и ночное сафари" },
+  { icon: "🦒", name: "Утренний", text: "сафари днём, Венеция, рыба из садка и пляж со звёздами" },
   { icon: "🌿", name: "Настоящий", text: "дикий мёд, пагода над морем и самолёты над головой, к 15:00 в отеле" },
   { icon: "🐍", name: "Дикий", text: "питон на плечах, водопад в джунглях и круглые лодки" },
   { icon: "⭐", name: "Морские звёзды", text: "мёд с сот, рыба из садка на сваях и пляж со звёздами" },
+  { icon: "🏝️", name: "Южные острова", text: "свой катер, риф с кораллами, белый пляж и канатка над морем" },
   { icon: "🎆", name: "Сансет Таун", text: "канатка над морем, закат на Мосту Поцелуев и два шоу из-за своего стола" },
   { icon: "✈️", name: "Хойан + Дананг", text: "3 дня с перелётом, две ночи в городе ЮНЕСКО" },
 ]
@@ -1231,15 +1265,18 @@ function ToursSlide() {
             <p className="mt-1.5 max-w-md text-base leading-snug font-medium text-foreground sm:mt-3 sm:max-w-xl sm:text-lg">
               Авторские маршруты по острову и за его пределы
             </p>
-            {/* Низкие экраны (до 820px по высоте): список не влезает под
+            {/* Низкие экраны (до 1000px по высоте, с 13.11 туров 8 в две линии): список не влезает под
                 фото, а внутренний скролл в слайде деки на телефоне не
                 работает - там остаётся прежний короткий абзац. */}
-            <p className="mt-2 max-w-md text-base leading-snug text-muted-foreground [@media(min-height:820px)]:hidden">
-              Вечер с ночным сафари, утро по главным местам, день в джунглях, пляж с морскими звёздами, вечер в Сансет Тауне с двумя шоу и Хойан с Данангом на три дня.
+            <p className="mt-2 max-w-md text-base leading-snug text-muted-foreground lg:[@media(min-height:1000px)]:hidden">
+              Сафари днём и ночью, джунгли, морские звёзды, острова на своём катере, Сансет Таун и Хойан на три дня.
             </p>
-            <ul className="mt-3 hidden w-full max-w-md divide-y divide-border rounded-md border border-border bg-card/60 text-left sm:mt-5 sm:max-w-xl [@media(min-height:820px)]:block">
+            {/* С 8 турами список на широких экранах в две колонки, иначе
+                не влезает по высоте. Сетка с gap-px на фоне border даёт
+                тонкие разделители и в одну, и в две колонки. */}
+            <ul className="mt-3 hidden w-full max-w-md gap-px overflow-hidden rounded-md border border-border bg-border text-left sm:mt-5 sm:max-w-xl md:max-w-4xl md:grid-cols-2 lg:[@media(min-height:1000px)]:grid">
               {PQ_TOUR_LINES.map((l) => (
-                <li key={l.name} className="flex items-start gap-2.5 px-3 py-2 sm:px-4 sm:py-2.5">
+                <li key={l.name} className="flex items-start gap-2.5 bg-card px-3 py-2 sm:px-4 sm:py-2.5">
                   <span aria-hidden className="text-base leading-snug sm:text-lg">{l.icon}</span>
                   <span className="text-sm leading-snug text-muted-foreground sm:text-base">
                     <span className="font-semibold text-foreground">{l.name}</span> - {l.text}
@@ -1247,7 +1284,7 @@ function ToursSlide() {
                 </li>
               ))}
             </ul>
-            <p className="mt-2.5 hidden max-w-md text-sm leading-snug text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-base [@media(min-height:820px)]:block">
+            <p className="mt-2.5 hidden max-w-md text-sm leading-snug text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-base lg:[@media(min-height:1000px)]:block">
               Только ваша компания и свой гид, без чужих людей в машине и без спешки.
             </p>
           </>

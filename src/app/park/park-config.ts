@@ -489,6 +489,16 @@ export const PROMO_TOURS_PQ = [
     imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-utro/v2-28.webp",
   },
   {
+    slug: "phuquoc-ostrova",
+    title: "Южные острова на своём катере",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-ostrova/r2-01.webp",
+  },
+  {
+    slug: "phuquoc-utro-safari",
+    title: "Утренний Фукуок + сафари",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-utro-safari/r2-01.webp",
+  },
+  {
     slug: "phuquoc-sunset-town",
     title: "Сансет Таун: два шоу и салют",
     imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-sunset-town/r2-12.webp",
