@@ -7,6 +7,7 @@ import type { Swiper as SwiperType } from "swiper/types"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import type { TourDetail } from "@/lib/site-data"
 import { PinchZoomPhoto } from "@/components/pinch-zoom-photo"
+import { PhotoLightbox } from "@/components/photo-lightbox"
 
 import "swiper/css"
 import "swiper/css/pagination"
@@ -32,6 +33,9 @@ function cropPositionFor(url: string) {
 export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
   const [active, setActive] = useState(0)
   const swiperRef = useRef<SwiperType | null>(null)
+  // Тап по фото открывает полноэкранный просмотр (PhotoLightbox), после закрытия
+  // карусель встаёт на то фото, на котором закрыли.
+  const [lightbox, setLightbox] = useState<number | null>(null)
   const photos = tour.galleryUrls.length > 0 ? tour.galleryUrls : tour.heroImageUrl ? [tour.heroImageUrl] : []
   // Грузим только текущее фото и соседей (2026-11-08, «сайт грузится долго»): раньше браузер
   // тянул всю ленту сразу. Уже показанные остаются в DOM, чтобы не мигали при возврате.
@@ -57,8 +61,9 @@ export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
             loop={photos.length > 1}
             onSwiper={(swiper: SwiperType) => (swiperRef.current = swiper)}
             onSlideChange={(swiper: SwiperType) => setActive(swiper.realIndex)}
+            onClick={(swiper: SwiperType) => setLightbox(swiper.realIndex)}
             nested
-            className="h-full w-full"
+            className="h-full w-full cursor-zoom-in"
           >
             {photos.map((url, i) => (
               <SwiperSlide key={url} className="relative h-full w-full">
@@ -106,6 +111,17 @@ export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
           )}
         </div>
       ) : null}
+      {lightbox !== null && (
+        <PhotoLightbox
+          photos={photos}
+          alt={tour.title}
+          startIndex={lightbox}
+          onClose={(i) => {
+            setLightbox(null)
+            swiperRef.current?.slideToLoop(i, 0)
+          }}
+        />
+      )}
 
       {/* flex-1 только когда фото нет вообще (photos.length === 0) — тогда
           текст остаётся единственным ребёнком и должен сам заполнить всю
