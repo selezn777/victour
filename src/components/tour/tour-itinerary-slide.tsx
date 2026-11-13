@@ -82,9 +82,11 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
   // локаций, для которых реально есть фото — недоделанная кнопка "в
   // никуда" хуже, чем её отсутствие; остальные локации получат кнопку,
   // когда для них добавят фото (см. лог задачи).
+  // openIndex - индекс в stops: все места тура с фото (все дни подряд),
+  // чтобы в попапе листать маршрут целиком, не закрывая его.
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const dayItems = itinerary.filter((i) => i.day === day)
-  const openItem = openIndex != null ? dayItems[openIndex] : null
+  const stops = itinerary.filter((i) => i.photos.length > 0)
 
   // Виктор: у коротких маршрутов список сбивался в кучу вверху, а снизу
   // пустовало до самой плашки с ценой — нужно, чтобы пункты равномерно
@@ -216,7 +218,7 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
                 <button
                   type="button"
                   disabled={!clickable}
-                  onClick={() => setOpenIndex(index)}
+                  onClick={() => setOpenIndex(stops.indexOf(item))}
                   className={`flex min-w-0 flex-1 items-center gap-3 rounded-md border border-border bg-card px-3 text-left ${dense ? "py-1" : roomy ? "py-2.5" : "py-1.5"} transition-colors enabled:hover:border-primary/60 enabled:active:bg-primary/10`}
                 >
                   <span className="min-w-0 flex-1">
@@ -243,12 +245,11 @@ function DayList({ itinerary, day }: { itinerary: ItineraryItem[]; day: number }
         </ol>
       </div>
 
-      {openItem && (
+      {openIndex != null && stops[openIndex] && (
         <LocationDetailSheet
-          title={openItem.title}
-          description={openItem.description}
-          photos={openItem.photos}
-          articleSlug={openItem.articleSlug}
+          stops={stops}
+          index={openIndex}
+          onIndexChange={setOpenIndex}
           open={isOpen}
           onOpenChange={(open) => {
             if (open) return

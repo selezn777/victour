@@ -1,9 +1,11 @@
 "use client"
 
 import Link from "next/link"
+import { useRef } from "react"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Pagination } from "swiper/modules"
-import { XIcon } from "lucide-react"
+import type { Swiper as SwiperType } from "swiper"
+import { ChevronLeftIcon, ChevronRightIcon, XIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog"
 import { PinchZoomPhoto } from "@/components/pinch-zoom-photo"
@@ -27,23 +29,51 @@ import "swiper/css/pagination"
 // общего UI-кита, а не самодельной.
 const SHOW_ARTICLE_LINK = false
 
-export function LocationDetailSheet({
-  title,
-  description,
-  photos,
-  articleSlug,
-  open,
-  onOpenChange,
-}: {
+// Виктор 2026-11-13: «не надо закрывает-открывает» - внутри попапа листаем
+// весь маршрут подряд: стрелки по бокам названия, счётчик «N из M» на фото,
+// свайп по тексту, а свайп дальше последнего фото переходит к следующему
+// месту (раньше первого - к предыдущему).
+export type LocationStop = {
   title: string
   description: string
   photos: string[]
-  /** Когда задан — под описанием появляется ссылка на полную статью
-   * (история + туристический рассказ) про эту локацию, см. /blog/[slug]. */
   articleSlug?: string | null
+}
+
+const SWIPE_PX = 50
+
+export function LocationDetailSheet({
+  stops,
+  index,
+  onIndexChange,
+  open,
+  onOpenChange,
+}: {
+  stops: LocationStop[]
+  index: number
+  onIndexChange: (index: number) => void
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const stop = stops[index]
+  const { title, description, photos, articleSlug } = stop
+  const total = stops.length
+  const hasPrev = index > 0
+  const hasNext = index < total - 1
+  const go = (d: number) => {
+    const n = index + d
+    if (n >= 0 && n < total) onIndexChange(n)
+  }
+  // свайп по тексту (фото листает Swiper сам)
+  const touch = useRef<{ x: number; y: number } | null>(null)
+  // свайп за край фото-карусели -> соседнее место
+  const onPhotoTouchEnd = (sw: SwiperType) => {
+    const diff = sw.touches.currentX - sw.touches.startX
+    if (Math.abs(diff) < SWIPE_PX) return
+    if (diff < 0 && sw.isEnd) go(1)
+    else if (diff > 0 && sw.isBeginning) go(-1)
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -79,8 +109,9 @@ export function LocationDetailSheet({
 
         <div className="relative h-[42vh] w-full shrink-0 bg-muted sm:h-[46vh]">
           <Swiper
+            key={index}
             modules={[Pagination]}
-            rewind
+            onTouchEnd={onPhotoTouchEnd}
             pagination={{ clickable: true, el: ".location-detail-pagination" }}
             className="h-full w-full"
           >
@@ -90,6 +121,11 @@ export function LocationDetailSheet({
               </SwiperSlide>
             ))}
           </Swiper>
+          {total > 1 && (
+            <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-md bg-black/45 px-2 py-1 text-xs font-semibold text-white">
+              Место {index + 1} из {total}
+            </div>
+          )}
           {/* Виктор: тёмная плашка-полоска под точками — убрать везде. */}
           {photos.length > 1 && (
             <div className="pointer-events-none absolute right-4 bottom-4 z-10 flex items-center gap-1.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]">
@@ -98,10 +134,47 @@ export function LocationDetailSheet({
           )}
         </div>
 
-        <div className="flex flex-1 flex-col overflow-y-auto px-4 pt-4 pb-4 text-center sm:px-8">
-          <h3 className="font-heading text-xl leading-[1.15] font-semibold sm:text-2xl">{title}</h3>
+        <div
+          className="flex flex-1 flex-col overflow-y-auto px-2 pt-4 pb-4 text-center sm:px-4"
+          onTouchStart={(e) => {
+            touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+          }}
+          onTouchEnd={(e) => {
+            const t = touch.current
+            touch.current = null
+            if (!t) return
+            const dx = e.changedTouches[0].clientX - t.x
+            const dy = e.changedTouches[0].clientY - t.y
+            if (Math.abs(dx) > SWIPE_PX && Math.abs(dx) > Math.abs(dy) * 1.5) go(dx < 0 ? 1 : -1)
+          }}
+        >
+          <div className="flex items-start gap-1">
+            {total > 1 && (
+              <button
+                type="button"
+                aria-label="Предыдущее место"
+                disabled={!hasPrev}
+                onClick={() => go(-1)}
+                className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-opacity disabled:opacity-25"
+              >
+                <ChevronLeftIcon className="size-6" />
+              </button>
+            )}
+            <h3 className="min-w-0 flex-1 self-center font-heading text-xl leading-[1.15] font-semibold sm:text-2xl">{title}</h3>
+            {total > 1 && (
+              <button
+                type="button"
+                aria-label="Следующее место"
+                disabled={!hasNext}
+                onClick={() => go(1)}
+                className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-opacity disabled:opacity-25"
+              >
+                <ChevronRightIcon className="size-6" />
+              </button>
+            )}
+          </div>
           {description && (
-            <p className="mt-2 text-sm text-muted-foreground sm:text-base">{description}</p>
+            <p className="mt-2 px-2 text-sm text-muted-foreground sm:px-4 sm:text-base">{description}</p>
           )}
         </div>
         {/* Виктор: обводка не смотрелась — сплошной акцентный цвет сайта
