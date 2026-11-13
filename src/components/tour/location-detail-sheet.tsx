@@ -1,8 +1,10 @@
 "use client"
 
 import Link from "next/link"
+import { useRef } from "react"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Pagination } from "swiper/modules"
+import type { Swiper as SwiperType } from "swiper/types"
 import { ChevronLeftIcon, ChevronRightIcon, XIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog"
@@ -31,6 +33,10 @@ const SHOW_ARTICLE_LINK = false
 // весь маршрут подряд: стрелки по бокам названия, счётчик «N из M» на фото.
 // Свайп листает только фото места; переход между местами свайпом убран
 // (Виктор 13.11: путался с листанием фото).
+// Виктор 13.11 (вечер): яркие зелёные стрелки у названия путали - непонятно,
+// листают они фото или места. Теперь: на фото свои полупрозрачные стрелки
+// (листают фото), а переход между местами - отдельной спокойной полосой внизу
+// попапа: «‹ Назад · Место N из M · Дальше ›».
 export type LocationStop = {
   title: string
   description: string
@@ -57,6 +63,7 @@ export function LocationDetailSheet({
   const total = stops.length
   const hasPrev = index > 0
   const hasNext = index < total - 1
+  const photoSwiper = useRef<SwiperType | null>(null)
   const go = (d: number) => {
     const n = index + d
     if (n >= 0 && n < total) onIndexChange(n)
@@ -99,6 +106,7 @@ export function LocationDetailSheet({
             key={index}
             modules={[Pagination]}
             rewind
+            onSwiper={(sw: SwiperType) => (photoSwiper.current = sw)}
             pagination={{ clickable: true, el: ".location-detail-pagination" }}
             className="h-full w-full"
           >
@@ -108,49 +116,67 @@ export function LocationDetailSheet({
               </SwiperSlide>
             ))}
           </Swiper>
-          {total > 1 && (
-            <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-md bg-black/45 px-2 py-1 text-xs font-semibold text-white">
-              Место {index + 1} из {total}
-            </div>
+          {photos.length > 1 && (
+            <>
+              <button
+                type="button"
+                aria-label="Предыдущее фото"
+                onClick={() => photoSwiper.current?.slidePrev()}
+                className="absolute top-1/2 left-2 z-10 -translate-y-1/2 rounded-full bg-black/35 p-2 text-white backdrop-blur-sm transition hover:bg-black/55"
+              >
+                <ChevronLeftIcon className="size-5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Следующее фото"
+                onClick={() => photoSwiper.current?.slideNext()}
+                className="absolute top-1/2 right-2 z-10 -translate-y-1/2 rounded-full bg-black/35 p-2 text-white backdrop-blur-sm transition hover:bg-black/55"
+              >
+                <ChevronRightIcon className="size-5" />
+              </button>
+            </>
           )}
           {/* Виктор: тёмная плашка-полоска под точками — убрать везде. */}
           {photos.length > 1 && (
-            <div className="pointer-events-none absolute right-4 bottom-4 z-10 flex items-center gap-1.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]">
-              <div className="location-detail-pagination pointer-events-auto flex items-center gap-1.5" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex items-center justify-center gap-1.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]">
+              <div className="location-detail-pagination pointer-events-auto flex w-auto! items-center gap-1.5" />
             </div>
           )}
         </div>
 
         <div className="flex flex-1 flex-col overflow-y-auto px-2 pt-4 pb-4 text-center sm:px-4">
-          <div className="flex items-start gap-1">
-            {total > 1 && (
-              <button
-                type="button"
-                aria-label="Предыдущее место"
-                disabled={!hasPrev}
-                onClick={() => go(-1)}
-                className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-opacity disabled:opacity-25"
-              >
-                <ChevronLeftIcon className="size-6" />
-              </button>
-            )}
-            <h3 className="min-w-0 flex-1 self-center font-heading text-xl leading-[1.15] font-semibold sm:text-2xl">{title}</h3>
-            {total > 1 && (
-              <button
-                type="button"
-                aria-label="Следующее место"
-                disabled={!hasNext}
-                onClick={() => go(1)}
-                className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-opacity disabled:opacity-25"
-              >
-                <ChevronRightIcon className="size-6" />
-              </button>
-            )}
-          </div>
+          <h3 className="px-2 font-heading text-xl leading-[1.15] font-semibold sm:text-2xl">{title}</h3>
           {description && (
             <p className="mt-2 px-2 text-sm text-muted-foreground sm:px-4 sm:text-base">{description}</p>
           )}
         </div>
+        {total > 1 && (
+          <div className="flex shrink-0 items-center justify-between gap-2 border-t border-border px-3 py-2.5">
+            <button
+              type="button"
+              aria-label="Предыдущее место"
+              disabled={!hasPrev}
+              onClick={() => go(-1)}
+              className="flex h-9 items-center gap-0.5 rounded-full px-3 text-sm font-medium text-foreground/80 ring-1 ring-border transition hover:bg-muted disabled:opacity-30"
+            >
+              <ChevronLeftIcon className="size-4" />
+              Назад
+            </button>
+            <span className="text-xs font-medium tabular-nums text-muted-foreground">
+              Место {index + 1} из {total}
+            </span>
+            <button
+              type="button"
+              aria-label="Следующее место"
+              disabled={!hasNext}
+              onClick={() => go(1)}
+              className="flex h-9 items-center gap-0.5 rounded-full px-3 text-sm font-medium text-foreground/80 ring-1 ring-border transition hover:bg-muted disabled:opacity-30"
+            >
+              Дальше
+              <ChevronRightIcon className="size-4" />
+            </button>
+          </div>
+        )}
         {/* Виктор: обводка не смотрелась — сплошной акцентный цвет сайта
             (тот же зелёный, что у кнопки брони на TourBottomBar), во всю
             ширину и без полей, флашем к нижнему краю попапа (скругление
