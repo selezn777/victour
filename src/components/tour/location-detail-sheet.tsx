@@ -1,10 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { useRef } from "react"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Pagination } from "swiper/modules"
-import type { Swiper as SwiperType } from "swiper"
 import { ChevronLeftIcon, ChevronRightIcon, XIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog"
@@ -30,9 +28,9 @@ import "swiper/css/pagination"
 const SHOW_ARTICLE_LINK = false
 
 // Виктор 2026-11-13: «не надо закрывает-открывает» - внутри попапа листаем
-// весь маршрут подряд: стрелки по бокам названия, счётчик «N из M» на фото,
-// свайп по тексту, а свайп дальше последнего фото переходит к следующему
-// месту (раньше первого - к предыдущему).
+// весь маршрут подряд: стрелки по бокам названия, счётчик «N из M» на фото.
+// Свайп листает только фото места; переход между местами свайпом убран
+// (Виктор 13.11: путался с листанием фото).
 export type LocationStop = {
   title: string
   description: string
@@ -40,7 +38,6 @@ export type LocationStop = {
   articleSlug?: string | null
 }
 
-const SWIPE_PX = 50
 
 export function LocationDetailSheet({
   stops,
@@ -64,16 +61,6 @@ export function LocationDetailSheet({
     const n = index + d
     if (n >= 0 && n < total) onIndexChange(n)
   }
-  // свайп по тексту (фото листает Swiper сам)
-  const touch = useRef<{ x: number; y: number } | null>(null)
-  // свайп за край фото-карусели -> соседнее место
-  const onPhotoTouchEnd = (sw: SwiperType) => {
-    const diff = sw.touches.currentX - sw.touches.startX
-    if (Math.abs(diff) < SWIPE_PX) return
-    if (diff < 0 && sw.isEnd) go(1)
-    else if (diff > 0 && sw.isBeginning) go(-1)
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -111,7 +98,7 @@ export function LocationDetailSheet({
           <Swiper
             key={index}
             modules={[Pagination]}
-            onTouchEnd={onPhotoTouchEnd}
+            rewind
             pagination={{ clickable: true, el: ".location-detail-pagination" }}
             className="h-full w-full"
           >
@@ -134,20 +121,7 @@ export function LocationDetailSheet({
           )}
         </div>
 
-        <div
-          className="flex flex-1 flex-col overflow-y-auto px-2 pt-4 pb-4 text-center sm:px-4"
-          onTouchStart={(e) => {
-            touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-          }}
-          onTouchEnd={(e) => {
-            const t = touch.current
-            touch.current = null
-            if (!t) return
-            const dx = e.changedTouches[0].clientX - t.x
-            const dy = e.changedTouches[0].clientY - t.y
-            if (Math.abs(dx) > SWIPE_PX && Math.abs(dx) > Math.abs(dy) * 1.5) go(dx < 0 ? 1 : -1)
-          }}
-        >
+        <div className="flex flex-1 flex-col overflow-y-auto px-2 pt-4 pb-4 text-center sm:px-4">
           <div className="flex items-start gap-1">
             {total > 1 && (
               <button
