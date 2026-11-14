@@ -82,7 +82,7 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     priceUsd: 45,
     priceDraft: true,
     groupSize: "до 10 человек",
-    heroImageUrl: `${MEDIA}/phuquoc-ostrova/r2-12.webp`,
+    heroImageUrl: `${MEDIA}/phuquoc-ostrova/r2-03.webp`,
     pitch:
       "Тот же скоростной катер, что в индивидуальном туре, только на небольшую компанию. Выходим раньше больших лодок, первый остров встречаем пустым, ныряем у лучшего рифа и обедаем на белом пляже.",
     guide: {
