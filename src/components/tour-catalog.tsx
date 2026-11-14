@@ -64,8 +64,8 @@ export function TourCatalog({ tours: allTours }: { tours: CatalogTour[] }) {
         onSlideChange={(index) => {
           sessionStorage.setItem(storageKey, String(index))
         }}
-        slides={tours.map((tour) => (
-          <TourCard key={tour.slug} tour={tour} fill />
+        slides={tours.map((tour, i) => (
+          <TourCard key={tour.slug} tour={tour} fill position={{ index: i + 1, total: tours.length }} />
         ))}
       />
     </section>

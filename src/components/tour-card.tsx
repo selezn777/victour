@@ -14,8 +14,11 @@ const BESTSELLERS = new Set(["phuquoc-yug2"])
 export function TourCard({
   tour,
   fill,
+  position,
 }: {
   tour: CatalogTour
+  /** Номер карточки в каталоге: «3 из 9» в правом верхнем углу */
+  position?: { index: number; total: number }
   /** Заполнить родителя целиком вместо фиксированного aspect-3/4 — для
    * использования внутри слайда с уже заданной высотой (см. TourCatalog). */
   fill?: boolean
@@ -123,13 +126,28 @@ export function TourCard({
         </div>
       </div>
 
-      {inPackage && (
-        <div
-          role="status"
-          aria-label="Тур уже в заявке"
-          className="absolute top-3 right-3 z-10 flex size-9 items-center justify-center rounded-md bg-primary text-primary-foreground backdrop-blur-sm"
-        >
-          <CheckIcon className="size-4" />
+      {(inPackage || position) && (
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+          {inPackage && (
+            <div
+              role="status"
+              aria-label="Тур уже в заявке"
+              className="flex size-9 items-center justify-center rounded-md bg-primary text-primary-foreground backdrop-blur-sm"
+            >
+              <CheckIcon className="size-4" />
+            </div>
+          )}
+          {/* Виктор 14.11: «1 из 9» в углу, чтобы при листании было понятно, сколько туров и где ты */}
+          {position && (
+            <span
+              aria-label={`Тур ${position.index} из ${position.total}`}
+              className="flex h-9 items-center rounded-full border border-white/15 bg-black/45 px-3.5 text-sm font-semibold text-white tabular-nums shadow-lg backdrop-blur-md"
+            >
+              {position.index}
+              <span className="px-1 text-white/55">из</span>
+              {position.total}
+            </span>
+          )}
         </div>
       )}
     </article>
