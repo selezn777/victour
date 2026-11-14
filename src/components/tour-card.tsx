@@ -8,6 +8,9 @@ import { formatUsd } from "@/lib/format"
 import { usePackage } from "@/hooks/use-package"
 import type { CatalogTour } from "@/lib/site-data"
 
+/** Бестселлеры: звезда и плашка на карточке в каталоге (Виктор 14.11: Юг 2.0 продаём в первую очередь) */
+const BESTSELLERS = new Set(["phuquoc-yug2"])
+
 export function TourCard({
   tour,
   fill,
@@ -76,9 +79,14 @@ export function TourCard({
               : "gap-2 px-5 pt-5 pb-6",
           )}
         >
-          <span className="text-xs tracking-wide text-white/70 uppercase">
-            {tour.durationLabel}
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            {BESTSELLERS.has(tour.slug) && (
+              <span className="rounded-full bg-amber-400 px-2.5 py-0.5 text-xs font-bold tracking-wide text-zinc-900 uppercase shadow">
+                ★ Бестселлер
+              </span>
+            )}
+            <span className="text-xs tracking-wide text-white/70 uppercase">{tour.durationLabel}</span>
+          </div>
           <h3
             className={cn(
               "font-heading leading-tight font-semibold",

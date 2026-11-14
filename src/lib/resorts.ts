@@ -15,7 +15,7 @@ export const RESORTS: { id: ResortId; label: string; area: ResortArea }[] = [
 const PHUQUOC_TOUR_SLUGS = new Set(["phuquoc-vecher-safari", "phuquoc-nastoyashchiy", "phuquoc-dikiy", "phuquoc-utro", "phuquoc-utro-safari", "phuquoc-ostrova", "phuquoc-sunset-town", "phuquoc-hoian-danang"])
 
 export function tourArea(slug: string): ResortArea {
-  return PHUQUOC_TOUR_SLUGS.has(slug) ? "phuquoc" : "nyachang"
+  return PHUQUOC_TOUR_SLUGS.has(slug) || slug.startsWith("phuquoc-") ? "phuquoc" : "nyachang"
 }
 
 /** Камрань далеко от Нячанга — Виктор: +$20 на ВСЮ группу (не на человека),
