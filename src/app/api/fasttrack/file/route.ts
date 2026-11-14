@@ -19,6 +19,7 @@ export async function POST(request: Request) {
   const file = form.get("file")
   const kind = form.get("kind") === "voucher" ? "voucher" : "passport"
   const index = Math.max(1, Math.min(50, Number(form.get("index")) || 1))
+  const who = String(form.get("name") ?? "").replace(/[^\p{L}\s'-]/gu, "").trim().slice(0, 80)
   const data = typeof token === "string" ? readUploadToken(token) : null
   if (!data) return Response.json({ ok: false, error: "expired" }, { status: 403 })
   if (!(file instanceof File) || !FT_FILE_TYPES.includes(file.type) || file.size === 0 || file.size > FT_MAX_FILE_BYTES) {
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
   const ext = file.type === "application/pdf" ? "pdf" : file.type.split("/")[1].replace("jpeg", "jpg")
   const label = kind === "voucher" ? "🏨 Ваучер отеля" : "🛂 Паспорт"
   const ok = await sendAdminDocument(file, `${data.ref}-${kind}-${index}.${ext}`, {
-    caption: `${label} ${index} · ${data.ref} · ${data.name}`,
+    caption: `${label} ${index}${who ? ` - ${who}` : ""} · ${data.ref} · ${data.name}`,
     replyTo: data.messageId ?? undefined,
     via: data.via,
   })

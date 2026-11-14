@@ -14,7 +14,6 @@ const TICKETS_NT = [
   { href: "/park?t=hontam", label: "🏝 Билеты Хон Там" },
 ]
 const TICKETS_PQ = [
-  { href: "/fasttrack", label: "✈️ Фаст-трек в аэропорту Фукуока" },
   { href: "/phuquoc", label: "🦒 Билеты VinWonders и Сафари Фукуок" },
   { href: "/phuquoc?t=pq_honthom", label: "🚡 Канатка на Хон Тхом" },
 ]
@@ -85,6 +84,19 @@ export function SiteMenu({
             <span>Наши туры</span>
             <span aria-hidden>→</span>
           </Link>
+          {/* Виктор 14.11: фаст-трек - второе главное направление, отдельная кнопка другим цветом */}
+          {(resort === "phuquoc" || !resort) && (
+            <a
+              href="/fasttrack"
+              className="mb-2 flex items-center justify-between rounded-2xl bg-[#1f5f9e] px-4 py-4 font-heading text-xl font-bold text-white shadow-[0_4px_0_#123d68] transition-[transform,box-shadow] duration-100 active:translate-y-[4px] active:shadow-none"
+            >
+              <span>
+                ✈️ Фаст-трек
+                <span className="block text-sm font-medium opacity-85">аэропорт Фукуока без очереди</span>
+              </span>
+              <span aria-hidden>→</span>
+            </a>
+          )}
           {/* Групповые выезды пока только на Фукуоке */}
           {(resort === "phuquoc" || !resort) && (
             <Link href="/groups" className={ITEM}>

@@ -5,14 +5,12 @@ import {
   FT_CAR_MAX_PEOPLE,
   FT_FILE_TYPES,
   FT_MAX_FILE_BYTES,
-  FT_MAX_PASSPORTS,
   FT_MAX_PEOPLE,
   FT_MAX_VOUCHERS,
   FT_PRICE_USD,
   FT_CHILD_PRICE_USD,
   FT_SBP,
   FT_STEPS,
-  formatPhone,
   FT_ZONES,
   ftDateRu,
   guessZone,
@@ -23,6 +21,7 @@ import {
   type FtPay,
   type FtStepId,
 } from "@/lib/fasttrack"
+import { clearDraft, deleteDoc, loadDocs, loadDraft, saveDoc, saveDraft } from "./draft-store"
 import { PARK_WHATSAPP } from "../park/park-config"
 import { WhatsAppIcon } from "../park/whatsapp-icon"
 
@@ -37,6 +36,8 @@ type Draft = {
   kids: number
   passengers: Passenger[]
   whatsapp: string
+  cc: string
+  phone: string
   date: string
   time: string
   flight: string
@@ -51,7 +52,7 @@ type Draft = {
   pay: FtPay
   comment: string
 }
-type Doc = { id: string; file: File; preview: string | null }
+type Doc = { id: string; file: File; preview: string | null; owner?: number }
 type Status = "idle" | "sending" | "uploading" | "failed" | "rate_limited"
 type Result = { ref: string; delivered: boolean; summary: string; filesSent: number; filesFailed: number; filesTotal: number }
 
@@ -60,6 +61,8 @@ const EMPTY: Draft = {
   kids: 0,
   passengers: [{ ru: "", en: "", enTouched: false }],
   whatsapp: "",
+  cc: "ru",
+  phone: "",
   date: "",
   time: "",
   flight: "",
@@ -74,7 +77,47 @@ const EMPTY: Draft = {
   pay: "prepay",
   comment: "",
 }
-const DRAFT_KEY = "ft-draft-v2"
+// Виктор 14.11: не только +7 - летят белорусы, казахи, узбеки и др.
+const COUNTRIES: { id: string; label: string; code: string }[] = [
+  { id: "ru", label: "🇷🇺 +7", code: "+7" },
+  { id: "kz", label: "🇰🇿 +7", code: "+7" },
+  { id: "by", label: "🇧🇾 +375", code: "+375" },
+  { id: "uz", label: "🇺🇿 +998", code: "+998" },
+  { id: "kg", label: "🇰🇬 +996", code: "+996" },
+  { id: "tj", label: "🇹🇯 +992", code: "+992" },
+  { id: "am", label: "🇦🇲 +374", code: "+374" },
+  { id: "az", label: "🇦🇿 +994", code: "+994" },
+  { id: "ge", label: "🇬🇪 +995", code: "+995" },
+  { id: "ua", label: "🇺🇦 +380", code: "+380" },
+  { id: "other", label: "🌍 другой", code: "+" },
+]
+const ccCode = (id: string) => COUNTRIES.find((c) => c.id === id)?.code ?? "+7"
+
+/** Номер без кода страны: «999 123-45-67» для +7, группами по 3 для остальных; «другой» - с кодом целиком */
+function formatLocal(cc: string, raw: string): string {
+  let digits = raw.replace(/\D/g, "")
+  const code = ccCode(cc)
+  if (code === "+") {
+    digits = digits.slice(0, 15)
+    return digits ? "+" + (digits.match(/.{1,3}/g) ?? []).join(" ") : raw.trim().startsWith("+") ? "+" : ""
+  }
+  const c = code.slice(1)
+  // вставили номер целиком, с кодом или с 8 в начале
+  if (digits.length > (c === "7" ? 10 : 9) && digits.startsWith(c)) digits = digits.slice(c.length)
+  if (c === "7" && digits.length === 11 && digits.startsWith("8")) digits = digits.slice(1)
+  if (c === "7") {
+    digits = digits.slice(0, 10)
+    const g = [digits.slice(0, 3), digits.slice(3, 6), digits.slice(6, 8), digits.slice(8, 10)]
+    return [g[0], g[1]].filter(Boolean).join(" ") + (g[2] ? "-" + g[2] : "") + (g[3] ? "-" + g[3] : "")
+  }
+  digits = digits.slice(0, 12)
+  return (digits.match(/.{1,3}/g) ?? []).join(" ")
+}
+const fullPhone = (cc: string, local: string) => {
+  const code = ccCode(cc)
+  if (code === "+") return local
+  return local ? `${code} ${local}` : ""
+}
 const DONE = FT_STEPS.length + 1
 
 const INPUT =
@@ -82,15 +125,15 @@ const INPUT =
 
 /** Фото уменьшаем до 2200px по длинной стороне (JPEG ~0.6 МБ, текст паспорта читается) */
 async function compress(file: File): Promise<File> {
-  if (!file.type.startsWith("image/") || (file.size < 1_200_000 && FT_FILE_TYPES.includes(file.type))) return file
+  if (!file.type.startsWith("image/") || (file.size < 700_000 && FT_FILE_TYPES.includes(file.type))) return file
   try {
     const bmp = await createImageBitmap(file)
-    const scale = Math.min(1, 2200 / Math.max(bmp.width, bmp.height))
+    const scale = Math.min(1, 1800 / Math.max(bmp.width, bmp.height))
     const canvas = document.createElement("canvas")
     canvas.width = Math.round(bmp.width * scale)
     canvas.height = Math.round(bmp.height * scale)
     canvas.getContext("2d")!.drawImage(bmp, 0, 0, canvas.width, canvas.height)
-    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.86))
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.82))
     return blob ? new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" }) : file
   } catch {
     return file
@@ -112,20 +155,50 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
   const [website, setWebsite] = useState("")
   const doneRef = useRef(false)
 
-  // черновик в sessionStorage: читаем при старте мастера, пишем на каждом шаге
+  // Виктор 14.11: случайно обновили страницу или нажали «назад» - всё введённое и фото паспортов остаются.
+  // Поля и шаг - localStorage, файлы - IndexedDB (draft-store.ts). Открыли страницу снова - продолжаем с того же шага.
+  const restored = useRef(false)
   useEffect(() => {
-    if (step < 1 || step === DONE) return
-    try {
-      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(d))
-    } catch {}
+    if (!restored.current || step < 1 || step === DONE) return
+    saveDraft(d, step)
   }, [d, step])
 
+  function restoreDraft(): number {
+    const saved = loadDraft<Partial<Draft>>()
+    if (!saved) return 0
+    const v = { ...EMPTY, ...saved.d }
+    if (!Array.isArray(v.passengers) || v.passengers.length !== v.people) return 0
+    // черновик старого формата: номер одной строкой
+    if (!v.phone && v.whatsapp) {
+      if (v.whatsapp.startsWith("+7")) Object.assign(v, { cc: "ru", phone: formatLocal("ru", v.whatsapp.slice(2)) })
+      else Object.assign(v, { cc: "other", phone: v.whatsapp })
+    }
+    setD(v)
+    return Math.min(Math.max(1, saved.step), FT_STEPS.length)
+  }
+
+  useEffect(() => {
+    // восстановление черновика один раз при открытии страницы - намеренно setState в эффекте
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    const s = restoreDraft()
+    restored.current = true
+    void loadDocs().then((docs) => {
+      const toDoc = (x: (typeof docs)[number], i: number): Doc => ({
+        id: x.id,
+        file: x.file,
+        owner: x.owner ?? i,
+        preview: x.file.type.startsWith("image/") ? URL.createObjectURL(x.file) : null,
+      })
+      if (!docs.length) return
+      setPassports(docs.filter((x) => x.kind === "passport").map(toDoc))
+      setVouchers(docs.filter((x) => x.kind === "voucher").map(toDoc))
+    })
+    // после эффекта истории ниже (он ставит ftStep: 0), иначе «назад» собьётся
+    if (s > 0) setTimeout(() => go(s), 0)
+  }, [])
+
   function start() {
-    try {
-      const raw = sessionStorage.getItem(DRAFT_KEY)
-      const saved = raw ? { ...EMPTY, ...(JSON.parse(raw) as Partial<Draft>) } : null
-      if (saved && Array.isArray(saved.passengers) && saved.passengers.length === saved.people) setD({ ...EMPTY, ...saved })
-    } catch {}
+    restored.current = true
     go(1)
   }
 
@@ -168,6 +241,13 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
 
   function setPeople(n: number) {
     const people = Math.max(1, Math.min(FT_MAX_PEOPLE, n))
+    setPassports((list) =>
+      list.filter((x) => {
+        const keep = (x.owner ?? 0) < people
+        if (!keep) deleteDoc(x.id)
+        return keep
+      }),
+    )
     setD((p) => ({
       ...p,
       people,
@@ -200,10 +280,9 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
   function next() {
     if (!stepId) return
     const e = validateFtStep(stepId, normalizeFt(toPayload(d)), today)
-    if (stepId === "docs" && passports.length < d.people)
-      e.passports = passports.length
-        ? `Нужен паспорт каждого пассажира: прикреплено ${passports.length} из ${d.people}`
-        : "Прикрепите фото первой страницы загранпаспорта"
+    if (stepId === "who")
+      for (let i = 0; i < d.people; i++)
+        if (!passports.some((x) => x.owner === i)) e[`p${i}-passport`] = "Прикрепите фото разворота загранпаспорта"
     if (Object.keys(e).length) {
       setErrors(e)
       document.getElementById(`ft-${Object.keys(e)[0]}`)?.scrollIntoView({ behavior: "smooth", block: "center" })
@@ -213,11 +292,11 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
     else go(step + 1)
   }
 
-  async function addFiles(kind: "passport" | "voucher", list: FileList | null) {
+  async function addFiles(kind: "passport" | "voucher", list: FileList | null, owner?: number) {
     if (!list) return
     setFileError("")
-    const current = kind === "passport" ? passports : vouchers
-    const room = (kind === "passport" ? FT_MAX_PASSPORTS : FT_MAX_VOUCHERS) - current.length
+    const current = kind === "passport" ? passports.filter((x) => x.owner === owner) : vouchers
+    const room = (kind === "passport" ? 1 : FT_MAX_VOUCHERS) - current.length
     const added: Doc[] = []
     for (const f of Array.from(list).slice(0, room)) {
       const file = await compress(f)
@@ -225,8 +304,10 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
         setFileError(`«${f.name}» не подходит: нужно фото или PDF до 4 МБ. Можно прислать его в WhatsApp.`)
         continue
       }
-      added.push({ id: `${Date.now()}-${Math.random()}`, file, preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : null })
+      added.push({ id: `${Date.now()}-${Math.random()}`, file, owner, preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : null })
     }
+    if (kind === "passport") setErrors((e) => ({ ...e, [`p${owner}-passport`]: "" }))
+    added.forEach((x) => saveDoc({ id: x.id, kind, file: x.file, owner }))
     if (kind === "passport") setPassports((p) => [...p, ...added])
     else setVouchers((p) => [...p, ...added])
   }
@@ -263,30 +344,37 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
       return
     }
     const files = [
-      ...passports.map((p, i) => ({ kind: "passport", index: i + 1, file: p.file })),
-      ...vouchers.map((p, i) => ({ kind: "voucher", index: i + 1, file: p.file })),
+      ...[...passports]
+        .sort((a, b) => (a.owner ?? 0) - (b.owner ?? 0))
+        .map((p) => ({ kind: "passport", index: (p.owner ?? 0) + 1, name: d.passengers[p.owner ?? 0]?.en ?? "", file: p.file })),
+      ...vouchers.map((p, i) => ({ kind: "voucher", index: i + 1, name: "", file: p.file })),
     ]
     let sent = 0
     let failed = 0
     if (files.length && data.uploadToken) {
       setStatus("uploading")
-      for (const f of files) {
-        const fd = new FormData()
-        fd.set("token", data.uploadToken)
-        fd.set("kind", f.kind)
-        fd.set("index", String(f.index))
-        fd.set("file", f.file)
-        const ok = await fetch("/api/fasttrack/file", { method: "POST", body: fd })
-          .then((r) => r.ok)
-          .catch(() => false)
-        if (ok) sent++
-        else failed++
-        setProgress(sent + failed)
+      // Виктор 14.11: «грузится долго» - файлы уходят в бота параллельно, по 3 сразу
+      const token = data.uploadToken
+      const queue = [...files]
+      const worker = async () => {
+        for (let f = queue.shift(); f; f = queue.shift()) {
+          const fd = new FormData()
+          fd.set("token", token)
+          fd.set("kind", f.kind)
+          fd.set("index", String(f.index))
+          fd.set("name", f.name)
+          fd.set("file", f.file)
+          const ok = await fetch("/api/fasttrack/file", { method: "POST", body: fd })
+            .then((r) => r.ok)
+            .catch(() => false)
+          if (ok) sent++
+          else failed++
+          setProgress(sent + failed)
+        }
       }
+      await Promise.all([worker(), worker(), worker()])
     } else failed = files.length
-    try {
-      sessionStorage.removeItem(DRAFT_KEY)
-    } catch {}
+    clearDraft()
     doneRef.current = true
     setResult({ ref: data.ref ?? "", delivered: !!data.delivered, summary: data.summary ?? "", filesSent: sent, filesFailed: failed, filesTotal: files.length })
     setStatus("idle")
@@ -403,52 +491,93 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
                 </div>
               )}
 
-              <fieldset className="space-y-4">
-                <legend className="mb-3 text-[13px] font-bold tracking-[0.1em] text-(--c-primary-2) uppercase">
-                  {d.people > 1 ? "Пассажир 1 (вы)" : "Ваши данные"}
-                </legend>
-                <Field id="p0-ru" label="Имя и фамилия" error={err("p0-ru")}>
-                  <input
-                    id="ft-p0-ru-in"
-                    value={d.passengers[0].ru}
-                    onChange={(e) => setPassenger(0, "ru", e.target.value)}
-                    placeholder="Иван Иванов"
-                    autoComplete="name"
-                    aria-invalid={!!err("p0-ru")}
-                    className={INPUT}
-                  />
-                </Field>
-                <Field id="p0-en" label="Как в загранпаспорте" hint="латиницей, заполнили сами, проверьте" error={err("p0-en")}>
-                  <input
-                    id="ft-p0-en-in"
-                    value={d.passengers[0].en}
-                    onChange={(e) => setPassenger(0, "en", e.target.value)}
-                    placeholder="IVAN IVANOV"
-                    autoCapitalize="characters"
-                    autoComplete="off"
-                    aria-invalid={!!err("p0-en")}
-                    className={`${INPUT} uppercase`}
-                  />
-                </Field>
-                <Field id="whatsapp" label="WhatsApp старшего группы" hint="один номер для связи, с кодом страны" error={err("whatsapp")}>
-                  <input
-                    id="ft-whatsapp-in"
-                    value={d.whatsapp}
-                    onChange={(e) => set("whatsapp", formatPhone(e.target.value))}
-                    placeholder="+7 999 123-45-67"
-                    inputMode="tel"
-                    autoComplete="tel"
-                    aria-invalid={!!err("whatsapp")}
-                    className={INPUT}
-                  />
-                </Field>
-              </fieldset>
-
-              {d.people > 1 && (
-                <p className="text-[14px] leading-snug text-(--c-muted)">
-                  Данные остальных пассажиров возьмём из паспортов на следующем шаге, вводить вручную не нужно.
-                </p>
-              )}
+              {d.passengers.map((p, i) => (
+                <fieldset key={i} className="space-y-4 rounded-[8px] border border-(--c-border) bg-white p-3.5">
+                  <legend className="sr-only">Пассажир {i + 1}</legend>
+                  <p className="text-[13px] font-bold tracking-[0.1em] text-(--c-primary-2) uppercase">
+                    {d.people > 1 ? `Пассажир ${i + 1}` : "Пассажир"}
+                  </p>
+                  <Field id={`p${i}-ru`} label="Имя и фамилия" error={err(`p${i}-ru`)}>
+                    <input
+                      id={`ft-p${i}-ru-in`}
+                      value={p.ru}
+                      onChange={(e) => setPassenger(i, "ru", e.target.value)}
+                      placeholder="Иван Иванов"
+                      autoComplete={i === 0 ? "name" : "off"}
+                      aria-invalid={!!err(`p${i}-ru`)}
+                      className={INPUT}
+                    />
+                  </Field>
+                  <Field id={`p${i}-en`} label="Латиницей" hint="сверьте с загранпаспортом" error={err(`p${i}-en`)}>
+                    <input
+                      id={`ft-p${i}-en-in`}
+                      value={p.en}
+                      onChange={(e) => setPassenger(i, "en", e.target.value)}
+                      placeholder="IVAN IVANOV"
+                      autoCapitalize="characters"
+                      autoComplete="off"
+                      aria-invalid={!!err(`p${i}-en`)}
+                      className={`${INPUT} uppercase`}
+                    />
+                  </Field>
+                  {i === 0 && (
+                  <Field id="whatsapp" label="Ваш WhatsApp" hint="для связи" error={err("whatsapp")}>
+                    <div className="flex gap-2">
+                      <select
+                        aria-label="Код страны"
+                        value={d.cc}
+                        onChange={(e) => {
+                          const cc = e.target.value
+                          const phone = formatLocal(cc, ccCode(cc) === "+" ? ccCode(d.cc) + d.phone : d.phone)
+                          setD((p) => ({ ...p, cc, phone, whatsapp: fullPhone(cc, phone) }))
+                        }}
+                        className={`${INPUT.replace("w-full", "")} w-[118px] shrink-0 px-2.5`}
+                      >
+                        {COUNTRIES.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        id="ft-whatsapp-in"
+                        value={d.phone}
+                        onChange={(e) => {
+                          const phone = formatLocal(d.cc, e.target.value)
+                          setD((p) => ({ ...p, phone, whatsapp: fullPhone(p.cc, phone) }))
+                          setErrors((x) => (x.whatsapp ? { ...x, whatsapp: "" } : x))
+                        }}
+                        placeholder={ccCode(d.cc) === "+7" ? "999 123-45-67" : ccCode(d.cc) === "+" ? "+code number" : "номер"}
+                        inputMode="tel"
+                        autoComplete="tel-national"
+                        aria-invalid={!!err("whatsapp")}
+                        className={`${INPUT} min-w-0`}
+                      />
+                    </div>
+                  </Field>
+                  )}
+                  <div id={`ft-p${i}-passport`}>
+                    <Uploader
+                      title="Загранпаспорт"
+                      note="разворот с фото"
+                      docs={passports.filter((x) => x.owner === i)}
+                      max={1}
+                      single
+                      addLabel="Прикрепить фото паспорта"
+                      onAdd={(l) => addFiles("passport", l, i)}
+                      onRemove={(id) => {
+                        deleteDoc(id)
+                        setPassports((list) => list.filter((x) => x.id !== id))
+                      }}
+                    />
+                    <Err text={err(`p${i}-passport`)} />
+                  </div>
+                </fieldset>
+              ))}
+              <p className="px-1 text-[14px] leading-snug text-(--c-muted)">
+                <PassportSample /> Фото разворота с фотографией: все 4 угла в кадре, без бликов.
+              </p>
+              {fileError && <Problem text={fileError} />}
             </>
           )}
 
@@ -492,9 +621,21 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
 
           {stepId === "hotel" && (
             <>
-              <Field id="hotel" label="Отель" error={err("hotel")}>
+              <Field id="hotel" label="Отель" hint="как в ваучере" error={err("hotel")}>
                 <input id="ft-hotel-in" value={d.hotel} onChange={(e) => setHotel(e.target.value)} placeholder="Название отеля" aria-invalid={!!err("hotel")} className={INPUT} />
               </Field>
+              <Uploader
+                title="Ваучер отеля"
+                note="если есть: скрин брони или PDF"
+                docs={vouchers}
+                max={FT_MAX_VOUCHERS}
+                addLabel="Прикрепить ваучер"
+                onAdd={(l) => addFiles("voucher", l)}
+                onRemove={(id) => {
+                  deleteDoc(id)
+                  setVouchers((p) => p.filter((x) => x.id !== id))
+                }}
+              />
 
               <div>
                 <Label>Машина до отеля</Label>
@@ -526,96 +667,28 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
                 </div>
               )}
 
-              <fieldset className="space-y-3 border-t border-(--c-border) pt-5">
-                <legend className="sr-only">Вылет</legend>
-                <p className="text-[16px] font-bold">
-                  Вылет домой <span className="font-normal text-(--c-muted)">если уже знаете</span>
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field id="depDate" label="Дата" error={err("depDate")}>
-                    <input id="ft-depDate-in" type="date" min={d.date || today} value={d.depDate} onChange={(e) => set("depDate", e.target.value)} aria-invalid={!!err("depDate")} className={INPUT} />
-                  </Field>
-                  <Field id="depTime" label="Время" error={err("depTime")}>
-                    <input id="ft-depTime-in" type="time" value={d.depTime} onChange={(e) => set("depTime", e.target.value)} aria-invalid={!!err("depTime")} className={INPUT} />
-                  </Field>
-                </div>
-                <Field id="depFlight" label="Рейс" error={err("depFlight")}>
-                  <input
-                    id="ft-depFlight-in"
-                    value={d.depFlight}
-                    onChange={(e) => set("depFlight", e.target.value.toUpperCase())}
-                    placeholder="VJ 976"
-                    autoCapitalize="characters"
-                    autoComplete="off"
-                    aria-invalid={!!err("depFlight")}
-                    className={`${INPUT} uppercase`}
-                  />
-                </Field>
-              </fieldset>
-            </>
-          )}
-
-          {stepId === "docs" && (
-            <>
-              <div className="flex items-center gap-3.5 rounded-[8px] border border-(--c-border) bg-white p-3.5">
-                <PassportSample />
-                <p className="text-[15px] leading-snug">
-                  Сфотографируйте <b>первую страницу загранпаспорта</b>, разворот с вашей фотографией, у каждого пассажира. Все
-                  данные для фаст-трека возьмём оттуда.
-                </p>
-              </div>
-              <ul className="space-y-1 px-1 text-[14px] leading-snug text-(--c-muted)">
-                <li>• Разворот целиком, все 4 угла в кадре</li>
-                <li>• Без бликов, текст и номер читаются</li>
-              </ul>
-              <div id="ft-passports">
-                <Err text={err("passports")} />
-              </div>
-              <Uploader
-                title="Загранпаспорта"
-                note={`разворот с фото, ${d.people > 1 ? `все ${d.people} пассажира` : "1 пассажир"}`}
-                docs={passports}
-                max={FT_MAX_PASSPORTS}
-                addLabel="Прикрепить паспорта"
-                onAdd={(l) => addFiles("passport", l)}
-                onRemove={(id) => setPassports((p) => p.filter((x) => x.id !== id))}
-              />
-              <Uploader
-                title="Ваучер отеля"
-                note="если есть: скрин брони или PDF"
-                docs={vouchers}
-                max={FT_MAX_VOUCHERS}
-                addLabel="Прикрепить ваучер"
-                onAdd={(l) => addFiles("voucher", l)}
-                onRemove={(id) => setVouchers((p) => p.filter((x) => x.id !== id))}
-              />
-              {fileError && <Problem text={fileError} />}
-              <p className="text-[13px] leading-snug text-(--c-muted)">🔒 Файлы уходят напрямую Виктору и не хранятся на сайте.</p>
             </>
           )}
 
           {stepId === "check" && (
             <>
               <div className="divide-y divide-(--c-border) rounded-[8px] border border-(--c-border) bg-white">
-                <Summary title="Кто летит" onEdit={() => go(1)}>
-                  {d.passengers[0].ru} · {d.passengers[0].en}
-                  <br />
-                  {d.people} чел. · WhatsApp {d.whatsapp}
+                <Summary title="Пассажиры" onEdit={() => go(1)}>
+                  {d.passengers.map((p, i) => (
+                    <span key={i} className="block">
+                      {i + 1}. {p.ru} · {p.en} {passports.some((x) => x.owner === i) ? "· паспорт ✓" : ""}
+                    </span>
+                  ))}
+                  WhatsApp {d.whatsapp}
                 </Summary>
-                <Summary title="Прилёт" onEdit={() => go(3)}>
+                <Summary title="Прилёт" onEdit={() => go(2)}>
                   {d.date && ftDateRu(d.date)}, {d.time} · рейс {d.flight}
                   {d.fromCity ? ` · откуда: ${d.fromCity}` : ""}
                 </Summary>
-                <Summary title="Отель и вылет" onEdit={() => go(4)}>
+                <Summary title="Отель" onEdit={() => go(3)}>
                   {d.hotel}
                   {d.transfer ? " · с машиной" : " · без машины"}
-                  <br />
-                  {d.depDate || d.depFlight
-                    ? `Вылет: ${[d.depDate && ftDateRu(d.depDate), d.depTime, d.depFlight].filter(Boolean).join(", ")}`
-                    : "Вылет: не указан"}
-                </Summary>
-                <Summary title="Паспорта" onEdit={() => go(2)}>
-                  {`Паспортов ${passports.length}${vouchers.length ? `, ваучер ${vouchers.length}` : ""}`}
+                  {vouchers.length ? " · ваучер ✓" : ""}
                 </Summary>
               </div>
 
@@ -751,6 +824,7 @@ function Uploader(props: {
   addLabel: string
   onAdd: (l: FileList | null) => void
   onRemove: (id: string) => void
+  single?: boolean
 }) {
   const ref = useRef<HTMLInputElement>(null)
   return (
@@ -796,7 +870,7 @@ function Uploader(props: {
         ref={ref}
         type="file"
         accept="image/*,application/pdf"
-        multiple
+        multiple={!props.single}
         className="hidden"
         onChange={(e) => {
           props.onAdd(e.target.files)

@@ -65,7 +65,9 @@ export function fasttrackMessage(b: FtBooking, ref: string, files: { passports: 
     q.totalUsd === null
       ? [`<b>Коллект - $${q.fasttrackUsd} + машина</b> (большая группа, посчитать)`]
       : b.pay === "prepay"
-        ? [`Предоплата - $${q.prepayUsd} на рос. карту`, `<b>Коллект - $${q.cashUsd} наличными при встрече</b>`]
+        ? q.cashUsd === 0
+          ? [`Предоплата - $${q.prepayUsd} на рос. карту`, `<b>Коллект - нет</b> (всё в предоплате)`]
+          : [`Предоплата - $${q.prepayUsd} на рос. карту`, `<b>Коллект - $${q.cashUsd} наличными при встрече</b>`]
         : [`<b>Коллект - $${q.totalUsd} наличными при встрече</b> (без предоплаты)`]
   const lines = [
     `<b>${b.transfer ? "Фаст-трек + трансфер" : "Фаст-трек"}</b> · ${ref}`,
@@ -74,13 +76,11 @@ export function fasttrackMessage(b: FtBooking, ref: string, files: { passports: 
     `Рейс - ${esc(b.flight)}${b.fromCity ? ` (${esc(b.fromCity)} - Фукуок)` : ""}`,
     `Пассажиров - ${b.people}${b.kids ? ` (из них детей до 10 лет - ${b.kids})` : ""}`,
     "",
-    ...named.map((p, i) => `${i + 1}. ${name(p)}`),
+    // первый - тот, кто заполнял: он у нас главный (самому клиенту об этом не пишем)
+    ...named.map((p, i) => `${i + 1}. ${name(p)}${i === 0 && b.people > 1 ? " (главный)" : ""}`),
     ...(b.people > named.length ? [`${b.people - named.length === 1 ? `${b.people}.` : `${named.length + 1}-${b.people}.`} по паспорту`] : []),
     "",
     b.transfer ? `Куда везти - ${esc(b.hotel)}${zone ? ` (${zone.label.toLowerCase()})` : ""}` : `Отель - ${esc(b.hotel)} (без трансфера)`,
-    b.depDate || b.depFlight
-      ? `Вылет - ${[b.depDate && dmy(b.depDate), b.depTime, b.depFlight && `рейс ${esc(b.depFlight)}`].filter(Boolean).join(", ")}`
-      : "Вылет - не знают",
     `Телефон - <a href="https://wa.me/${digits}">${esc(b.whatsapp)}</a> (WhatsApp)`,
     "",
     `Фаст-трек ${b.kids ? `${b.people - b.kids} × $32 + ${b.kids} × $14` : `${b.people} × $32`} = $${q.fasttrackUsd}${b.transfer ? `, машина ${q.carUsd === null ? "вручную" : `$${q.carUsd}`}` : ""}${q.totalUsd !== null ? `, итого $${q.totalUsd}` : ""}`,

@@ -103,10 +103,9 @@ export type FtBooking = {
 }
 
 export const FT_STEPS = [
-  { id: "who", title: "Кто летит" },
-  { id: "docs", title: "Паспорта" },
+  { id: "who", title: "Пассажиры" },
   { id: "arrival", title: "Прилёт" },
-  { id: "hotel", title: "Отель и вылет" },
+  { id: "hotel", title: "Отель" },
   { id: "check", title: "Проверка и оплата" },
 ] as const
 export type FtStepId = (typeof FT_STEPS)[number]["id"]
@@ -147,11 +146,10 @@ export function normalizeFt(input: Record<string, unknown>): FtBooking {
 export function validateFtStep(step: FtStepId, b: FtBooking, today?: string): Record<string, string> {
   const e: Record<string, string> = {}
   if (step === "who") {
-    const lead = b.passengers[0]
-    if (!lead?.ru) e["p0-ru"] = "Имя и фамилия"
-    if (!lead?.en || !LATIN_NAME.test(lead.en)) e["p0-en"] = "Латиницей, как в загранпаспорте"
-    b.passengers.slice(1).forEach((p, i) => {
-      if (p.en && !LATIN_NAME.test(p.en)) e[`p${i + 1}-en`] = "Только латиница"
+    // Виктор 14.11: на каждого пассажира своя карточка - имя по-русски и латиницей как в паспорте
+    b.passengers.forEach((p, i) => {
+      if (!p.ru) e[`p${i}-ru`] = "Имя и фамилия"
+      if (!p.en || !LATIN_NAME.test(p.en)) e[`p${i}-en`] = "Латиницей, как в загранпаспорте"
     })
     if (b.whatsapp.replace(/\D/g, "").length < 8) e.whatsapp = "Номер WhatsApp с кодом страны"
   }
@@ -165,10 +163,6 @@ export function validateFtStep(step: FtStepId, b: FtBooking, today?: string): Re
   if (step === "hotel") {
     if (!b.hotel) e.hotel = "Название отеля"
     if (b.transfer && !findZone(b.zone)) e.zone = "Выберите район"
-    if (b.depDate && !/^\d{4}-\d{2}-\d{2}$/.test(b.depDate)) e.depDate = "Дата вылета"
-    else if (b.depDate && /^\d{4}-\d{2}-\d{2}$/.test(b.date) && b.depDate < b.date) e.depDate = "Вылет раньше прилёта"
-    if (b.depTime && !/^\d{2}:\d{2}$/.test(b.depTime)) e.depTime = "Время в формате 10:30"
-    if (b.depFlight && !/^[A-Z0-9]{2}\s?\d{1,5}[A-Z]?$/.test(b.depFlight)) e.depFlight = "Например VJ 976"
   }
   return e
 }
