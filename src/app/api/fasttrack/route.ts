@@ -42,17 +42,16 @@ export async function POST(request: Request) {
   }
 
   const ref = newRef()
-  const [messageId, saved] = await Promise.all([sendAdminHtml(fasttrackMessage(b, ref, files)), saveFasttrackLead(b, ref)])
-  if (messageId === null && !saved) {
+  const [sent, saved] = await Promise.all([sendAdminHtml(fasttrackMessage(b, ref, files)), saveFasttrackLead(b, ref)])
+  if (!sent && !saved) {
     console.error("fasttrack: booking not delivered:", ref, JSON.stringify(b))
     return Response.json({ ok: false, error: "failed" }, { status: 502 })
   }
-  const delivered = messageId !== null
   return Response.json({
     ok: true,
     ref,
-    delivered,
-    uploadToken: delivered ? createUploadToken({ ref, name: b.passengers[0].en || b.passengers[0].ru, messageId }) : null,
+    delivered: !!sent,
+    uploadToken: sent ? createUploadToken({ ref, name: b.passengers[0].en || b.passengers[0].ru, ...sent }) : null,
     summary: fasttrackSummaryRu(b, ref),
   })
 }

@@ -106,6 +106,7 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
   const [progress, setProgress] = useState(0)
   const [result, setResult] = useState<Result | null>(null)
   const [website, setWebsite] = useState("")
+  const doneRef = useRef(false)
 
   // черновик в sessionStorage: читаем при старте мастера, пишем на каждом шаге
   useEffect(() => {
@@ -133,6 +134,11 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
   useEffect(() => {
     window.history.replaceState({ ...window.history.state, ftStep: 0 }, "")
     const onPop = (e: PopStateEvent) => {
+      // заявка уже ушла: назад на форму не пускаем, чтобы не отправили второй раз
+      if (doneRef.current) {
+        window.history.pushState({ ...window.history.state, ftStep: DONE }, "")
+        return
+      }
       const s = (e.state as { ftStep?: number } | null)?.ftStep
       setStep(typeof s === "number" ? s : 0)
       setErrors({})
@@ -272,6 +278,7 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
     try {
       sessionStorage.removeItem(DRAFT_KEY)
     } catch {}
+    doneRef.current = true
     setResult({ ref: data.ref ?? "", delivered: !!data.delivered, summary: data.summary ?? "", filesSent: sent, filesFailed: failed, filesTotal: files.length })
     setStatus("idle")
     go(DONE, true)

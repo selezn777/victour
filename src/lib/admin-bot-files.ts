@@ -5,35 +5,40 @@ import { adminBotApi, adminChatId, isAdminBotConfigured } from "@/lib/admin-bot"
 // (TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID) -> ничего (заявка всё равно лежит в CRM).
 
 type Target = { token: string; chatId: string }
+/** Через какой бот ушло сообщение: файлы шлём тем же ботом, ответом на него */
+export type AdminVia = "admin" | "main"
 
-export function adminTarget(): Target | null {
-  if (isAdminBotConfigured()) return { token: process.env.TELEGRAM_ADMIN_BOT_TOKEN!, chatId: adminChatId() }
+export function adminTarget(via?: AdminVia): Target | null {
+  if (via !== "main" && isAdminBotConfigured()) return { token: process.env.TELEGRAM_ADMIN_BOT_TOKEN!, chatId: adminChatId() }
   const main = process.env.TELEGRAM_BOT_TOKEN
-  if (main) return { token: main, chatId: process.env.TELEGRAM_CHAT_ID || adminChatId() }
+  if (via !== "admin" && main) return { token: main, chatId: process.env.TELEGRAM_CHAT_ID || adminChatId() }
   return null
 }
 
-/** HTML-сообщение админу; возвращает message_id или null */
-export async function sendAdminHtml(html: string): Promise<number | null> {
-  const t = adminTarget()
-  if (!t) return null
-  const res = await adminBotApi<{ message_id: number }>(
-    "sendMessage",
-    {
-      chat_id: t.chatId,
-      text: html.length > 4000 ? `${html.slice(0, 3990)}\n…` : html,
-      parse_mode: "HTML",
-      link_preview_options: { is_disabled: true },
-    },
-    t.token,
-  )
-  return res?.message_id ?? null
+/** HTML-сообщение админу: сначала админ-бот, если не настроен или упал, то основной бот */
+export async function sendAdminHtml(html: string): Promise<{ messageId: number; via: AdminVia } | null> {
+  for (const via of ["admin", "main"] as const) {
+    const t = adminTarget(via)
+    if (!t) continue
+    const res = await adminBotApi<{ message_id: number }>(
+      "sendMessage",
+      {
+        chat_id: t.chatId,
+        text: html.length > 4000 ? `${html.slice(0, 3990)}\n…` : html,
+        parse_mode: "HTML",
+        link_preview_options: { is_disabled: true },
+      },
+      t.token,
+    )
+    if (res?.message_id) return { messageId: res.message_id, via }
+  }
+  return null
 }
 
-export type SendFileOptions = { caption?: string; replyTo?: number }
+export type SendFileOptions = { caption?: string; replyTo?: number; via?: AdminVia }
 
 async function sendFile(method: "sendDocument" | "sendPhoto", field: "document" | "photo", file: Blob, filename: string, opts: SendFileOptions) {
-  const t = adminTarget()
+  const t = adminTarget(opts.via)
   if (!t) return false
   const fd = new FormData()
   fd.set("chat_id", t.chatId)

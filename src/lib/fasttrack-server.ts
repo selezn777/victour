@@ -18,13 +18,13 @@ function key(): string | null {
 
 const sign = (body: string, k: string) => createHmac("sha256", `ft:${k}`).update(body).digest("base64url").slice(0, 22)
 
-export type UploadTokenData = { ref: string; name: string; messageId: number | null }
+export type UploadTokenData = { ref: string; name: string; messageId: number | null; via: "admin" | "main" }
 
 /** Токен на загрузку файлов к одной заявке, живёт 2 часа */
 export function createUploadToken(d: UploadTokenData): string | null {
   const k = key()
   if (!k) return null
-  const body = Buffer.from(JSON.stringify({ r: d.ref, n: d.name.slice(0, 40), m: d.messageId, e: Date.now() + 2 * 3600_000 })).toString(
+  const body = Buffer.from(JSON.stringify({ r: d.ref, n: d.name.slice(0, 40), m: d.messageId, v: d.via, e: Date.now() + 2 * 3600_000 })).toString(
     "base64url",
   )
   return `${body}.${sign(body, k)}`
@@ -38,8 +38,8 @@ export function readUploadToken(token: string): UploadTokenData | null {
   const b = Buffer.from(sign(body, k))
   if (a.length !== b.length || !timingSafeEqual(a, b)) return null
   try {
-    const d = JSON.parse(Buffer.from(body, "base64url").toString()) as { r: string; n: string; m: number | null; e: number }
-    return d.e > Date.now() ? { ref: d.r, name: d.n, messageId: typeof d.m === "number" ? d.m : null } : null
+    const d = JSON.parse(Buffer.from(body, "base64url").toString()) as { r: string; n: string; m: number | null; v?: string; e: number }
+    return d.e > Date.now() ? { ref: d.r, name: d.n, messageId: typeof d.m === "number" ? d.m : null, via: d.v === "main" ? "main" : "admin" } : null
   } catch {
     return null
   }

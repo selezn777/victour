@@ -28,7 +28,7 @@ export type SendAdminOptions = {
   parseMode?: "HTML" | "MarkdownV2"
   replyTo?: number
   disablePreview?: boolean
-  /** Если админ-бот не настроен, отправить через основной @victour_bot (TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID) */
+  /** Если админ-бот не настроен, отправить через основной @victour_bot (TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID). По умолчанию true. */
   fallbackToMainBot?: boolean
 }
 
@@ -56,9 +56,11 @@ export async function adminBotApi<T = unknown>(method: string, body: Record<stri
 
 /** Сообщение админу. true - доставлено. */
 export async function sendAdmin(text: string, opts: SendAdminOptions = {}): Promise<boolean> {
-  const useMain = !isAdminBotConfigured() && opts.fallbackToMainBot
+  const useMain = !isAdminBotConfigured() && (opts.fallbackToMainBot ?? true)
   const token = useMain ? process.env.TELEGRAM_BOT_TOKEN : process.env.TELEGRAM_ADMIN_BOT_TOKEN
   const chatId = opts.chatId ?? (useMain ? process.env.TELEGRAM_CHAT_ID || adminChatId() : adminChatId())
+  // Локально без токена админ-бота: печатаем, что ушло бы, чтобы проверять ответы бота
+  if (!token && process.env.NODE_ENV !== "production") console.log(`[admin-bot dry-run → ${chatId}]\n${text}`)
   const result = await adminBotApi(
     "sendMessage",
     {

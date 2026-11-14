@@ -34,6 +34,7 @@ export async function POST(request: Request) {
   const ok = await sendAdminDocument(file, `${data.ref}-${kind}-${index}.${ext}`, {
     caption: `${label} ${index} · ${data.ref} · ${data.name}`,
     replyTo: data.messageId ?? undefined,
+    via: data.via,
   })
   return ok ? Response.json({ ok: true }) : Response.json({ ok: false, error: "telegram_failed" }, { status: 502 })
 }

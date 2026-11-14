@@ -58,6 +58,8 @@ const ICAO: Record<string, string> = {
   ч: "ch", ш: "sh", щ: "shch", ъ: "ie", ы: "y", ь: "", э: "e", ю: "iu", я: "ia",
 }
 export function toPassportLatin(s: string): string {
+  // казахские и прочие буквы без пары в ICAO-таблице: не угадываем, пусть впишут сами
+  if (/[^\sа-яёa-z'-]/i.test(s)) return ""
   return Array.from(s.toLowerCase())
     .map((ch) => ICAO[ch] ?? ch)
     .join("")
