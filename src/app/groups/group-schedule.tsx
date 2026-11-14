@@ -359,7 +359,10 @@ function SignupForm({ d, free }: { d: GroupDeparture; free: number }) {
       >
         {status === "sending" ? "Отправляем…" : `Записаться: ${people} ${plural(people, "человек", "человека", "человек")}`}
       </button>
-      <p className="text-center text-[12px] text-(--c-muted)">Бесплатно. Виктор напишет и подтвердит место.</p>
+      <p className="text-center text-[12px] leading-snug text-(--c-muted)">
+        Виктор напишет и подтвердит место. Групповые туры - по 100% предоплате, при неявке или отказе в день выезда деньги не
+        возвращаются.
+      </p>
     </form>
   )
 }
