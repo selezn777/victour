@@ -56,7 +56,7 @@ const dmy = (iso: string) => iso.split("-").reverse().join(".")
  * Дети у нас только до 10 лет, остальные взрослые (возраст видно по паспорту).
  */
 export function fasttrackMessage(b: FtBooking, ref: string, files: { passports: number; vouchers: number }): string {
-  const q = quote(b.people, b.transfer, b.zone, b.pay)
+  const q = quote(b.people, b.kids, b.transfer, b.zone, b.pay)
   const zone = findZone(b.zone)
   const digits = b.whatsapp.replace(/\D/g, "")
   const named = b.passengers.filter((p) => p.ru || p.en)
@@ -72,7 +72,7 @@ export function fasttrackMessage(b: FtBooking, ref: string, files: { passports: 
     "",
     `Прилёт - ${dmy(b.date)}, ${b.time}`,
     `Рейс - ${esc(b.flight)}${b.fromCity ? ` (${esc(b.fromCity)} - Фукуок)` : ""}`,
-    `Пассажиров - ${b.people}`,
+    `Пассажиров - ${b.people}${b.kids ? ` (из них детей до 10 лет - ${b.kids})` : ""}`,
     "",
     ...named.map((p, i) => `${i + 1}. ${name(p)}`),
     ...(b.people > named.length ? [`${b.people - named.length === 1 ? `${b.people}.` : `${named.length + 1}-${b.people}.`} по паспорту`] : []),
@@ -83,7 +83,7 @@ export function fasttrackMessage(b: FtBooking, ref: string, files: { passports: 
       : "Вылет - не знают",
     `Телефон - <a href="https://wa.me/${digits}">${esc(b.whatsapp)}</a> (WhatsApp)`,
     "",
-    `Фаст-трек ${b.people} × $32 = $${q.fasttrackUsd}${b.transfer ? `, машина ${q.carUsd === null ? "вручную" : `$${q.carUsd}`}` : ""}${q.totalUsd !== null ? `, итого $${q.totalUsd}` : ""}`,
+    `Фаст-трек ${b.kids ? `${b.people - b.kids} × $32 + ${b.kids} × $14` : `${b.people} × $32`} = $${q.fasttrackUsd}${b.transfer ? `, машина ${q.carUsd === null ? "вручную" : `$${q.carUsd}`}` : ""}${q.totalUsd !== null ? `, итого $${q.totalUsd}` : ""}`,
     ...collect,
     ...(b.comment ? ["", `Комментарий - ${esc(b.comment)}`] : []),
     "",
@@ -96,7 +96,7 @@ export function fasttrackMessage(b: FtBooking, ref: string, files: { passports: 
 
 /** Текст для кнопки «Продублировать в WhatsApp» */
 export function fasttrackSummaryRu(b: FtBooking, ref: string): string {
-  const q = quote(b.people, b.transfer, b.zone, b.pay)
+  const q = quote(b.people, b.kids, b.transfer, b.zone, b.pay)
   return [
     `✈️ Заявка на фаст-трек ВикТур · ${ref}`,
     "",
@@ -113,7 +113,7 @@ export async function saveFasttrackLead(b: FtBooking, ref: string): Promise<bool
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const sk = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !sk) return false
-  const q = quote(b.people, b.transfer, b.zone, b.pay)
+  const q = quote(b.people, b.kids, b.transfer, b.zone, b.pay)
   const zone = findZone(b.zone)
   const remind = new Date(Date.parse(`${b.date}T00:00:00Z`) - 3 * 86400_000).toISOString().slice(0, 10)
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date())

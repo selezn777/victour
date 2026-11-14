@@ -1,5 +1,5 @@
 // Фаст-трек в аэропорту Фукуока. Правила Виктора (2026-11-14):
-// - фаст-трек $32 с человека;
+// - фаст-трек $32 со взрослого, дети до 10 лет $14 (с 10 лет - взрослый);
 // - трансфер до отеля по себестоимости, за машину: $12 по всему острову (центр, Sunset Town и т.д.),
 //   $18 только для северных отелей (Vinpearl, Wyndham Grand, Grand World и рядом);
 // - предоплата докругляет остаток до кратного $50 (одна купюра на месте): $120 -> $20, $130 -> $30, $82 -> $32;
@@ -9,6 +9,8 @@
 // проверка полей общие для браузера и сервера.
 
 export const FT_PRICE_USD = 32
+/** Ребёнок до 10 лет (Виктор 14.11), с 10 лет считаем взрослым */
+export const FT_CHILD_PRICE_USD = 14
 /** СБП для предоплаты (Виктор 14.11) */
 export const FT_SBP = { phone: "+7 902 865-11-13", bank: "Т-Банк", name: "Виктор С." }
 /** Предоплата: столько, чтобы на месте осталась сумма, кратная $50 (одна купюра) */
@@ -50,8 +52,9 @@ export type FtQuote = {
   cashUsd: number | null
 }
 
-export function quote(people: number, transfer: boolean, zoneId: string | null, pay: FtPay): FtQuote {
-  const fasttrackUsd = people * FT_PRICE_USD
+export function quote(people: number, kids: number, transfer: boolean, zoneId: string | null, pay: FtPay): FtQuote {
+  const k = Math.max(0, Math.min(people - 1, kids))
+  const fasttrackUsd = (people - k) * FT_PRICE_USD + k * FT_CHILD_PRICE_USD
   const zone = findZone(zoneId)
   const carUsd = !transfer ? 0 : people > FT_CAR_MAX_PEOPLE ? null : (zone?.carUsd ?? FT_ZONES[0].carUsd)
   const totalUsd = carUsd === null ? null : fasttrackUsd + carUsd
@@ -83,6 +86,8 @@ export type FtBooking = {
   passengers: FtPassenger[] // [0] - тот, кто заполняет
   whatsapp: string
   people: number
+  /** из них детей до 10 лет */
+  kids: number
   date: string // YYYY-MM-DD
   time: string // HH:MM
   flight: string
@@ -122,6 +127,7 @@ export function normalizeFt(input: Record<string, unknown>): FtBooking {
     passengers,
     whatsapp: str(input.whatsapp, 30),
     people,
+    kids: Math.max(0, Math.min(people - 1, Math.trunc(Number(input.kids)) || 0)),
     date: str(input.date, 10),
     time: str(input.time, 5),
     flight: str(input.flight, 12).toUpperCase(),

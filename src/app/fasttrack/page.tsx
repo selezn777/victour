@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next"
 import Image from "@/components/img"
 import Link from "next/link"
 import { SiteMenu } from "@/components/site-menu"
-import { FT_PRICE_USD, FT_ZONES } from "@/lib/fasttrack"
+import { FT_CHILD_PRICE_USD, FT_PRICE_USD, FT_ZONES } from "@/lib/fasttrack"
 import entrance from "../../../public/fasttrack/terminal-entrance.jpg"
 import { lora, manrope } from "../park/fonts"
 import { PARK_WHATSAPP } from "../park/park-config"
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://victour.online"),
   title: "Фаст-трек в аэропорту Фукуока + трансфер до отеля | ВикТур",
   description:
-    "Паспортный контроль без очереди в аэропорту Фукуока, $32 с человека. Трансфер до отеля по себестоимости с заездом в нормальный обменник. Заявка за пару минут, паспорта можно прикрепить сразу.",
+    "Паспортный контроль без очереди в аэропорту Фукуока, $32 со взрослого, дети до 10 лет $14. Трансфер до отеля по себестоимости с заездом в нормальный обменник. Заявка за пару минут, паспорта можно прикрепить сразу.",
 }
 
 export const viewport: Viewport = { themeColor: "#16406b" }
@@ -72,7 +72,8 @@ function Intro() {
           </p>
           <div className="shrink-0 text-right">
             <b className={`${SERIF} block text-[34px] leading-none`}>${FT_PRICE_USD}</b>
-            <span className="text-[13px] opacity-85">с человека</span>
+            <span className="block text-[13px] opacity-85">взрослый</span>
+            <span className="block text-[12px] opacity-85">дети до 10 лет ${FT_CHILD_PRICE_USD}</span>
           </div>
         </section>
 

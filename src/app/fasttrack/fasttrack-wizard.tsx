@@ -9,6 +9,7 @@ import {
   FT_MAX_PEOPLE,
   FT_MAX_VOUCHERS,
   FT_PRICE_USD,
+  FT_CHILD_PRICE_USD,
   FT_SBP,
   FT_STEPS,
   formatPhone,
@@ -33,6 +34,7 @@ import { WhatsAppIcon } from "../park/whatsapp-icon"
 type Passenger = { ru: string; en: string; enTouched: boolean }
 type Draft = {
   people: number
+  kids: number
   passengers: Passenger[]
   whatsapp: string
   date: string
@@ -55,6 +57,7 @@ type Result = { ref: string; delivered: boolean; summary: string; filesSent: num
 
 const EMPTY: Draft = {
   people: 1,
+  kids: 0,
   passengers: [{ ru: "", en: "", enTouched: false }],
   whatsapp: "",
   date: "",
@@ -121,7 +124,7 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
     try {
       const raw = sessionStorage.getItem(DRAFT_KEY)
       const saved = raw ? { ...EMPTY, ...(JSON.parse(raw) as Partial<Draft>) } : null
-      if (saved && Array.isArray(saved.passengers) && saved.passengers.length === saved.people) setD(saved)
+      if (saved && Array.isArray(saved.passengers) && saved.passengers.length === saved.people) setD({ ...EMPTY, ...saved })
     } catch {}
     go(1)
   }
@@ -168,6 +171,7 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
     setD((p) => ({
       ...p,
       people,
+      kids: Math.min(p.kids, people - 1),
       passengers: Array.from({ length: people }, (_, i) => p.passengers[i] ?? { ru: "", en: "", enTouched: false }),
     }))
   }
@@ -191,7 +195,7 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
 
   const today = typeof window === "undefined" ? "" : new Date().toLocaleDateString("sv-SE")
   const stepId: FtStepId | null = step >= 1 && step <= FT_STEPS.length ? FT_STEPS[step - 1].id : null
-  const q = quote(d.people, d.transfer, d.zone, d.pay)
+  const q = quote(d.people, d.kids, d.transfer, d.zone, d.pay)
 
   function next() {
     if (!stepId) return
@@ -377,7 +381,7 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
               <div className="flex items-center justify-between gap-3 rounded-[6px] border border-[#b6c4d6] bg-white px-4 py-3">
                 <span className="text-[16px] font-bold">
                   Сколько человек летит
-                  <span className="block text-[13px] font-normal text-(--c-muted)">включая детей, ${FT_PRICE_USD} за каждого</span>
+                  <span className="block text-[13px] font-normal text-(--c-muted)">включая детей, ${FT_PRICE_USD} со взрослого</span>
                 </span>
                 <span className="flex shrink-0 items-center gap-2.5">
                   <StepBtn label="Меньше" disabled={d.people <= 1} onClick={() => setPeople(d.people - 1)}>−</StepBtn>
@@ -385,6 +389,19 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
                   <StepBtn label="Больше" disabled={d.people >= FT_MAX_PEOPLE} onClick={() => setPeople(d.people + 1)}>+</StepBtn>
                 </span>
               </div>
+              {d.people > 1 && (
+                <div className="flex items-center justify-between gap-3 rounded-[6px] border border-[#b6c4d6] bg-white px-4 py-3">
+                  <span className="text-[16px] font-bold">
+                    Из них детей до 10 лет
+                    <span className="block text-[13px] font-normal text-(--c-muted)">${FT_CHILD_PRICE_USD} за ребёнка, с 10 лет - как взрослый</span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-2.5">
+                    <StepBtn label="Меньше детей" disabled={d.kids <= 0} onClick={() => set("kids", d.kids - 1)}>−</StepBtn>
+                    <b className="w-7 text-center text-[21px] tabular-nums">{d.kids}</b>
+                    <StepBtn label="Больше детей" disabled={d.kids >= d.people - 1} onClick={() => set("kids", d.kids + 1)}>+</StepBtn>
+                  </span>
+                </div>
+              )}
 
               <fieldset className="space-y-4">
                 <legend className="mb-3 text-[13px] font-bold tracking-[0.1em] text-(--c-primary-2) uppercase">
@@ -603,7 +620,7 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
               </div>
 
               <div className="rounded-[8px] border border-(--c-border) bg-white px-4 py-3.5 text-[15px]" aria-live="polite">
-                <Row label={`Фаст-трек × ${d.people}`} value={`$${q.fasttrackUsd}`} />
+                <Row label={d.kids ? `Фаст-трек: ${d.people - d.kids} взр. + ${d.kids} дет.` : `Фаст-трек × ${d.people}`} value={`$${q.fasttrackUsd}`} />
                 {d.transfer && <Row label={`Машина до отеля${d.zone === "north" ? " (север)" : ""}`} value={q.carUsd === null ? "уточним" : `$${q.carUsd}`} />}
                 <div className="mt-2 flex items-baseline justify-between gap-3 border-t border-(--c-border) pt-2.5 text-[19px] font-extrabold">
                   <span>Итого</span>
