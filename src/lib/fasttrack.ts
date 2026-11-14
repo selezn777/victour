@@ -99,9 +99,9 @@ export type FtBooking = {
 
 export const FT_STEPS = [
   { id: "who", title: "Кто летит" },
+  { id: "docs", title: "Паспорта" },
   { id: "arrival", title: "Прилёт" },
   { id: "hotel", title: "Отель и вылет" },
-  { id: "docs", title: "Документы" },
   { id: "check", title: "Проверка и оплата" },
 ] as const
 export type FtStepId = (typeof FT_STEPS)[number]["id"]
@@ -176,6 +176,25 @@ export function validateFtBooking(
     if (Object.keys(errors).length) return { ok: false, errors, step: s.id }
   }
   return { ok: true, data: b }
+}
+
+/** Номер телефона с пробелами по мере ввода: +7 999 123-45-67, остальные страны группами */
+export function formatPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 15)
+  if (!digits) return raw.trim().startsWith("+") ? "+" : ""
+  if (digits[0] === "7" || digits[0] === "8") {
+    const d = "7" + digits.slice(1, 11)
+    const p = [d.slice(1, 4), d.slice(4, 7), d.slice(7, 9), d.slice(9, 11)]
+    let s = "+7"
+    if (p[0]) s += " " + p[0]
+    if (p[1]) s += " " + p[1]
+    if (p[2]) s += "-" + p[2]
+    if (p[3]) s += "-" + p[3]
+    return s
+  }
+  const cc = digits.length > 3 ? digits.slice(0, digits.length > 11 ? 3 : 2) : digits
+  const rest = digits.slice(cc.length).match(/.{1,3}/g) ?? []
+  return ["+" + cc, ...rest].join(" ")
 }
 
 export function ftDateRu(iso: string) {

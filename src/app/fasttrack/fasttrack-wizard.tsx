@@ -11,6 +11,7 @@ import {
   FT_PRICE_USD,
   FT_SBP,
   FT_STEPS,
+  formatPhone,
   FT_ZONES,
   ftDateRu,
   guessZone,
@@ -195,6 +196,10 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
   function next() {
     if (!stepId) return
     const e = validateFtStep(stepId, normalizeFt(toPayload(d)), today)
+    if (stepId === "docs" && passports.length < d.people)
+      e.passports = passports.length
+        ? `Нужен паспорт каждого пассажира: прикреплено ${passports.length} из ${d.people}`
+        : "Прикрепите фото первой страницы загранпаспорта"
     if (Object.keys(e).length) {
       setErrors(e)
       document.getElementById(`ft-${Object.keys(e)[0]}`)?.scrollIntoView({ behavior: "smooth", block: "center" })
@@ -412,7 +417,7 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
                   <input
                     id="ft-whatsapp-in"
                     value={d.whatsapp}
-                    onChange={(e) => set("whatsapp", e.target.value)}
+                    onChange={(e) => set("whatsapp", formatPhone(e.target.value))}
                     placeholder="+7 999 123-45-67"
                     inputMode="tel"
                     autoComplete="tel"
@@ -423,39 +428,9 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
               </fieldset>
 
               {d.people > 1 && (
-                <fieldset className="space-y-3">
-                  <legend className="mb-1 text-[13px] font-bold tracking-[0.1em] text-(--c-primary-2) uppercase">Остальные пассажиры</legend>
-                  <p className="text-[14px] leading-snug text-(--c-muted)">Можно не заполнять, если прикрепите паспорта на шаге 4.</p>
-                  {d.passengers.slice(1).map((p, j) => {
-                    const i = j + 1
-                    return (
-                      <div key={i} className="rounded-[6px] border border-(--c-border) bg-white/60 p-3">
-                        <span className="mb-2 block text-[14px] font-bold">Пассажир {i + 1}</span>
-                        <div className="grid gap-2.5 sm:grid-cols-2">
-                          <input
-                            value={p.ru}
-                            onChange={(e) => setPassenger(i, "ru", e.target.value)}
-                            placeholder="Имя и фамилия"
-                            aria-label={`Пассажир ${i + 1}: имя и фамилия`}
-                            className={INPUT}
-                          />
-                          <div id={`ft-p${i}-en`}>
-                            <input
-                              value={p.en}
-                              onChange={(e) => setPassenger(i, "en", e.target.value)}
-                              placeholder="КАК В ЗАГРАНПАСПОРТЕ"
-                              aria-label={`Пассажир ${i + 1}: латиницей`}
-                              aria-invalid={!!err(`p${i}-en`)}
-                              autoCapitalize="characters"
-                              className={`${INPUT} uppercase`}
-                            />
-                            <Err text={err(`p${i}-en`)} />
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </fieldset>
+                <p className="text-[14px] leading-snug text-(--c-muted)">
+                  Данные остальных пассажиров возьмём из паспортов на следующем шаге, вводить вручную не нужно.
+                </p>
               )}
             </>
           )}
@@ -565,9 +540,20 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
 
           {stepId === "docs" && (
             <>
-              <p className="text-[15px] leading-snug text-(--c-muted)">
-                Фаст-трек оформляется на каждого, поэтому нужны паспорта. Нет под рукой? Пропустите и пришлите позже в WhatsApp.
-              </p>
+              <div className="flex items-center gap-3.5 rounded-[8px] border border-(--c-border) bg-white p-3.5">
+                <PassportSample />
+                <p className="text-[15px] leading-snug">
+                  Сфотографируйте <b>первую страницу загранпаспорта</b>, разворот с вашей фотографией, у каждого пассажира. Все
+                  данные для фаст-трека возьмём оттуда.
+                </p>
+              </div>
+              <ul className="space-y-1 px-1 text-[14px] leading-snug text-(--c-muted)">
+                <li>• Разворот целиком, все 4 угла в кадре</li>
+                <li>• Без бликов, текст и номер читаются</li>
+              </ul>
+              <div id="ft-passports">
+                <Err text={err("passports")} />
+              </div>
               <Uploader
                 title="Загранпаспорта"
                 note={`разворот с фото, ${d.people > 1 ? `все ${d.people} пассажира` : "1 пассажир"}`}
@@ -579,7 +565,7 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
               />
               <Uploader
                 title="Ваучер отеля"
-                note="бронь: скрин или PDF"
+                note="если есть: скрин брони или PDF"
                 docs={vouchers}
                 max={FT_MAX_VOUCHERS}
                 addLabel="Прикрепить ваучер"
@@ -599,11 +585,11 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
                   <br />
                   {d.people} чел. · WhatsApp {d.whatsapp}
                 </Summary>
-                <Summary title="Прилёт" onEdit={() => go(2)}>
+                <Summary title="Прилёт" onEdit={() => go(3)}>
                   {d.date && ftDateRu(d.date)}, {d.time} · рейс {d.flight}
                   {d.fromCity ? ` из ${d.fromCity}` : ""}
                 </Summary>
-                <Summary title="Отель и вылет" onEdit={() => go(3)}>
+                <Summary title="Отель и вылет" onEdit={() => go(4)}>
                   {d.hotel}
                   {d.transfer ? " · с машиной" : " · без машины"}
                   <br />
@@ -611,8 +597,8 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
                     ? `Вылет: ${[d.depDate && ftDateRu(d.depDate), d.depTime, d.depFlight].filter(Boolean).join(", ")}`
                     : "Вылет: не указан"}
                 </Summary>
-                <Summary title="Документы" onEdit={() => go(4)}>
-                  {filesTotal ? `Паспортов ${passports.length}, ваучер ${vouchers.length}` : "Пришлю позже в WhatsApp"}
+                <Summary title="Паспорта" onEdit={() => go(2)}>
+                  {`Паспортов ${passports.length}${vouchers.length ? `, ваучер ${vouchers.length}` : ""}`}
                 </Summary>
               </div>
 
@@ -676,9 +662,7 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
                 ? `Документы ${Math.min(progress + 1, filesTotal)} из ${filesTotal}…`
                 : stepId === "check"
                   ? "Отправить заявку"
-                  : stepId === "docs" && filesTotal === 0
-                    ? "Пропустить"
-                    : "Далее"}
+                  : "Далее"}
           </button>
         </Footer>
       </form>
@@ -849,4 +833,23 @@ function Err({ text }: { text?: string }) {
 
 function Problem({ text }: { text: string }) {
   return <p id="ft-problem" className="rounded-[6px] bg-[#fbe4dc] px-4 py-3 text-[14px] font-semibold text-[#8a2f16]">{text}</p>
+}
+
+/** Схема разворота загранпаспорта: фото слева, строки данных, машиночитаемая зона внизу */
+function PassportSample() {
+  return (
+    <svg viewBox="0 0 120 84" className="h-[66px] w-[94px] shrink-0" role="img" aria-label="Пример: разворот паспорта с фотографией">
+      <rect x="1" y="1" width="118" height="82" rx="5" fill="#f3e7d3" stroke="#b9a37f" strokeWidth="1.5" />
+      <rect x="9" y="12" width="30" height="38" rx="2" fill="#c9d6e4" stroke="#7d93ad" />
+      <circle cx="24" cy="26" r="7" fill="#7d93ad" />
+      <path d="M12 48c2-8 7-11 12-11s10 3 12 11z" fill="#7d93ad" />
+      <rect x="9" y="5" width="60" height="3" rx="1.5" fill="#b9a37f" />
+      {[14, 22, 30, 38, 46].map((y) => (
+        <rect key={y} x="46" y={y} width={y % 16 === 14 ? 44 : 62} height="3.5" rx="1.75" fill="#a08a66" />
+      ))}
+      <rect x="6" y="60" width="108" height="18" rx="2" fill="#fff8ec" />
+      <rect x="10" y="64" width="100" height="3" rx="1.5" fill="#6b5a3e" />
+      <rect x="10" y="71" width="100" height="3" rx="1.5" fill="#6b5a3e" />
+    </svg>
+  )
 }
