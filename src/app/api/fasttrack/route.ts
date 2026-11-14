@@ -1,16 +1,11 @@
-import { after } from "next/server"
+import { sendAdminHtml } from "@/lib/admin-bot-files"
 import { validateFtBooking } from "@/lib/fasttrack"
-import {
-  createUploadToken,
-  fasttrackMessage,
-  fasttrackSummaryRu,
-  newRef,
-  saveFasttrackLead,
-  sendTelegram,
-} from "@/lib/fasttrack-server"
+import { createUploadToken, fasttrackMessage, fasttrackSummaryRu, newRef, saveFasttrackLead } from "@/lib/fasttrack-server"
 
-// Заявка на фаст-трек: сообщение Виктору в Telegram + лид в CRM.
-// В ответ - токен, с которым форма отправляет паспорта по одному (/api/fasttrack/passport).
+// Заявка на фаст-трек (мастер на /fasttrack): лид в CRM + сообщение Виктору в админ-бот
+// (если не настроен - в основной @victour_bot). Telegram не обязателен: если он упал,
+// заявка всё равно в CRM, турист видит «принято». В ответ - токен для загрузки файлов
+// по одному (/api/fasttrack/file), они придут ответами на сообщение заявки.
 
 const RATE_LIMIT = 5
 const RATE_WINDOW_MS = 10 * 60 * 1000
@@ -33,28 +28,30 @@ export async function POST(request: Request) {
   } catch {
     return Response.json({ ok: false, error: "invalid json" }, { status: 400 })
   }
-  if (typeof body.website === "string" && body.website.trim()) return Response.json({ ok: true })
+  if (typeof body.website === "string" && body.website.trim()) return Response.json({ ok: true, ref: "FT-OK", delivered: true, uploadToken: null })
 
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
   if (isRateLimited(ip)) return Response.json({ ok: false, error: "rate_limited" }, { status: 429 })
 
   const result = validateFtBooking(body)
-  if (!result.ok) return Response.json({ ok: false, error: "validation", errors: result.errors }, { status: 400 })
+  if (!result.ok) return Response.json({ ok: false, error: "validation", errors: result.errors, step: result.step }, { status: 400 })
   const b = result.data
-
-  const chatId = process.env.TELEGRAM_CHAT_ID
-  if (!chatId) return Response.json({ ok: false, error: "telegram_failed" }, { status: 500 })
+  const files = {
+    passports: Math.max(0, Math.min(50, Number(body.passportCount) || 0)),
+    vouchers: Math.max(0, Math.min(10, Number(body.voucherCount) || 0)),
+  }
 
   const ref = newRef()
-  const sent = await sendTelegram(
-    "sendMessage",
-    JSON.stringify({ chat_id: chatId, text: fasttrackMessage(b, ref), parse_mode: "HTML", link_preview_options: { is_disabled: true } }),
-  )
-  if (!sent) {
-    console.error("fasttrack: booking not delivered:", JSON.stringify(b))
-    return Response.json({ ok: false, error: "telegram_failed" }, { status: 502 })
+  const [sent, saved] = await Promise.all([sendAdminHtml(fasttrackMessage(b, ref, files)), saveFasttrackLead(b, ref)])
+  if (!sent && !saved) {
+    console.error("fasttrack: booking not delivered:", ref, JSON.stringify(b))
+    return Response.json({ ok: false, error: "failed" }, { status: 502 })
   }
-  after(() => saveFasttrackLead(b, ref))
-
-  return Response.json({ ok: true, ref, uploadToken: createUploadToken(ref, b.name), summary: fasttrackSummaryRu(b, ref) })
+  return Response.json({
+    ok: true,
+    ref,
+    delivered: !!sent,
+    uploadToken: sent ? createUploadToken({ ref, name: b.passengers[0].en || b.passengers[0].ru, ...sent }) : null,
+    summary: fasttrackSummaryRu(b, ref),
+  })
 }
