@@ -104,7 +104,7 @@ export function fasttrackSummaryRu(b: FtBooking, ref: string): string {
     `🛬 Прилёт: ${ftDateRu(b.date)}, ${b.time}, рейс ${b.flight}`,
     `🏨 ${b.hotel}${b.transfer ? ", с трансфером" : ", без трансфера"}`,
     q.totalUsd !== null ? `🧾 Итого: $${q.totalUsd}` : `🧾 Фаст-трек $${q.fasttrackUsd}, машину посчитаем`,
-    b.pay === "prepay" ? `💳 Предоплата $${q.prepayUsd}, остальное наличными на месте` : "💵 Оплата на месте",
+    b.pay === "prepay" ? (q.cashUsd === 0 ? `💳 Предоплата $${q.prepayUsd} - вся сумма` : `💳 Предоплата $${q.prepayUsd}, остальное наличными на месте`) : "💵 Оплата на месте",
   ].join("\n")
 }
 
@@ -132,7 +132,7 @@ export async function saveFasttrackLead(b: FtBooking, ref: string): Promise<bool
     note:
       [
         `Заявка с сайта ${ref}`,
-        `рейс ${b.flight} в ${b.time}${b.fromCity ? ` из ${b.fromCity}` : ""}`,
+        `рейс ${b.flight} в ${b.time}${b.fromCity ? `, откуда: ${b.fromCity}` : ""}`,
         `отель: ${b.hotel}`,
         b.depDate || b.depFlight ? `вылет: ${[b.depDate, b.depTime, b.depFlight].filter(Boolean).join(" ")}` : "",
         `пассажиры: ${b.passengers.map((p) => [p.en, p.ru && `(${p.ru})`].filter(Boolean).join(" ") || "по паспорту").join(", ")}`,

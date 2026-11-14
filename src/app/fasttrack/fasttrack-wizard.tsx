@@ -604,7 +604,7 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
                 </Summary>
                 <Summary title="Прилёт" onEdit={() => go(3)}>
                   {d.date && ftDateRu(d.date)}, {d.time} · рейс {d.flight}
-                  {d.fromCity ? ` из ${d.fromCity}` : ""}
+                  {d.fromCity ? ` · откуда: ${d.fromCity}` : ""}
                 </Summary>
                 <Summary title="Отель и вылет" onEdit={() => go(4)}>
                   {d.hotel}
@@ -635,7 +635,7 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
                     active={d.pay === "prepay"}
                     onClick={() => set("pay", "prepay")}
                     title={`Предоплата $${q.prepayUsd} на российскую карту`}
-                    note={q.cashUsd !== null ? `остальное $${q.cashUsd} наличными при встрече, одной купюрой` : "остальное наличными при встрече"}
+                    note={q.cashUsd === 0 ? "это вся сумма, на месте платить ничего не нужно" : q.cashUsd !== null ? `остальное $${q.cashUsd} наличными при встрече, одной купюрой` : "остальное наличными при встрече"}
                   />
                   <Choice
                     active={d.pay === "on_site"}
