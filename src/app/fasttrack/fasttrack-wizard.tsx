@@ -125,15 +125,16 @@ const INPUT =
 
 /** Фото уменьшаем до 2200px по длинной стороне (JPEG ~0.6 МБ, текст паспорта читается) */
 async function compress(file: File): Promise<File> {
-  if (!file.type.startsWith("image/") || (file.size < 700_000 && FT_FILE_TYPES.includes(file.type))) return file
+  if (!file.type.startsWith("image/") || (file.size < 450_000 && FT_FILE_TYPES.includes(file.type))) return file
   try {
     const bmp = await createImageBitmap(file)
-    const scale = Math.min(1, 1800 / Math.max(bmp.width, bmp.height))
+    const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height))
     const canvas = document.createElement("canvas")
     canvas.width = Math.round(bmp.width * scale)
     canvas.height = Math.round(bmp.height * scale)
     canvas.getContext("2d")!.drawImage(bmp, 0, 0, canvas.width, canvas.height)
-    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.82))
+    let blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.8))
+    if (blob && blob.size > 650_000) blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.68))
     return blob ? new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" }) : file
   } catch {
     return file
@@ -314,18 +315,49 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
 
   async function submit() {
     setStatus("sending")
-    let res: Response
-    try {
-      res = await fetch("/api/fasttrack", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...toPayload(d), passportCount: passports.length, voucherCount: vouchers.length, website }),
-      })
-    } catch {
+    setProgress(0)
+    const files = [
+      ...[...passports]
+        .sort((x, y) => (x.owner ?? 0) - (y.owner ?? 0))
+        .map((p) => ({ kind: "passport", index: (p.owner ?? 0) + 1, name: d.passengers[p.owner ?? 0]?.en ?? "", file: p.file })),
+      ...vouchers.map((p, i) => ({ kind: "voucher", index: i + 1, name: "", file: p.file })),
+    ]
+    const booking = { ...toPayload(d), passportCount: passports.length, voucherCount: vouchers.length, website }
+    const together = files.length > 0 && files.reduce((s, f) => s + f.file.size, 0) < 4_000_000
+    // Виктор 14.11: заявка и файлы - одним запросом, сервер сразу пересылает их в бота
+    const res = await new Promise<{ status: number; text: string } | null>((resolve) => {
+      const xhr = new XMLHttpRequest()
+      xhr.open("POST", "/api/fasttrack")
+      xhr.timeout = 180_000
+      xhr.onload = () => resolve({ status: xhr.status, text: xhr.responseText })
+      xhr.onerror = xhr.ontimeout = () => resolve(null)
+      if (together) {
+        const fd = new FormData()
+        fd.set("booking", JSON.stringify(booking))
+        files.forEach((f) => {
+          const key = f.kind === "passport" ? `p_${f.index}` : `v_${f.index}`
+          fd.set(key, f.file)
+          if (f.name) fd.set(`pn_${f.index}`, f.name)
+        })
+        setStatus("uploading")
+        xhr.upload.onprogress = (e) => e.lengthComputable && setProgress(Math.min(99, Math.round((e.loaded / e.total) * 100)))
+        xhr.send(fd)
+      } else {
+        xhr.setRequestHeader("Content-Type", "application/json")
+        xhr.send(JSON.stringify(booking))
+      }
+    })
+    if (!res) {
       setStatus("failed")
       return
     }
-    const data = (await res.json().catch(() => ({}))) as {
+    const data = (() => {
+      try {
+        return JSON.parse(res.text)
+      } catch {
+        return {}
+      }
+    })() as {
       ok?: boolean
       error?: string
       errors?: Record<string, string>
@@ -334,6 +366,8 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
       delivered?: boolean
       uploadToken?: string | null
       summary?: string
+      filesSent?: number
+      filesFailed?: { kind: string; index: number }[]
     }
     if (!data.ok) {
       if (data.error === "validation" && data.errors) {
@@ -343,19 +377,15 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
       } else setStatus(data.error === "rate_limited" ? "rate_limited" : "failed")
       return
     }
-    const files = [
-      ...[...passports]
-        .sort((a, b) => (a.owner ?? 0) - (b.owner ?? 0))
-        .map((p) => ({ kind: "passport", index: (p.owner ?? 0) + 1, name: d.passengers[p.owner ?? 0]?.en ?? "", file: p.file })),
-      ...vouchers.map((p, i) => ({ kind: "voucher", index: i + 1, name: "", file: p.file })),
-    ]
-    let sent = 0
+    let sent = together ? (data.filesSent ?? 0) : 0
     let failed = 0
-    if (files.length && data.uploadToken) {
+    const retry = together ? files.filter((f) => data.filesFailed?.some((x) => x.kind === f.kind && x.index === f.index)) : files
+    if (retry.length && data.uploadToken) {
       setStatus("uploading")
       // Виктор 14.11: «грузится долго» - файлы уходят в бота параллельно, по 3 сразу
       const token = data.uploadToken
-      const queue = [...files]
+      setProgress(0)
+      const queue = [...retry]
       const worker = async () => {
         for (let f = queue.shift(); f; f = queue.shift()) {
           const fd = new FormData()
@@ -373,7 +403,7 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
         }
       }
       await Promise.all([worker(), worker(), worker()])
-    } else failed = files.length
+    } else failed = retry.length
     clearDraft()
     doneRef.current = true
     setResult({ ref: data.ref ?? "", delivered: !!data.delivered, summary: data.summary ?? "", filesSent: sent, filesFailed: failed, filesTotal: files.length })
@@ -411,7 +441,7 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
           {d.pay === "prepay" && (
             <p className="mt-3 rounded-[6px] border border-(--c-border) px-3.5 py-3 text-[15px] leading-snug">
               Предоплата <b>${q.prepayUsd}</b> по СБП: <b className="tabular-nums">{FT_SBP.phone}</b>, {FT_SBP.bank}, {FT_SBP.name}{" "}
-              Или по QR-коду ниже. Остальное{q.cashUsd !== null ? ` $${q.cashUsd}` : ""} наличными при встрече.
+              Или по QR-коду ниже.{q.cashUsd === 0 ? " Это вся сумма." : ` Остальное${q.cashUsd !== null ? ` $${q.cashUsd}` : ""} наличными при встрече.`}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/fasttrack/sbp-qr-v1.png" alt="QR-код для предоплаты" width={200} height={200} className="mx-auto mt-3 block size-[200px]" />
             </p>
@@ -436,7 +466,6 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
   if (!stepId) return null
   const err = (k: string) => errors[k] || undefined
   const busy = status === "sending" || status === "uploading"
-  const filesTotal = passports.length + vouchers.length
 
   return (
     <div className="flex flex-1 flex-col">
@@ -749,7 +778,9 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
             {status === "sending"
               ? "Отправляем…"
               : status === "uploading"
-                ? `Документы ${Math.min(progress + 1, filesTotal)} из ${filesTotal}…`
+                ? progress > 0 && progress < 99
+                  ? `Отправляем документы ${progress}%`
+                  : "Отправляем документы…"
                 : stepId === "check"
                   ? "Отправить заявку"
                   : "Далее"}
