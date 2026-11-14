@@ -85,6 +85,12 @@ export function SiteMenu({
             <span>Наши туры</span>
             <span aria-hidden>→</span>
           </Link>
+          {/* Групповые выезды пока только на Фукуоке */}
+          {(resort === "phuquoc" || !resort) && (
+            <Link href="/groups" className={ITEM}>
+              👥 Групповые выезды на Фукуоке
+            </Link>
+          )}
           {/* Обычные <a>, не Link: /park и /phuquoc читают направление из ?t= при загрузке */}
           {tickets.map((t) => (
             <a key={t.href} href={t.href} className={ITEM}>
