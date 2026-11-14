@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next"
 import Image from "@/components/img"
 import Link from "next/link"
 import { SiteMenu } from "@/components/site-menu"
-import { FT_PREPAY_USD, FT_PRICE_USD, FT_ZONES } from "@/lib/fasttrack"
+import { FT_PRICE_USD, FT_ZONES } from "@/lib/fasttrack"
 import entrance from "../../../public/fasttrack/terminal-entrance.jpg"
 import { lora, manrope } from "../park/fonts"
 import { PARK_WHATSAPP } from "../park/park-config"
@@ -40,7 +40,7 @@ const THEME = {
 const INCLUDED = [
   { emoji: "🙋", text: "Встречаем у выхода из самолёта с табличкой" },
   { emoji: "🛂", text: "Паспортный контроль по отдельному коридору, без очереди" },
-  { emoji: "🧳", text: "Помогаем с багажом и выводим к машине" },
+  { emoji: "🧳", text: "Получаете багаж и выходите, машина уже ждёт" },
 ]
 
 const H2 = "text-[13px] font-bold tracking-[0.1em] text-(--c-primary-2) uppercase"
@@ -115,8 +115,9 @@ function Intro() {
         <section className="rounded-[8px] border border-(--c-border) bg-white px-4 py-3 text-[15px] leading-snug">
           <h2 className={H2}>Оплата</h2>
           <p className="mt-1.5">
-            Предоплата <b>${FT_PREPAY_USD}</b> на российскую карту, остальное наличными при встрече. Нет российской карты? Можно
-            оплатить всё на месте.
+            Небольшая предоплата на российскую карту, чтобы на месте осталась ровная сумма одной купюрой: из $120 предоплата{" "}
+            <b>$20</b>, а $100 наличными при встрече. Нет российской карты? Можно оплатить всё на месте, но отказаться после
+            оформления всё равно нельзя: данные заранее передаются на пограничный контроль.
           </p>
         </section>
 

@@ -2,13 +2,21 @@
 // - фаст-трек $32 с человека;
 // - трансфер до отеля по себестоимости, за машину: $12 по всему острову (центр, Sunset Town и т.д.),
 //   $18 только для северных отелей (Vinpearl, Wyndham Grand, Grand World и рядом);
-// - предоплата $20 на российскую карту, остаток наличными при встрече.
+// - предоплата докругляет остаток до кратного $50 (одна купюра на месте): $120 -> $20, $130 -> $30, $82 -> $32;
+//   оплата по СБП на Т-Банк (Виктор С.) или по QR, реквизиты показываем после отправки заявки.
 //   Казахам и другим иностранцам предоплату брать неудобно - вариант «всё на месте».
 // Заявку заполняют пошаговым мастером (src/app/fasttrack/fasttrack-wizard.tsx), шаги и
 // проверка полей общие для браузера и сервера.
 
 export const FT_PRICE_USD = 32
-export const FT_PREPAY_USD = 20
+/** СБП для предоплаты (Виктор 14.11) */
+export const FT_SBP = { phone: "+7 902 865-11-13", bank: "Т-Банк", name: "Виктор С." }
+/** Предоплата: столько, чтобы на месте осталась сумма, кратная $50 (одна купюра) */
+export function ftPrepay(total: number): number {
+  const r = total % 50
+  if (r > 0) return r
+  return total > 50 ? 50 : total
+}
 export const FT_MAX_PEOPLE = 20
 /** Больше - машину (минивэн) и цену подбираем вручную */
 export const FT_CAR_MAX_PEOPLE = 7
@@ -47,7 +55,7 @@ export function quote(people: number, transfer: boolean, zoneId: string | null, 
   const zone = findZone(zoneId)
   const carUsd = !transfer ? 0 : people > FT_CAR_MAX_PEOPLE ? null : (zone?.carUsd ?? FT_ZONES[0].carUsd)
   const totalUsd = carUsd === null ? null : fasttrackUsd + carUsd
-  const prepayUsd = pay === "prepay" ? FT_PREPAY_USD : 0
+  const prepayUsd = pay === "prepay" ? ftPrepay(totalUsd ?? fasttrackUsd) : 0
   return { fasttrackUsd, carUsd, totalUsd, prepayUsd, cashUsd: totalUsd === null ? null : totalUsd - prepayUsd }
 }
 

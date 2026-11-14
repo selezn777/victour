@@ -8,8 +8,8 @@ import {
   FT_MAX_PASSPORTS,
   FT_MAX_PEOPLE,
   FT_MAX_VOUCHERS,
-  FT_PREPAY_USD,
   FT_PRICE_USD,
+  FT_SBP,
   FT_STEPS,
   FT_ZONES,
   ftDateRu,
@@ -309,9 +309,16 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
           <h2 className="mt-3 text-[22px] leading-tight font-extrabold text-(--c-primary)">Заявка отправлена</h2>
           <p className="mt-1 text-[13px] text-(--c-muted)">Номер заявки {result.ref}</p>
           <p className="mt-3 text-[16px] leading-snug">
-            Виктор напишет вам в WhatsApp, подтвердит встречу
-            {d.pay === "prepay" ? ` и пришлёт реквизиты для предоплаты $${FT_PREPAY_USD}` : ""}.
+            Виктор напишет вам в WhatsApp и подтвердит встречу.
           </p>
+          {d.pay === "prepay" && (
+            <p className="mt-3 rounded-[6px] border border-(--c-border) px-3.5 py-3 text-[15px] leading-snug">
+              Предоплата <b>${q.prepayUsd}</b> по СБП: <b className="tabular-nums">{FT_SBP.phone}</b>, {FT_SBP.bank}, {FT_SBP.name}{" "}
+              Или по QR-коду ниже. Остальное{q.cashUsd !== null ? ` $${q.cashUsd}` : ""} наличными при встрече.
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/fasttrack/sbp-qr-v1.png" alt="QR-код для предоплаты" width={200} height={200} className="mx-auto mt-3 block size-[200px]" />
+            </p>
+          )}
           {filesOk && <p className="mt-2 text-[15px] text-[#2d7a45]">Документы получены: {result.filesSent}.</p>}
           {result.filesTotal === 0 && <p className="mt-2 text-[15px] text-(--c-muted)">Паспорта и ваучер пришлите в WhatsApp, когда будет удобно.</p>}
           {result.filesFailed > 0 && (
@@ -401,7 +408,7 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
                     className={`${INPUT} uppercase`}
                   />
                 </Field>
-                <Field id="whatsapp" label="Номер WhatsApp" hint="для связи, с кодом страны" error={err("whatsapp")}>
+                <Field id="whatsapp" label="WhatsApp старшего группы" hint="один номер для связи, с кодом страны" error={err("whatsapp")}>
                   <input
                     id="ft-whatsapp-in"
                     value={d.whatsapp}
@@ -624,8 +631,8 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
                   <Choice
                     active={d.pay === "prepay"}
                     onClick={() => set("pay", "prepay")}
-                    title={`Предоплата $${FT_PREPAY_USD} на российскую карту`}
-                    note={q.cashUsd !== null ? `остальное $${q.cashUsd} наличными при встрече` : "остальное наличными при встрече"}
+                    title={`Предоплата $${q.prepayUsd} на российскую карту`}
+                    note={q.cashUsd !== null ? `остальное $${q.cashUsd} наличными при встрече, одной купюрой` : "остальное наличными при встрече"}
                   />
                   <Choice
                     active={d.pay === "on_site"}
@@ -635,7 +642,9 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
                   />
                 </div>
                 <p className="mt-2 text-[13px] leading-snug text-(--c-muted)">
-                  Реквизиты пришлём в WhatsApp. Наличные в долларах, удобнее крупными купюрами.
+                  Реквизиты для предоплаты (СБП на Т-Банк или QR-код) покажем сразу после отправки заявки. Наличные в долларах.
+                  {d.pay === "on_site" &&
+                    " Без предоплаты отказаться от услуги после оформления всё равно нельзя: данные заранее передаются на пограничный контроль."}
                 </p>
               </div>
 
