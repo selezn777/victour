@@ -48,51 +48,48 @@ export function readUploadToken(token: string): UploadTokenData | null {
 export const newRef = () => `FT-${randomBytes(3).toString("hex").toUpperCase()}`
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-const enDate = (iso: string) =>
-  new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", weekday: "short", day: "2-digit", month: "short", year: "numeric" }).format(
-    new Date(`${iso}T00:00:00Z`),
-  )
+const dmy = (iso: string) => iso.split("-").reverse().join(".")
 
-function priceLines(b: FtBooking): string[] {
+/**
+ * Сообщение Виктору в его формате (14.11): строки «поле - значение», имя по-русски - по-английски,
+ * без эмодзи, чтобы переслать как есть. Паспорта и ваучер приходят ответами на это сообщение.
+ * Дети у нас только до 10 лет, остальные взрослые (возраст видно по паспорту).
+ */
+export function fasttrackMessage(b: FtBooking, ref: string, files: { passports: number; vouchers: number }): string {
   const q = quote(b.people, b.transfer, b.zone, b.pay)
   const zone = findZone(b.zone)
-  return [
-    `🧾 Фаст-трек ${b.people} × $32 = $${q.fasttrackUsd}`,
-    ...(b.transfer
-      ? [q.carUsd === null ? "🚐 Машина: большая группа, посчитать вручную" : `🚐 Машина до отеля (${zone?.label.toLowerCase()}): $${q.carUsd}`]
-      : []),
-    q.totalUsd !== null ? `💵 Итого: <b>$${q.totalUsd}</b>` : `💵 Итого: $${q.fasttrackUsd} + машина`,
-    b.pay === "prepay"
-      ? `💳 Предоплата <b>$${q.prepayUsd}</b> на рос. карту, на месте наличными ${q.cashUsd !== null ? `<b>$${q.cashUsd}</b>` : "остаток"}`
-      : "💵 Без предоплаты: вся сумма наличными на месте (нет рос. карты)",
-  ]
-}
-
-/** Сообщение Виктору: блок для агентства латиницей + цена и оплата по-русски */
-export function fasttrackMessage(b: FtBooking, ref: string, files: { passports: number; vouchers: number }): string {
   const digits = b.whatsapp.replace(/\D/g, "")
+  const named = b.passengers.filter((p) => p.ru || p.en)
+  const name = (p: { ru: string; en: string }) => [p.ru, p.en].filter(Boolean).map(esc).join(" - ")
+  const collect =
+    q.totalUsd === null
+      ? [`<b>Коллект - $${q.fasttrackUsd} + машина</b> (большая группа, посчитать)`]
+      : b.pay === "prepay"
+        ? [`Предоплата - $${q.prepayUsd} на рос. карту`, `<b>Коллект - $${q.cashUsd} наличными при встрече</b>`]
+        : [`<b>Коллект - $${q.totalUsd} наличными при встрече</b> (без предоплаты)`]
   const lines = [
-    `✈️ <b>FAST TRACK · Phu Quoc airport (PQC)</b> · ${ref}`,
+    `<b>${b.transfer ? "Фаст-трек + трансфер" : "Фаст-трек"}</b> · ${ref}`,
     "",
-    `🛬 Arrival: <b>${enDate(b.date)}, ${b.time}</b>`,
-    `✈️ Flight: <b>${esc(b.flight)}</b>${b.fromCity ? ` from ${esc(b.fromCity)}` : ""}`,
-    `👥 Passengers: <b>${b.people}</b>`,
-    ...b.passengers.map((p, i) =>
-      p.en || p.ru ? `${i + 1}. <b>${esc(p.en || "?")}</b>${p.ru ? ` (${esc(p.ru)})` : ""}` : `${i + 1}. по паспорту`,
-    ),
-    `🏨 Hotel: ${esc(b.hotel)}`,
-    b.transfer ? `🚐 Transfer to hotel: <b>yes</b>${b.zone === "north" ? ", north" : ""}` : "🚐 Transfer: no (fast track only)",
+    `Прилёт - ${dmy(b.date)}, ${b.time}`,
+    `Рейс - ${esc(b.flight)}${b.fromCity ? ` (${esc(b.fromCity)} - Фукуок)` : ""}`,
+    `Пассажиров - ${b.people}`,
+    "",
+    ...named.map((p, i) => `${i + 1}. ${name(p)}`),
+    ...(b.people > named.length ? [`${b.people - named.length === 1 ? `${b.people}.` : `${named.length + 1}-${b.people}.`} по паспорту`] : []),
+    "",
+    b.transfer ? `Куда везти - ${esc(b.hotel)}${zone ? ` (${zone.label.toLowerCase()})` : ""}` : `Отель - ${esc(b.hotel)} (без трансфера)`,
     b.depDate || b.depFlight
-      ? `🛫 Departure: ${b.depDate ? enDate(b.depDate) : "date ?"}${b.depTime ? `, ${b.depTime}` : ""}${b.depFlight ? `, ${esc(b.depFlight)}` : ""}`
-      : "🛫 Departure: не знают",
-    `📱 WhatsApp: <a href="https://wa.me/${digits}">${esc(b.whatsapp)}</a>`,
+      ? `Вылет - ${[b.depDate && dmy(b.depDate), b.depTime, b.depFlight && `рейс ${esc(b.depFlight)}`].filter(Boolean).join(", ")}`
+      : "Вылет - не знают",
+    `Телефон - <a href="https://wa.me/${digits}">${esc(b.whatsapp)}</a> (WhatsApp)`,
     "",
-    ...priceLines(b),
-    ...(b.comment ? ["", `💬 ${esc(b.comment)}`] : []),
+    `Фаст-трек ${b.people} × $32 = $${q.fasttrackUsd}${b.transfer ? `, машина ${q.carUsd === null ? "вручную" : `$${q.carUsd}`}` : ""}${q.totalUsd !== null ? `, итого $${q.totalUsd}` : ""}`,
+    ...collect,
+    ...(b.comment ? ["", `Комментарий - ${esc(b.comment)}`] : []),
     "",
     files.passports || files.vouchers
-      ? `📎 Ответами придут: паспорта ${files.passports}, ваучер ${files.vouchers}`
-      : "📎 Файлы не прикрепили, пришлют в WhatsApp",
+      ? `Ответами придут: паспорта ${files.passports}, ваучер ${files.vouchers}`
+      : "Файлы не прикрепили, пришлют в WhatsApp",
   ]
   return lines.join("\n")
 }
