@@ -1073,6 +1073,13 @@ const PHUQUOC_TOURS: typeof CATALOG_TOURS = [
     imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-hoian-danang/01.webp",
     annotation: "Приключение с перелётом: пиво на вершине горы, фонарики на реке и две ночи в городе ЮНЕСКО.",
   },
+  // Виктор 14.11: новые туры добавляем в конец, девятый начинает третий ряд
+  {
+    slug: "phuquoc-yug2",
+    title: "Юг Фукуока 2.0",
+    imageSrc: "https://vocavnmriasslbxmpccw.supabase.co/storage/v1/object/public/media/tours/phuquoc-yug2/r2-17.webp",
+    annotation: "Остров, Сансет Таун и ужин-шоу с салютом: всё включено.",
+  },
 ]
 
 // Было "горной" волной (пик в центре) — рассчитано на нечётное число
@@ -1160,9 +1167,11 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
   // Виктор 2026-11-13: на Фукуоке 8 туров в одну линию не влезают - больше
   // 4 карточек раскладываем в две линии поровну, фото ниже, чтобы обе линии
   // с подписями помещались на слайд. Шахматный сдвиг - внутри каждой линии.
+  // Виктор 14.11: ряды по 4, новый тур начинает следующий ряд; подписи в сетке убраны - только фото.
   const multiRow = tours.length > 4
-  const perRow = multiRow ? Math.ceil(tours.length / 2) : tours.length
-  const rows = multiRow ? [tours.slice(0, perRow), tours.slice(perRow)] : [tours]
+  const perRow = multiRow ? 4 : tours.length
+  const rows = multiRow ? Array.from({ length: Math.ceil(tours.length / perRow) }, (_, r) => tours.slice(r * perRow, r * perRow + perRow)) : [tours]
+  const manyRows = rows.length > 2
 
   return (
     <div
@@ -1192,7 +1201,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
             onMouseEnter={() => setActive(i)}
             onMouseLeave={() => setActive(null)}
             className={`relative w-full overflow-hidden rounded-[1px] bg-muted ring-1 ring-white/10 transition-shadow duration-500 ease-out ${
-              multiRow ? "h-36 [@media(max-height:700px)]:h-24 sm:h-40 lg:h-44" : "h-64 lg:h-72"
+              manyRows ? "h-28 [@media(max-height:700px)]:h-20 sm:h-32 lg:h-36" : multiRow ? "h-36 [@media(max-height:700px)]:h-24 sm:h-40 lg:h-44" : "h-64 lg:h-72"
             } ${i === active ? "shadow-[0_10px_28px_-6px_rgba(0,0,0,0.55)]" : ""}`}
           >
             <div className={`absolute inset-0 ${i === blinking ? "tour-priming" : ""}`}>
@@ -1209,18 +1218,24 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
               />
             </div>
           </Link>
-          <div className={`relative w-px shrink-0 bg-primary/40 ${multiRow ? "mt-1 h-2" : "mt-1.5 h-3"}`}>
-            <span className="absolute -bottom-px left-1/2 size-1.5 -translate-x-1/2 rounded-full bg-primary/70" />
-          </div>
-          <span
-            className={`mt-1 text-center font-heading text-[10px] leading-tight font-semibold text-foreground sm:text-xs ${
-              i === blinking ? "tour-caption-blinking" : ""
-            }`}
-          >
-            {tour.title}
-          </span>
+          {!multiRow && (
+            <>
+              <div className="relative mt-1.5 h-3 w-px shrink-0 bg-primary/40">
+                <span className="absolute -bottom-px left-1/2 size-1.5 -translate-x-1/2 rounded-full bg-primary/70" />
+              </div>
+              <span
+                className={`mt-1 text-center font-heading text-[10px] leading-tight font-semibold text-foreground sm:text-xs ${
+                  i === blinking ? "tour-caption-blinking" : ""
+                }`}
+              >
+                {tour.title}
+              </span>
+            </>
+          )}
         </div>
       )})}
+      {/* неполный ряд: пустые ячейки, чтобы фото были той же ширины, что в рядах выше */}
+      {multiRow && Array.from({ length: perRow - row.length }, (_, k) => <div key={`pad-${k}`} aria-hidden className="min-w-0 flex-1" />)}
       </div>
       ))}
     </div>
@@ -1236,6 +1251,7 @@ const PQ_TOUR_LINES = [
   { icon: "🏝️", name: "Южные острова", text: "свой катер, риф с кораллами, белый пляж и канатка над морем" },
   { icon: "🎆", name: "Сансет Таун", text: "канатка над морем, закат на Мосту Поцелуев и два шоу из-за своего стола" },
   { icon: "✈️", name: "Хойан + Дананг", text: "3 дня с перелётом, две ночи в городе ЮНЕСКО" },
+  { icon: "⭐", name: "Юг 2.0", text: "остров, Сансет Таун и ужин-шоу с салютом, всё включено" },
 ]
 
 function ToursSlide() {
