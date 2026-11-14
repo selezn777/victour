@@ -200,9 +200,11 @@ function ProgramCard({ p, dates }: { p: GroupProgram; dates: string[] }) {
 
         <div className="flex items-end justify-between gap-3 border-t border-(--c-border) pt-3.5">
           <div>
-            <span className="block text-[11px] font-bold tracking-[0.12em] text-(--c-muted)">ОТ</span>
+            {/* Черновая цена: показываем как ориентир, точную - в расписании выезда */}
+            <span className="block text-[11px] font-bold tracking-[0.12em] text-(--c-muted)">{p.priceDraft ? "ОКОЛО" : "ОТ"}</span>
             <b className={`${SERIF} text-[30px] leading-none text-(--c-primary)`}>${p.priceUsd}</b>
             <span className="ml-1 text-[13px] text-(--c-muted)">с человека</span>
+            {p.priceDraft && <span className="block text-[12px] text-(--c-muted)">точная цена у каждой даты</span>}
           </div>
           {p.individualSlug && (
             <Link href={`/tours/${p.individualSlug}`} className="text-right text-[13px] font-semibold text-(--c-primary-2) underline underline-offset-2">

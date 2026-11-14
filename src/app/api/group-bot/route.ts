@@ -57,7 +57,7 @@ export async function POST(request: Request) {
   if (!msg?.text) return ok()
 
   const chatId = msg.chat.id
-  const reply = (text: string) => sendAdmin(text, { chatId, replyTo: msg.message_id })
+  const reply = (text: string) => sendAdmin(text, { chatId, replyTo: msg.message_id, fallbackToMainBot: false })
 
   if (!adminUserIds().has(String(msg.from?.id ?? chatId))) {
     await reply("Это служебный бот ВикТур. Записаться в группу можно на сайте: victour.online/groups")

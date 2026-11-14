@@ -38,7 +38,7 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
   {
     slug: "gruppa-istorik",
     title: "Настоящий Фукуок с историком",
-    aliases: ["настоящий", "с историком", "историк", "настоящий фукуок"],
+    aliases: ["с историком", "настоящий фукуок"],
     individualSlug: "phuquoc-nastoyashchiy",
     time: "8:30-15:00",
     priceUsd: 35,
@@ -76,7 +76,7 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
   {
     slug: "gruppa-ostrova",
     title: "Южные острова: катер на компанию",
-    aliases: ["острова", "южные острова", "катер", "снорклинг"],
+    aliases: ["южные острова", "острова"],
     individualSlug: "phuquoc-ostrova",
     time: "7:30-15:30",
     priceUsd: 45,
@@ -113,7 +113,7 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
   {
     slug: "gruppa-vecher",
     title: "Вечерний Фукуок и ночное сафари",
-    aliases: ["вечерний", "вечер", "ночное сафари", "сафари", "венеция"],
+    aliases: ["вечерний фукуок", "вечерний"],
     individualSlug: "phuquoc-vecher-safari",
     time: "15:00-22:15",
     priceUsd: 49,
