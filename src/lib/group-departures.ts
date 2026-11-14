@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 import { matchGroupProgram } from "@/lib/group-tours"
 import { todayInVietnam, type ParsedDeparture } from "@/lib/group-schedule-parse"
+import staticSchedule from "@/lib/group-schedule-static.json"
 
 // Доступ к групповым выездам (таблица group_departures, миграция 20261114120000).
 // Клиент без типов Database: таблицы нет в database.types.ts, а до применения миграции
@@ -90,7 +91,8 @@ export async function getUpcomingDepartures(): Promise<GroupDeparture[]> {
       .order("time", { nullsFirst: true })
       .limit(200)
     if (error) {
-      if (!isMissingTable(error)) console.error("group-departures: read failed:", error.message)
+      if (isMissingTable(error)) return staticUpcoming()
+      console.error("group-departures: read failed:", error.message)
       return []
     }
     return (data as Row[]).map(fromRow)
@@ -100,7 +102,33 @@ export async function getUpcomingDepartures(): Promise<GroupDeparture[]> {
   }
 }
 
+// ---------- Расписание из файла, пока нет таблицы ----------
+
+type StaticRow = [string, string, string | null, number, number, number | null]
+
+export function staticDepartures(): GroupDeparture[] {
+  return (staticSchedule.rows as StaticRow[]).map(([date, title, slug, total, booked, price], i) => ({
+    id: `s-${i + 1}`,
+    num: i + 1,
+    date,
+    time: null,
+    tourTitle: title,
+    tourSlug: slug,
+    guideName: null,
+    seatsTotal: total,
+    seatsBooked: booked,
+    priceUsd: price,
+    status: "open",
+  }))
+}
+
+function staticUpcoming(): GroupDeparture[] {
+  const today = todayInVietnam()
+  return staticDepartures().filter((d) => d.date >= today)
+}
+
 export async function getOpenDepartureById(id: string): Promise<GroupDeparture | null> {
+  if (id.startsWith("s-")) return staticUpcoming().find((d) => d.id === id) ?? null
   const db = serviceDb()
   if (!db) return null
   const { data, error } = await db.from("group_departures").select(COLUMNS).eq("id", id).maybeSingle()

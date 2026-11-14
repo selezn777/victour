@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import Image from "@/components/img"
+import { ProgramPhotos } from "./program-photos"
 import Link from "next/link"
 import { SiteMenu } from "@/components/site-menu"
 import { getUpcomingDepartures, type GroupDeparture } from "@/lib/group-departures"
@@ -208,13 +209,7 @@ function ProgramCard({ p, dates }: { p: GroupProgram; dates: string[] }) {
   const ask = `${PARK_WHATSAPP.href}?text=${encodeURIComponent(`Здравствуйте! Хочу в групповой тур «${p.title}». Какие ближайшие даты?`)}`
   return (
     <article id={p.slug} className={`${CARD} scroll-mt-16 overflow-hidden`}>
-      <div className="flex snap-x snap-mandatory gap-1 overflow-x-auto [scrollbar-width:none]">
-        {[p.heroImageUrl, ...p.photos].map((src, i) => (
-          <div key={src} className="relative h-[190px] w-[88%] shrink-0 snap-start">
-            <Image src={src} alt={i ? "" : p.title} fill sizes="(max-width: 1024px) 90vw, 330px" className="object-cover" />
-          </div>
-        ))}
-      </div>
+      <ProgramPhotos photos={[p.heroImageUrl, ...p.photos]} title={p.title} />
       <div className="space-y-3 p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">

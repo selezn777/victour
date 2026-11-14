@@ -87,7 +87,7 @@ export async function POST(request: Request) {
     `${s.name} · ${s.contactChannel === "whatsapp" ? "WhatsApp" : "Telegram"}: ${s.contact}`,
     s.comment ? `Комментарий: ${s.comment}` : null,
     "",
-    `Подтвердили - отметьте места: /seats ${d.num} +${s.people}`,
+    d.id.startsWith("s-") ? null : `Подтвердили - отметьте места: /seats ${d.num} +${s.people}`,
   ]
     .filter((l) => l !== null)
     .join("\n")

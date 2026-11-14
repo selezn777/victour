@@ -58,7 +58,7 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     childPrice: "дети 100-140 см - $60",
     notes: [WATER, FAR],
     heroImageUrl: `${T}/phuquoc-ostrova/r2-01.webp`,
-    photos: [`${T}/phuquoc-ostrova/r2-08.webp`, `${T}/phuquoc-ostrova/r2-15.webp`, `${T}/phuquoc-ostrova/r2-09.webp`],
+    photos: [`${T}/phuquoc-ostrova/r2-02.webp`, `${T}/phuquoc-ostrova/r2-04.webp`, `${T}/phuquoc-ostrova/r2-09.webp`, `${T}/phuquoc-ostrova/r2-08.webp`],
     pitch: "Морской день на скоростном катере по южному архипелагу: подводный мир, белые пляжи и четыре острова за день.",
     program: [
       "Sea Walker: прогулка по морскому дну (по желанию)",
@@ -79,8 +79,8 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     priceUsd: 90,
     childPrice: "дети 100-140 см - $80",
     notes: [WATER, FAR],
-    heroImageUrl: `${T}/phuquoc-ostrova/r2-19.webp`,
-    photos: [`${T}/phuquoc-ostrova/r2-17.webp`, `${T}/phuquoc-sunset-town/r2-09.webp`, `${T}/phuquoc-ostrova/r2-06.webp`],
+    heroImageUrl: `${T}/phuquoc-ostrova/r2-17.webp`,
+    photos: [`${T}/phuquoc-sunset-town/r2-09.webp`, `${T}/phuquoc-ostrova/r2-18.webp`, `${T}/phuquoc-ostrova/r2-06.webp`, `${T}/phuquoc-ostrova/r2-07.webp`],
     pitch: "Всё самое красивое за один день: канатная дорога над морем, аквапарк, острова и снорклинг.",
     program: [
       "Канатная дорога на Хонтхом и аквапарк Aquatopia",
@@ -100,8 +100,8 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     priceUsd: 100,
     childPrice: "детскую цену уточним",
     notes: ["Утренний круиз 9:00-14:00 - $100, вечерний 15:00-20:30 - $130.", FAR],
-    heroImageUrl: `${T}/phuquoc-ostrova/r2-12.webp`,
-    photos: [`${T}/phuquoc-ostrova/r2-02.webp`, `${T}/phuquoc-ostrova/r2-04.webp`],
+    heroImageUrl: `${G}/katamaran-g-01.webp`,
+    photos: [`${G}/katamaran-g-02.webp`, `${G}/katamaran-g-03.webp`, `${G}/katamaran-g-04.webp`, `${G}/katamaran-g-05.webp`],
     pitch: "Спокойный день на яхте: риф у острова Гам Ги, рыбалка с борта, обед у островов и безлимитное пиво.",
     program: [
       "Риф у острова Гам Ги: снорклинг, купание и сап-борды",
@@ -118,8 +118,8 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     time: "8:00-15:30",
     priceUsd: 120,
     notes: ["Можно пройти обучение и получить сертификат PADI, SSI или NDL.", FAR],
-    heroImageUrl: `${T}/phuquoc-ostrova/r2-09.webp`,
-    photos: [`${T}/phuquoc-ostrova/r2-07.webp`, `${T}/phuquoc-ostrova/r2-10.webp`],
+    heroImageUrl: `${G}/dayving-g-01.webp`,
+    photos: [`${G}/dayving-g-02.webp`, `${G}/dayving-g-03.webp`, `${G}/dayving-g-04.webp`, `${G}/dayving-g-05.webp`],
     pitch: "Два погружения в Сиамском заливе с сертифицированным русскоговорящим инструктором, опыт не нужен.",
     program: [
       "Подробный инструктаж на лодке",
@@ -138,8 +138,8 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     priceUsd: 65,
     childPrice: "дети 100-140 см - $55",
     notes: [FAR],
-    heroImageUrl: `${T}/phuquoc-sunset-town/r2-36.webp`,
-    photos: [`${T}/phuquoc-sunset-town/r2-14.webp`, `${T}/phuquoc-sunset-town/r2-16.webp`],
+    heroImageUrl: `${G}/bbq-korabl-g-01.webp`,
+    photos: [`${G}/bbq-korabl-g-02.webp`, `${G}/bbq-korabl-g-03.webp`, `${G}/bbq-korabl-g-04.webp`, `${G}/bbq-korabl-g-05.webp`],
     pitch: "Вечер на большом корабле вокруг юга острова: закат, барбекю, ночная ловля кальмаров и салют Сансет Тауна с моря.",
     program: [
       "Прогулка на большом комфортном корабле на закате",
@@ -159,8 +159,8 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     priceUsd: 95,
     childPrice: "дети 100-139 см - $85",
     notes: [WATER, FAR],
-    heroImageUrl: `${T}/phuquoc-ostrova/r2-21.webp`,
-    photos: [`${T}/phuquoc-ostrova/r2-11.webp`, `${T}/phuquoc-sunset-town/r2-12.webp`],
+    heroImageUrl: `${T}/phuquoc-ostrova/r2-19.webp`,
+    photos: [`${T}/phuquoc-ostrova/r2-10.webp`, `${T}/phuquoc-ostrova/r2-13.webp`, `${T}/phuquoc-sunset-town/r2-08.webp`, `${T}/phuquoc-sunset-town/r2-12.webp`],
     pitch: "Канатка без дневной толпы, катер, снорклинг и ужин на острове под закатным небом.",
     program: [
       "Канатная дорога на Хонтхом с видами на южные острова",
@@ -179,8 +179,8 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     priceUsd: 90,
     childPrice: "детский - $80",
     notes: [FAR],
-    heroImageUrl: `${T}/phuquoc-sunset-town/r2-11.webp`,
-    photos: [`${T}/phuquoc-ostrova/r2-02.webp`, `${T}/phuquoc-sunset-town/r2-08.webp`],
+    heroImageUrl: `${G}/rybalka-g-01.webp`,
+    photos: [`${G}/rybalka-g-02.webp`, `${G}/rybalka-g-03.webp`, `${G}/rybalka-g-04.webp`, `${G}/rybalka-g-05.webp`],
     pitch: "Настоящая морская рыбалка на судне с эхолотом: барракуда, кобия, групер, морской окунь. Улов приготовят на борту.",
     program: [
       "Выход в море на рассвете",
@@ -201,8 +201,8 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     priceUsd: 40,
     childPrice: "дети 100-140 см - $30",
     notes: [FAR],
-    heroImageUrl: `${T}/phuquoc-nastoyashchiy/r2-13.webp`,
-    photos: [`${T}/phuquoc-nastoyashchiy/r2-29.webp`, `${T}/phuquoc-utro/v2-16.webp`, `${T}/phuquoc-nastoyashchiy/r2-32.webp`],
+    heroImageUrl: `${T}/phuquoc-nastoyashchiy/r2-15.webp`,
+    photos: [`${G}/sokrovishcha-yuga-g-01.webp`, `${T}/phuquoc-nastoyashchiy/r2-12.webp`, `${T}/phuquoc-dikiy/r2-24.webp`, `${T}/phuquoc-nastoyashchiy/r2-29.webp`],
     pitch: "Обзорный день по югу острова: жемчуг, перец, шёлк и рыбный соус, пагода Хо Куок и пляж Сао.",
     program: [
       "Жемчужная ферма",
@@ -224,7 +224,7 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     childPrice: "дети 100-140 см - $75",
     notes: [FAR],
     heroImageUrl: `${T}/phuquoc-utro-safari/r2-01.webp`,
-    photos: [`${T}/phuquoc-utro-safari/r2-19.webp`, `${T}/phuquoc-utro-safari/r2-04.webp`, `${T}/phuquoc-utro-safari/r2-14.webp`],
+    photos: [`${T}/phuquoc-utro-safari/r2-04.webp`, `${T}/phuquoc-utro-safari/r2-03.webp`, `${T}/phuquoc-utro-safari/r2-20.webp`, `${T}/phuquoc-utro-safari/r2-14.webp`],
     pitch: "Крупнейший открытый сафари-парк Вьетнама, потом пляж с морскими звёздами и обед на воде.",
     program: [
       "Vinpearl Safari: жирафы, слоны, носороги, львы, больше 150 видов",
@@ -243,7 +243,7 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     childPrice: "дети 100-139 см - $30",
     notes: ["Круглые лодки по реке Куа Кан по желанию - $10 с человека.", FAR],
     heroImageUrl: `${T}/phuquoc-utro/v2-28.webp`,
-    photos: [`${T}/phuquoc-utro/v2-30.webp`, `${T}/phuquoc-utro/v2-10.webp`, `${T}/phuquoc-utro/v2-20.webp`],
+    photos: [`${T}/phuquoc-utro/r2-01.webp`, `${T}/phuquoc-utro/v2-09.webp`, `${T}/phuquoc-utro/v2-18.webp`, `${T}/phuquoc-utro/v2-20.webp`],
     pitch: "Спокойный день на севере: дикий пляж с морскими звёздами, обед на воде и круглые вьетнамские лодки.",
     program: [
       "Лодка до пляжа Хам Ронг, отдых с морскими звёздами",
@@ -262,8 +262,8 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     priceUsd: 85,
     childPrice: "дети 100-139 см - $75",
     notes: [WATER, FAR],
-    heroImageUrl: `${T}/phuquoc-dikiy/r2-35.webp`,
-    photos: [`${T}/phuquoc-utro-safari/r2-17.webp`, `${T}/phuquoc-utro-safari/r2-12.webp`, `${T}/phuquoc-dikiy/r2-37.webp`],
+    heroImageUrl: `${G}/dikiy-sever-g-01.webp`,
+    photos: [`${G}/dikiy-sever-g-02.webp`, `${G}/dikiy-sever-g-03.webp`, `${G}/dikiy-sever-g-04.webp`, `${G}/dikiy-sever-g-05.webp`],
     pitch: "Джунгли, дикие пляжи и морские звёзды вдали от туристической суеты, на скоростном катере.",
     program: [
       "Мыс Ганьдау: катер к жемчужной ферме на воде",
@@ -284,8 +284,8 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     priceUsd: 95,
     childPrice: "дети 100-139 см - $85",
     notes: [FAR],
-    heroImageUrl: `${T}/phuquoc-sunset-town/r2-17.webp`,
-    photos: [`${T}/phuquoc-sunset-town/r2-30.webp`, `${T}/phuquoc-sunset-town/r2-32.webp`, `${T}/phuquoc-sunset-town/r2-33.webp`],
+    heroImageUrl: `${T}/phuquoc-sunset-town/r2-33.webp`,
+    photos: [`${T}/phuquoc-sunset-town/r2-17.webp`, `${T}/phuquoc-sunset-town/r2-32.webp`, `${T}/phuquoc-sunset-town/r2-30.webp`, `${T}/phuquoc-yug2/r3-08.webp`],
     pitch: "Один вечер и сразу все шоу Сансет Тауна: Мост Поцелуев, шоу на воде и ужин в Bavaria с видом на представление.",
     program: [
       "Прогулка по вечернему Сансет Тауну и время для фото",
@@ -305,8 +305,8 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     priceUsd: 100,
     childPrice: "дети до 100 см бесплатно",
     notes: [FAR],
-    heroImageUrl: `${T}/phuquoc-dikiy/r2-15.webp`,
-    photos: [`${T}/phuquoc-dikiy/r2-36.webp`, `${T}/phuquoc-dikiy/r2-24.webp`, `${T}/phuquoc-utro-safari/r2-20.webp`],
+    heroImageUrl: `${G}/dzhip-tur-g-01.webp`,
+    photos: [`${G}/dzhip-tur-g-02.webp`, `${G}/dzhip-tur-g-03.webp`, `${G}/dzhip-tur-g-04.webp`, `${G}/dzhip-tur-g-05.webp`],
     pitch: "Армейские джипы, бездорожье и джунгли национального парка: туда, куда автобусы не доезжают.",
     program: [
       "Бездорожье и джунгли национального парка",
@@ -328,7 +328,7 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     priceUsd: 475,
     notes: ["Виза в Камбоджу $50, оплачивается на границе.", "Дорога: паром, спальный автобус, паром. Возвращение около 12:00 через день.", FAR],
     heroImageUrl: `${G}/kambodzha-01.webp`,
-    photos: [`${G}/kambodzha-02.webp`, `${G}/kambodzha-03.webp`],
+    photos: [`${G}/kambodzha-02.webp`, `${G}/kambodzha-03.webp`, `${G}/kambodzha-g-01.webp`, `${G}/kambodzha-g-02.webp`],
     pitch: "Два дня в другом мире: Ангкор-Ват, храм с каменными лицами, джунгли с водопадом и плавучая деревня.",
     program: [
       "День 1: Ангкор-Ват, Байон с сотнями каменных лиц, Ангкор-Том",
@@ -350,7 +350,7 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     priceFrom: true,
     notes: ["С собой паспорт, ручная кладь до 7 кг.", FAR],
     heroImageUrl: `${G}/hoshimin-01.webp`,
-    photos: [`${G}/hoshimin-02.webp`, `${G}/hoshimin-03.webp`],
+    photos: [`${G}/hoshimin-02.webp`, `${G}/hoshimin-03.webp`, `${G}/hoshimin-g-01.webp`, `${G}/hoshimin-g-02.webp`],
     pitch: "Колониальный Сайгон, партизанские тоннели в джунглях и каналы дельты Меконга на лодках.",
     program: [
       "День 1: Сайгон, военный музей, почтамт, собор Нотр-Дам, театр",
@@ -370,7 +370,7 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     priceUsd: null,
     notes: ["Катание на слоне или страусе и горные сани на водопаде оплачиваются отдельно.", "С собой паспорт, ручная кладь до 7 кг."],
     heroImageUrl: `${T}/dalat-2-dnya/r2-37.webp`,
-    photos: [`${T}/dalat-2-dnya/r2-15.webp`, `${T}/dalat-2-dnya/r2-35.webp`, `${T}/dalat-2-dnya/r2-64.webp`],
+    photos: [`${T}/dalat-2-dnya/r2-15.webp`, `${T}/dalat-2-dnya/r2-35.webp`, `${T}/dalat-2-dnya/r2-64.webp`, `${T}/dalat-2-dnya/r2-71.webp`],
     pitch: "Другой Вьетнам: прохладный воздух, горы, водопады, яркие храмы и архитектура без правил.",
     program: [
       "Обзорная площадка на высоте 1500 метров",
@@ -392,7 +392,7 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     priceFrom: true,
     notes: ["С собой паспорт, ручная кладь до 7 кг.", FAR],
     heroImageUrl: `${T}/phuquoc-hoian-danang/01.webp`,
-    photos: [`${T}/phuquoc-hoian-danang/31.webp`, `${T}/phuquoc-hoian-danang/51.webp`, `${T}/phuquoc-hoian-danang/11.webp`],
+    photos: [`${T}/phuquoc-hoian-danang/31.webp`, `${T}/phuquoc-hoian-danang/51.webp`, `${T}/phuquoc-hoian-danang/11.webp`, `${T}/phuquoc-hoian-danang/02.webp`],
     pitch: "Центральный Вьетнам за два дня: Ba Na Hills и Золотой мост, Мраморные горы и старинный Хойан.",
     program: [
       "Канатка на Ba Na Hills и Золотой мост «Руки Бога»",
@@ -413,7 +413,7 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
     priceFrom: true,
     notes: ["С собой паспорт, ручная кладь до 7 кг.", FAR],
     heroImageUrl: `${G}/halong-01.webp`,
-    photos: [`${G}/halong-02.webp`, `${G}/halong-03.webp`],
+    photos: [`${G}/halong-02.webp`, `${G}/halong-03.webp`, `${G}/halong-g-01.webp`, `${G}/halong-g-02.webp`],
     pitch: "Север Вьетнама за три дня: старый Ханой и ночь на корабле среди скал бухты Халонг.",
     program: [
       "День 1: Ханой, Храм Литературы, мавзолей, озеро Возвращённого меча, Старый квартал",
@@ -426,7 +426,7 @@ export const GROUP_PROGRAMS: GroupProgram[] = [
 
 /** Фото со свободной лицензией: показываем авторов внизу /groups */
 export const GROUP_PHOTO_CREDITS =
-  "Фото Камбоджи, Хошимина и Халонга: Reinhard Onasch (CC BY-SA 3.0), David Sim (CC BY 2.0), Christophe95 (CC BY-SA 4.0), Diego Delso (CC BY-SA 3.0), Esin Üstün (CC BY 2.0), McKay Savage (CC BY 2.0), Thomas Hirsch (CC BY-SA 3.0), Jakub Hałun (CC BY 4.0), shankar s. (CC BY 2.0), Wikimedia Commons."
+  "Фото Камбоджи, Хошимина и Халонга: Reinhard Onasch (CC BY-SA 3.0), David Sim (CC BY 2.0), Christophe95 (CC BY-SA 4.0), Diego Delso (CC BY-SA 3.0), Esin Üstün (CC BY 2.0), McKay Savage (CC BY 2.0), Thomas Hirsch (CC BY-SA 3.0), Jakub Hałun (CC BY 4.0), shankar s. (CC BY 2.0), Vladimir Pankratov (CC BY-SA 2.0), Pierre André Leclercq (CC BY-SA 4.0), SfdWASINO (CC BY 4.0), 星凤星凤 (CC BY 4.0), lumoplank (CC0), Shyamal (CC BY-SA 4.0), Wikimedia Commons. Часть фото морских программ - из отзывов туристов на Google Картах."
 
 export function findGroupProgram(slug: string | null | undefined): GroupProgram | undefined {
   return slug ? GROUP_PROGRAMS.find((p) => p.slug === slug) : undefined
