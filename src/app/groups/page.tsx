@@ -4,7 +4,6 @@ import { ProgramPhotos } from "./program-photos"
 import Link from "next/link"
 import { SiteMenu } from "@/components/site-menu"
 import { getUpcomingDepartures, type GroupDeparture } from "@/lib/group-departures"
-import { formatDateShort } from "@/lib/group-schedule-parse"
 import {
   findGroupProgram,
   GROUP_CATEGORIES,
@@ -18,7 +17,7 @@ import { PARK_WHATSAPP } from "../park/park-config"
 import { CARD, Pill, SERIF, SectionTitle, THEMES } from "../park/ui"
 import { WhatsAppIcon } from "../park/whatsapp-icon"
 import { GuideItem, InfoTile } from "../phuquoc/pq-ui"
-import { GroupSchedule, type ScheduleTourLink } from "./group-schedule"
+import { ProgramDates } from "./group-schedule"
 
 // Групповые выезды (Виктор 2026-11-14). Расписание приходит из админ-бота (/api/group-bot),
 // бот после каждого изменения обновляет страницу; revalidate - запасной вариант.
@@ -35,15 +34,11 @@ export const viewport: Viewport = { themeColor: THEMES.pq_vin["--c-bg"] }
 
 export const revalidate = 60
 
-function tourLink(d: GroupDeparture): ScheduleTourLink {
-  const program = findGroupProgram(d.tourSlug)
-  if (program) return { href: `#${program.slug}`, title: program.title }
-  return d.tourSlug ? { href: `/tours/${d.tourSlug}`, title: d.tourTitle } : null
-}
-
 export default async function GroupsPage() {
   const departures = await getUpcomingDepartures()
-  const links = Object.fromEntries(departures.map((d) => [d.id, tourLink(d)]))
+  // Выезды без своей программы на сайте (шоу Grand World и т.п.) - отдельным блоком, сгруппированы по названию
+  const other = new Map<string, GroupDeparture[]>()
+  for (const d of departures) if (!findGroupProgram(d.tourSlug)) other.set(d.tourTitle, [...(other.get(d.tourTitle) ?? []), d])
   const hero = GROUP_PROGRAMS[1]
 
   return (
@@ -82,7 +77,7 @@ export default async function GroupsPage() {
               места.
             </p>
             <a
-              href="#schedule"
+              href={`#cat-${GROUP_CATEGORIES[0].id}`}
               className="mt-4 inline-flex h-12 items-center gap-2 rounded-md bg-(--c-accent) px-6 text-[15px] font-bold text-white shadow-[0_8px_20px_rgb(0_0_0/0.25)]"
             >
               Смотреть даты <span aria-hidden>⬇️</span>
@@ -119,22 +114,37 @@ export default async function GroupsPage() {
         </nav>
 
         <div className="mt-9 space-y-10 px-4">
-          <section id="schedule" className="scroll-mt-16">
-            <SectionTitle>Ближайшие выезды</SectionTitle>
-            <GroupSchedule departures={departures} links={links} />
-          </section>
-
           {GROUP_CATEGORIES.map((c) => (
             <section key={c.id} id={`cat-${c.id}`} className="scroll-mt-16">
               <SectionTitle>{c.title}</SectionTitle>
               <p className="-mt-2 mb-3 ml-1 text-[13px] text-(--c-muted)">{c.note}</p>
               <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {GROUP_PROGRAMS.filter((p) => p.category === c.id).map((p) => (
-                  <ProgramCard key={p.slug} p={p} dates={departures.filter((d) => d.tourSlug === p.slug).map((d) => d.date)} />
+                  <ProgramCard key={p.slug} p={p} departures={departures.filter((d) => d.tourSlug === p.slug)} />
                 ))}
               </div>
             </section>
           ))}
+
+          {other.size > 0 && (
+            <section id="cat-other" className="scroll-mt-16">
+              <SectionTitle>Другие выезды</SectionTitle>
+              <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {[...other.entries()].map(([title, list]) => (
+                  <article key={title} className={`${CARD} space-y-3 p-4`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className={`${SERIF} text-[21px] leading-tight font-bold text-(--c-primary)`}>{title}</h3>
+                      {list[0].priceUsd !== null && (
+                        <b className={`${SERIF} shrink-0 text-[26px] leading-none text-(--c-primary)`}>${list[0].priceUsd}</b>
+                      )}
+                    </div>
+                    {list[0].time && <p className="-mt-1 text-[13px] font-semibold text-(--c-muted)">🕘 выезд {list[0].time}</p>}
+                    <ProgramDates departures={list} title={title} />
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="space-y-2.5 lg:max-w-[720px]">
             <SectionTitle>Частые вопросы</SectionTitle>
@@ -203,10 +213,9 @@ function List({ items }: { items: string[] }) {
   )
 }
 
-// Компактная карточка: фото лентой, название, время и цена сразу, программа и что включено - по тапу
-function ProgramCard({ p, dates }: { p: GroupProgram; dates: string[] }) {
-  const uniq = [...new Set(dates)].slice(0, 6)
-  const ask = `${PARK_WHATSAPP.href}?text=${encodeURIComponent(`Здравствуйте! Хочу в групповой тур «${p.title}». Какие ближайшие даты?`)}`
+// Компактная карточка: фото лентой, название, время и цена сразу, программа и что включено - по тапу,
+// все даты со счётчиком записавшихся - по кнопке «Даты»
+function ProgramCard({ p, departures }: { p: GroupProgram; departures: GroupDeparture[] }) {
   return (
     <article id={p.slug} className={`${CARD} scroll-mt-16 overflow-hidden`}>
       <ProgramPhotos photos={[p.heroImageUrl, ...p.photos]} title={p.title} />
@@ -245,23 +254,7 @@ function ProgramCard({ p, dates }: { p: GroupProgram; dates: string[] }) {
           </div>
         </details>
 
-        {uniq.length ? (
-          <a
-            href="#schedule"
-            className="flex min-h-12 flex-wrap items-center justify-center gap-x-1.5 rounded-md bg-(--c-accent) px-3 py-2 text-center text-[14px] font-bold text-white"
-          >
-            Даты: {uniq.map(formatDateShort).join(", ")}
-          </a>
-        ) : (
-          <a
-            href={ask}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex min-h-12 items-center justify-center gap-2 rounded-md bg-(--c-bg-2) px-3 py-2 text-center text-[14px] font-bold text-(--c-primary)"
-          >
-            <WhatsAppIcon className="size-4 fill-[#25d366]" /> Узнать даты и записаться
-          </a>
-        )}
+        <ProgramDates departures={departures} title={p.title} />
       </div>
     </article>
   )

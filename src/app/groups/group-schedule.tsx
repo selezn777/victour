@@ -1,17 +1,13 @@
 "use client"
 
-import Link from "next/link"
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import type { GroupDeparture } from "@/lib/group-departures"
-import { formatDateRu } from "@/lib/group-schedule-parse"
+import { formatDateRu, formatDateShort } from "@/lib/group-schedule-parse"
 import { PARK_WHATSAPP, waTextLink } from "../park/park-config"
 import { WhatsAppIcon } from "../park/whatsapp-icon"
-import { CARD, SERIF } from "../park/ui"
 
-// Расписание групп по датам: полоска дат сверху (все / конкретный день), под ней выезды.
-// «Записаться» раскрывает короткую форму прямо в карточке.
-
-export type ScheduleTourLink = { href: string; title: string } | null
+// Даты групповых выездов внутри карточки программы (Виктор 15.11: всегда карточка с фото и временем,
+// а по кнопке дат - все даты и сколько человек на каждую). «Записаться» раскрывает короткую форму.
 
 const LABEL = "mb-1.5 block text-[14px] font-bold text-(--c-primary)"
 const FIELD =
@@ -29,102 +25,86 @@ function left(d: GroupDeparture) {
   return Math.max(0, d.seatsTotal - d.seatsBooked)
 }
 
-export function GroupSchedule({
-  departures,
-  links,
-}: {
-  departures: GroupDeparture[]
-  /** id выезда → ссылка на программу/тур */
-  links: Record<string, ScheduleTourLink>
-}) {
-  const [day, setDay] = useState<string | null>(null)
+/** Кнопка «Даты: …» в карточке программы. По тапу - все даты списком: сколько записано и свободно, запись на нужную. */
+export function ProgramDates({ departures, title }: { departures: GroupDeparture[]; title: string }) {
+  const [open, setOpen] = useState(false)
   const [openId, setOpenId] = useState<string | null>(null)
-
-  const days = useMemo(() => {
-    const map = new Map<string, GroupDeparture[]>()
-    for (const d of departures) map.set(d.date, [...(map.get(d.date) ?? []), d])
-    return [...map.entries()]
-  }, [departures])
+  const preview = [...new Set(departures.map((d) => d.date))].slice(0, 4)
+  const more = new Set(departures.map((d) => d.date)).size - preview.length
 
   if (!departures.length) {
     return (
-      <div className={`${CARD} p-5 text-[15px] leading-snug`}>
-        <p className="font-bold text-(--c-primary)">Ближайшие даты скоро появятся</p>
-        <p className="mt-1.5">
-          Мы как раз собираем расписание. Напишите Виктору, какие дни вам удобны, и мы предложим группу или соберём свою.
-        </p>
-        <a
-          href={waTextLink(PARK_WHATSAPP.display, "Здравствуйте! Хочу в групповой тур на Фукуоке, подскажите ближайшие даты.")}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-flex h-12 items-center gap-2 rounded-md bg-[#25d366] px-5 text-[15px] font-extrabold text-white"
-        >
-          <WhatsAppIcon className="size-5 fill-white" /> Спросить даты
-        </a>
-      </div>
+      <a
+        href={waTextLink(PARK_WHATSAPP.display, `Здравствуйте! Хочу в групповой тур «${title}». Какие ближайшие даты?`)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex min-h-12 items-center justify-center gap-2 rounded-md bg-(--c-bg-2) px-3 py-2 text-center text-[14px] font-bold text-(--c-primary)"
+      >
+        <WhatsAppIcon className="size-4 fill-[#25d366]" /> Узнать даты и записаться
+      </a>
     )
   }
 
-  const shown = day ? days.filter(([d]) => d === day) : days
-
   return (
     <div>
-      <div className="-mx-4 mb-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
-        <div className="flex w-max gap-2">
-          <DayChip active={day === null} onClick={() => setDay(null)}>
-            Все даты
-            <small>{departures.length} {plural(departures.length, "выезд", "выезда", "выездов")}</small>
-          </DayChip>
-          {days.map(([date, list]) => {
-            const free = list.reduce((a, d) => a + left(d), 0)
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className={`flex min-h-12 w-full flex-wrap items-center justify-center gap-x-1.5 rounded-md px-3 py-2 text-center text-[14px] font-bold transition active:scale-[0.99] ${
+          open ? "border-2 border-(--c-border) bg-white text-(--c-primary)" : "bg-(--c-accent) text-white"
+        }`}
+      >
+        {open ? (
+          "Свернуть даты"
+        ) : (
+          <>
+            Даты: {preview.map(formatDateShort).join(", ")}
+            {more > 0 && <span className="font-semibold opacity-90">и ещё {more}</span>}
+          </>
+        )}
+      </button>
+
+      {open && (
+        <ul className="mt-2.5 space-y-2.5">
+          {departures.map((d) => {
+            const free = left(d)
+            const isOpen = openId === d.id
             return (
-              <DayChip key={date} active={day === date} onClick={() => setDay(date)}>
-                {formatDateRu(date)}
-                <small>{free ? `${free} ${plural(free, "место", "места", "мест")}` : "всё занято"}</small>
-              </DayChip>
+              <li key={d.id} className="rounded-md bg-(--c-bg) p-3">
+                <div className="mb-2 flex items-baseline justify-between gap-2">
+                  <b className="text-[15.5px] text-(--c-ink) first-letter:uppercase">{formatDateRu(d.date)}</b>
+                  {d.priceUsd !== null && <span className="text-[13px] font-bold text-(--c-primary)">${d.priceUsd}</span>}
+                </div>
+                <Seats d={d} />
+                {free > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setOpenId((id) => (id === d.id ? null : d.id))}
+                    aria-expanded={isOpen}
+                    className={`mt-2.5 h-11 w-full rounded-md text-[14.5px] font-extrabold transition active:scale-[0.99] ${
+                      isOpen ? "border-2 border-(--c-border) bg-white text-(--c-primary)" : "bg-(--c-primary) text-white"
+                    }`}
+                  >
+                    {isOpen ? "Свернуть" : "Записаться на эту дату"}
+                  </button>
+                ) : (
+                  <a
+                    href={waTextLink(PARK_WHATSAPP.display, `Здравствуйте! Группа ${formatDateRu(d.date)} «${d.tourTitle}» собрана. Можно в лист ожидания или на другую дату?`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2.5 flex h-11 w-full items-center justify-center rounded-md border-2 border-(--c-border) bg-white text-[14px] font-bold text-(--c-primary)"
+                  >
+                    В лист ожидания через WhatsApp
+                  </a>
+                )}
+                {isOpen && free > 0 && <SignupForm d={d} free={free} />}
+              </li>
             )
           })}
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        {shown.map(([date, list]) => (
-          <section key={date}>
-            <h3 className={`${SERIF} mb-2.5 ml-1 text-[22px] leading-tight font-bold text-(--c-primary) first-letter:uppercase`}>
-              {formatDateRu(date)}
-            </h3>
-            <div className="grid items-start gap-3 lg:grid-cols-2">
-              {list.map((d) => (
-                <DepartureCard
-                  key={d.id}
-                  d={d}
-                  link={links[d.id] ?? null}
-                  open={openId === d.id}
-                  onToggle={() => setOpenId((id) => (id === d.id ? null : d.id))}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
+        </ul>
+      )}
     </div>
-  )
-}
-
-function DayChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={`flex min-w-[112px] flex-col items-start rounded-md border-2 px-3 py-2 text-left text-[14px] leading-tight font-bold whitespace-nowrap transition-colors [&>small]:mt-0.5 [&>small]:text-[12px] [&>small]:font-semibold ${
-        active
-          ? "border-(--c-primary) bg-(--c-primary) text-white [&>small]:text-(--c-on-primary)"
-          : "border-(--c-border) bg-white text-(--c-ink) [&>small]:text-(--c-muted)"
-      }`}
-    >
-      {children}
-    </button>
   )
 }
 
@@ -138,89 +118,13 @@ function Seats({ d }: { d: GroupDeparture }) {
           {free === 0 ? "Группа собрана" : `Свободно ${free} ${plural(free, "место", "места", "мест")}`}
         </b>
         <span className="text-(--c-muted) tabular-nums">
-          {d.seatsBooked} из {d.seatsTotal}
+          записано {d.seatsBooked} из {d.seatsTotal}
         </span>
       </div>
       <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-(--c-bg-2)" aria-hidden>
         <div className="h-full rounded-full bg-(--c-primary-2)" style={{ width: `${pct}%` }} />
       </div>
     </div>
-  )
-}
-
-function DepartureCard({
-  d,
-  link,
-  open,
-  onToggle,
-}: {
-  d: GroupDeparture
-  link: ScheduleTourLink
-  open: boolean
-  onToggle: () => void
-}) {
-  const free = left(d)
-  return (
-    <article className={`${CARD} p-4`}>
-      <div className="flex gap-3.5">
-        <div className="w-[64px] shrink-0 rounded-md bg-(--c-bg-2) py-2 text-center">
-          <b className="block text-[20px] leading-none text-(--c-primary) tabular-nums">{d.time ?? "--:--"}</b>
-          <span className="mt-1 block text-[11px] font-semibold text-(--c-muted)">выезд</span>
-        </div>
-        <div className="min-w-0 flex-1">
-          <h4 className="text-[17px] leading-tight font-extrabold text-(--c-ink)">{d.tourTitle}</h4>
-          <p className="mt-1 text-[13.5px] leading-snug text-(--c-muted)">
-            {d.guideName ? `Гид ${d.guideName}` : "Гид наш, имя скажем при записи"}
-            {link && (
-              <>
-                {" · "}
-                <Link href={link.href} className="font-semibold text-(--c-primary-2) underline underline-offset-2">
-                  программа
-                </Link>
-              </>
-            )}
-          </p>
-        </div>
-        <div className="shrink-0 text-right">
-          {d.priceUsd !== null ? (
-            <>
-              <b className={`${SERIF} block text-[24px] leading-none text-(--c-primary)`}>${d.priceUsd}</b>
-              <span className="text-[11px] text-(--c-muted)">с человека</span>
-            </>
-          ) : (
-            <span className="text-[12px] text-(--c-muted)">цена при записи</span>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-3.5">
-        <Seats d={d} />
-      </div>
-
-      {free > 0 ? (
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={open}
-          className={`mt-3.5 h-12 w-full rounded-md text-[15px] font-extrabold transition active:scale-[0.99] ${
-            open ? "border-2 border-(--c-border) bg-white text-(--c-primary)" : "bg-(--c-accent) text-white shadow-[0_6px_16px_rgb(0_0_0/0.14)]"
-          }`}
-        >
-          {open ? "Свернуть" : "Записаться"}
-        </button>
-      ) : (
-        <a
-          href={waTextLink(PARK_WHATSAPP.display, `Здравствуйте! Группа ${formatDateRu(d.date)} «${d.tourTitle}» собрана. Можно в лист ожидания или на другую дату?`)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3.5 flex h-12 w-full items-center justify-center rounded-md border-2 border-(--c-border) bg-white text-[14.5px] font-bold text-(--c-primary)"
-        >
-          В лист ожидания через WhatsApp
-        </a>
-      )}
-
-      {open && free > 0 && <SignupForm d={d} free={free} />}
-    </article>
   )
 }
 
