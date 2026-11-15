@@ -1,6 +1,6 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto"
 import { createClient } from "@supabase/supabase-js"
-import { findZone, ftDateRu, quote, type FtBooking } from "@/lib/fasttrack"
+import { findZone, ftDateRu, ftRub, quote, type FtBooking } from "@/lib/fasttrack"
 
 // Серверная часть фаст-трека: сообщение Виктору одним блоком, лид в CRM (crm_clients),
 // подпись ссылки для загрузки файлов. Паспорта и ваучеры на сайте не храним: каждый файл
@@ -66,8 +66,8 @@ export function fasttrackMessage(b: FtBooking, ref: string, files: { passports: 
       ? [`<b>Коллект - $${q.fasttrackUsd} + машина</b> (большая группа, посчитать)`]
       : b.pay === "prepay"
         ? q.cashUsd === 0
-          ? [`Предоплата - $${q.prepayUsd} на рос. карту`, `<b>Коллект - нет</b> (всё в предоплате)`]
-          : [`Предоплата - $${q.prepayUsd} на рос. карту`, `<b>Коллект - $${q.cashUsd} наличными при встрече</b>`]
+          ? [`Предоплата - ${ftRub(q.prepayUsd)} ($${q.prepayUsd}) на рос. карту`, `<b>Коллект - нет</b> (всё в предоплате)`]
+          : [`Предоплата - ${ftRub(q.prepayUsd)} ($${q.prepayUsd}) на рос. карту`, `<b>Коллект - $${q.cashUsd} наличными при встрече</b>`]
         : [`<b>Коллект - $${q.totalUsd} наличными при встрече</b> (без предоплаты)`]
   const lines = [
     `<b>${b.transfer ? "Фаст-трек + трансфер" : "Фаст-трек"}</b> · ${ref}`,
@@ -104,7 +104,7 @@ export function fasttrackSummaryRu(b: FtBooking, ref: string): string {
     `🛬 Прилёт: ${ftDateRu(b.date)}, ${b.time}, рейс ${b.flight}`,
     `🏨 ${b.hotel}${b.transfer ? ", с трансфером" : ", без трансфера"}`,
     q.totalUsd !== null ? `🧾 Итого: $${q.totalUsd}` : `🧾 Фаст-трек $${q.fasttrackUsd}, машину посчитаем`,
-    b.pay === "prepay" ? (q.cashUsd === 0 ? `💳 Предоплата $${q.prepayUsd} - вся сумма` : `💳 Предоплата $${q.prepayUsd}, остальное наличными на месте`) : "💵 Оплата на месте",
+    b.pay === "prepay" ? (q.cashUsd === 0 ? `💳 Предоплата ${ftRub(q.prepayUsd)} ($${q.prepayUsd}) - вся сумма` : `💳 Предоплата ${ftRub(q.prepayUsd)} ($${q.prepayUsd}), остальное наличными на месте`) : "💵 Оплата на месте",
   ].join("\n")
 }
 
@@ -136,7 +136,7 @@ export async function saveFasttrackLead(b: FtBooking, ref: string): Promise<bool
         `отель: ${b.hotel}`,
         b.depDate || b.depFlight ? `вылет: ${[b.depDate, b.depTime, b.depFlight].filter(Boolean).join(" ")}` : "",
         `пассажиры: ${b.passengers.map((p) => [p.en, p.ru && `(${p.ru})`].filter(Boolean).join(" ") || "по паспорту").join(", ")}`,
-        b.pay === "prepay" ? `предоплата $${q.prepayUsd}, на месте ${q.cashUsd !== null ? `$${q.cashUsd}` : "остаток"}` : "оплата вся на месте",
+        b.pay === "prepay" ? `предоплата ${ftRub(q.prepayUsd)} ($${q.prepayUsd}), на месте ${q.cashUsd !== null ? `$${q.cashUsd}` : "остаток"}` : "оплата вся на месте",
         b.comment && `комментарий: ${b.comment}`,
         "паспорта/ваучер - в Telegram",
       ]

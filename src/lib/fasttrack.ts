@@ -12,6 +12,11 @@ export const FT_PRICE_USD = 32
 /** Ребёнок до 10 лет (Виктор 14.11), с 10 лет считаем взрослым */
 export const FT_CHILD_PRICE_USD = 14
 /** СБП для предоплаты (Виктор 14.11) */
+/** Предоплата на рос. карту в рублях (Виктор 15.11): курс $1 = 85 ₽ плюс 6% налога ИП, вверх до десятков рублей */
+export const FT_RUB_RATE = 85
+export const FT_RUB_TAX = 0.06
+export const ftRubAmount = (usd: number) => Math.ceil((usd * FT_RUB_RATE * (1 + FT_RUB_TAX)) / 10) * 10
+export const ftRub = (usd: number) => `${ftRubAmount(usd).toLocaleString("ru-RU")} ₽`
 export const FT_SBP = { phone: "+7 902 865-11-13", bank: "Т-Банк", name: "Виктор С." }
 /** Предоплата: столько, чтобы на месте осталась сумма, кратная $50 (одна купюра) */
 export function ftPrepay(total: number): number {

@@ -10,6 +10,7 @@ import {
   FT_PRICE_USD,
   FT_CHILD_PRICE_USD,
   FT_SBP,
+  ftRub,
   FT_STEPS,
   FT_ZONES,
   ftDateRu,
@@ -440,7 +441,7 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
           </p>
           {d.pay === "prepay" && (
             <p className="mt-3 rounded-[6px] border border-(--c-border) px-3.5 py-3 text-[15px] leading-snug">
-              Предоплата <b>${q.prepayUsd}</b> по СБП: <b className="tabular-nums">{FT_SBP.phone}</b>, {FT_SBP.bank}, {FT_SBP.name}{" "}
+              Предоплата <b className="whitespace-nowrap">{ftRub(q.prepayUsd)}</b> (${q.prepayUsd}) по СБП: <b className="tabular-nums">{FT_SBP.phone}</b>, {FT_SBP.bank}, {FT_SBP.name}{" "}
               Или по QR-коду ниже.{q.cashUsd === 0 ? " Это вся сумма." : ` Остальное${q.cashUsd !== null ? ` $${q.cashUsd}` : ""} наличными при встрече.`}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/fasttrack/sbp-qr-v1.png" alt="QR-код для предоплаты" width={200} height={200} className="mx-auto mt-3 block size-[200px]" />
@@ -736,7 +737,7 @@ export function FasttrackWizard({ intro }: { intro: React.ReactNode }) {
                   <Choice
                     active={d.pay === "prepay"}
                     onClick={() => set("pay", "prepay")}
-                    title={`Предоплата $${q.prepayUsd} на российскую карту`}
+                    title={`Предоплата ${ftRub(q.prepayUsd)} ($${q.prepayUsd}) на российскую карту`}
                     note={q.cashUsd === 0 ? "это вся сумма, на месте платить ничего не нужно" : q.cashUsd !== null ? `остальное $${q.cashUsd} наличными при встрече, одной купюрой` : "остальное наличными при встрече"}
                   />
                   <Choice
