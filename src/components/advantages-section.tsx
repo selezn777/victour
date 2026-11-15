@@ -1106,7 +1106,11 @@ const STAGGER = ["", "mt-4", "", "mt-4"]
 const TOUR_BLINK_MS = 900
 const TOUR_BLINK_GAP_MS = 1100
 
-function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
+// Виктор 15.11: бестселлер помечаем звёздочкой на плитке (тот же список, что в tour-card)
+const TILE_BESTSELLERS = new Set(["phuquoc-yug2"])
+
+// fill: плитки растягиваются на всю высоту слайда (Фукуок 15.11 - текст под сеткой убран)
+function TourSelector({ tours, fill = false }: { tours: typeof CATALOG_TOURS; fill?: boolean }) {
   const [active, setActive] = useState<number | null>(null)
   // По одной карточке за раз "моргает", в случайном порядке, бесконечно —
   // Виктор сначала попросил "один раз, чуть мягче и чуть реже" (один
@@ -1168,6 +1172,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
   // 4 карточек раскладываем в две линии поровну, фото ниже, чтобы обе линии
   // с подписями помещались на слайд. Шахматный сдвиг - внутри каждой линии.
   // Виктор 14.11: ряды по 4, новый тур начинает следующий ряд; подписи в сетке убраны - только фото.
+  // Виктор 15.11: подписи вернуть, а текст под сеткой убрать - сетка на весь экран (fill).
   const multiRow = tours.length > 4
   const perRow = multiRow ? 4 : tours.length
   const rows = multiRow ? Array.from({ length: Math.ceil(tours.length / perRow) }, (_, r) => tours.slice(r * perRow, r * perRow + perRow)) : [tours]
@@ -1176,7 +1181,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
   return (
     <div
       ref={rootRef}
-      className={`flex w-full flex-col gap-2 sm:gap-3 ${
+      className={`flex w-full flex-col gap-2 sm:gap-3 ${fill ? "min-h-0 flex-1" : ""} ${
         tours.length === 1
           ? "max-w-[15rem] sm:max-w-xs"
           : multiRow
@@ -1185,11 +1190,11 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
       }`}
     >
       {rows.map((row, r) => (
-      <div key={r} className="flex w-full items-start gap-1 sm:gap-1.5">
+      <div key={r} className={`flex w-full gap-1 sm:gap-1.5 ${fill ? "min-h-0 flex-1 items-stretch" : "items-start"}`}>
       {row.map((tour, j) => { const i = r * perRow + j; return (
         <div
           key={tour.slug}
-          className={`flex min-w-0 flex-1 flex-col items-center ${multiRow ? (j % 2 ? "mt-2.5" : "") : STAGGER[i % STAGGER.length]}`}
+          className={`flex min-w-0 flex-1 flex-col items-center ${fill ? `min-h-0 ${j % 2 ? "pt-2.5" : "pb-2.5"}` : multiRow ? (j % 2 ? "mt-2.5" : "") : STAGGER[i % STAGGER.length]}`}
         >
           {/* h-36 на мобиле было уменьшено, когда под фотополосой ещё был
               длинный абзац (кнопка обрезалась снизу) — с тех пор текст
@@ -1201,7 +1206,7 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
             onMouseEnter={() => setActive(i)}
             onMouseLeave={() => setActive(null)}
             className={`relative w-full overflow-hidden rounded-[1px] bg-muted ring-1 ring-white/10 transition-shadow duration-500 ease-out ${
-              manyRows ? "h-28 [@media(max-height:700px)]:h-20 sm:h-32 lg:h-36" : multiRow ? "h-36 [@media(max-height:700px)]:h-24 sm:h-40 lg:h-44" : "h-64 lg:h-72"
+              fill ? "min-h-0 flex-1" : manyRows ? "h-28 [@media(max-height:700px)]:h-20 sm:h-32 lg:h-36" : multiRow ? "h-36 [@media(max-height:700px)]:h-24 sm:h-40 lg:h-44" : "h-64 lg:h-72"
             } ${i === active ? "shadow-[0_10px_28px_-6px_rgba(0,0,0,0.55)]" : ""}`}
           >
             <div className={`absolute inset-0 ${i === blinking ? "tour-priming" : ""}`}>
@@ -1217,10 +1222,18 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
                 className="object-cover brightness-100"
               />
             </div>
+            {TILE_BESTSELLERS.has(tour.slug) && (
+              <span
+                aria-label="Бестселлер"
+                className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-amber-400 text-sm leading-none text-zinc-900 shadow-md sm:size-7 sm:text-base"
+              >
+                ★
+              </span>
+            )}
           </Link>
-          {!multiRow && (
+          {(!multiRow || fill) && (
             <>
-              <div className="relative mt-1.5 h-3 w-px shrink-0 bg-primary/40">
+              <div className={`relative w-px shrink-0 bg-primary/40 ${fill ? "mt-1 h-2" : "mt-1.5 h-3"}`}>
                 <span className="absolute -bottom-px left-1/2 size-1.5 -translate-x-1/2 rounded-full bg-primary/70" />
               </div>
               <span
@@ -1242,18 +1255,6 @@ function TourSelector({ tours }: { tours: typeof CATALOG_TOURS }) {
   )
 }
 
-const PQ_TOUR_LINES = [
-  { icon: "🌙", name: "Вечерний", text: "звёзды на пляже, Венеция на закате и ночное сафари" },
-  { icon: "🦒", name: "Утренний", text: "сафари днём, Венеция, рыба из садка и пляж со звёздами" },
-  { icon: "🌿", name: "Настоящий", text: "дикий мёд, пагода над морем и самолёты над головой, к 15:00 в отеле" },
-  { icon: "🐍", name: "Дикий", text: "питон на плечах, водопад в джунглях и круглые лодки" },
-  { icon: "⭐", name: "Морские звёзды", text: "мёд с сот, рыба из садка на сваях и пляж со звёздами" },
-  { icon: "🏝️", name: "Южные острова", text: "свой катер, риф с кораллами, белый пляж и канатка над морем" },
-  { icon: "🎆", name: "Сансет Таун", text: "канатка над морем, закат на Мосту Поцелуев и два шоу из-за своего стола" },
-  { icon: "✈️", name: "Хойан + Дананг", text: "3 дня с перелётом, две ночи в городе ЮНЕСКО" },
-  { icon: "⭐", name: "Юг 2.0", text: "остров, Сансет Таун и ужин-шоу с салютом, всё включено" },
-]
-
 function ToursSlide() {
   const [resort] = useResort()
   const isPhuQuoc = resortById(resort)?.area === "phuquoc"
@@ -1269,42 +1270,10 @@ function ToursSlide() {
         <TourSelector
           key={isPhuQuoc ? "pq" : "nt"}
           tours={isPhuQuoc ? PHUQUOC_TOURS : CATALOG_TOURS}
+          fill={isPhuQuoc}
         />
-        {isPhuQuoc ? (
-          // Виктор 2026-11-09: под фото "совсем пусто, навалить текста
-          // побольше", "поаккуратнее, подсобрать" - вместо одного серого
-          // абзаца плотный список: по строке на маршрут, общим блоком.
-          <>
-            <h2 className="mt-4 max-w-xl font-heading text-2xl leading-[1.1] font-semibold sm:mt-6 sm:text-4xl">
-              Новое на Фукуоке
-            </h2>
-            <p className="mt-1.5 max-w-md text-base leading-snug font-medium text-foreground sm:mt-3 sm:max-w-xl sm:text-lg">
-              Авторские маршруты по острову и за его пределы
-            </p>
-            {/* Низкие экраны (до 1000px по высоте, с 13.11 туров 8 в две линии): список не влезает под
-                фото, а внутренний скролл в слайде деки на телефоне не
-                работает - там остаётся прежний короткий абзац. */}
-            <p className="mt-2 max-w-md text-base leading-snug text-muted-foreground lg:[@media(min-height:1000px)]:hidden">
-              Сафари днём и ночью, джунгли, морские звёзды, острова на своём катере, Сансет Таун и Хойан на три дня.
-            </p>
-            {/* С 8 турами список на широких экранах в две колонки, иначе
-                не влезает по высоте. Сетка с gap-px на фоне border даёт
-                тонкие разделители и в одну, и в две колонки. */}
-            <ul className="mt-3 hidden w-full max-w-md gap-px overflow-hidden rounded-md border border-border bg-border text-left sm:mt-5 sm:max-w-xl md:max-w-4xl md:grid-cols-2 lg:[@media(min-height:1000px)]:grid">
-              {PQ_TOUR_LINES.map((l) => (
-                <li key={l.name} className="flex items-start gap-2.5 bg-card px-3 py-2 sm:px-4 sm:py-2.5">
-                  <span aria-hidden className="text-base leading-snug sm:text-lg">{l.icon}</span>
-                  <span className="text-sm leading-snug text-muted-foreground sm:text-base">
-                    <span className="font-semibold text-foreground">{l.name}</span> - {l.text}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-2.5 hidden max-w-md text-sm leading-snug text-muted-foreground sm:mt-4 sm:max-w-xl sm:text-base lg:[@media(min-height:1000px)]:block">
-              Только ваша компания и свой гид, без чужих людей в машине и без спешки.
-            </p>
-          </>
-        ) : (
+        {/* Виктор 15.11: на Фукуоке текст под сеткой убран - только плитки с подписями на весь экран */}
+        {isPhuQuoc ? null : (
           <>
             <h2 className="mt-6 max-w-xl font-heading text-3xl leading-[1.1] font-semibold sm:mt-8 sm:text-4xl">
               Авторские маршруты
