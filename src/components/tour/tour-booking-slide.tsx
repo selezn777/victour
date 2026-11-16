@@ -407,11 +407,11 @@ export function TourBookingSlide({
         <div className={cn("flex items-baseline justify-between px-1", dense ? "mt-2" : "mt-3")}>
           <div>
             <span className={cn("font-heading font-semibold text-primary", dense ? "text-xl" : "text-2xl")}>
-              от {formatUsd(priceAdultUsd)}
+              {formatUsd(priceAdultUsd)}
             </span>
             <span className="ml-1 text-sm text-muted-foreground">за человека</span>
           </div>
-          <div className="text-xs text-muted-foreground">Итого за {guestCount}: от {formatUsd(groupTotalUsd)}</div>
+          <div className="text-xs text-muted-foreground">Итого за {guestCount}: {formatUsd(groupTotalUsd)}</div>
         </div>
 
         {/* После успешного добавления — Виктор: "не совсем понятно куда
