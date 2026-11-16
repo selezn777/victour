@@ -135,7 +135,7 @@ export default async function GroupsPage() {
                     <div className="flex items-start justify-between gap-3">
                       <h3 className={`${SERIF} text-[21px] leading-tight font-bold text-(--c-primary)`}>{title}</h3>
                       {list[0].priceUsd !== null && (
-                        <b className={`${SERIF} shrink-0 text-[26px] leading-none text-(--c-primary)`}>${list[0].priceUsd}</b>
+                        <b className={`${SERIF} shrink-0 text-[26px] leading-none text-(--c-primary)`}>от ${list[0].priceUsd}</b>
                       )}
                     </div>
                     {list[0].time && <p className="-mt-1 text-[13px] font-semibold text-(--c-muted)">🕘 выезд {list[0].time}</p>}

@@ -74,7 +74,7 @@ export function ProgramDates({ departures, title }: { departures: GroupDeparture
               <li key={d.id} className="rounded-md bg-(--c-bg) p-3">
                 <div className="mb-2 flex items-baseline justify-between gap-2">
                   <b className="text-[15.5px] text-(--c-ink) first-letter:uppercase">{formatDateRu(d.date)}</b>
-                  {d.priceUsd !== null && <span className="text-[13px] font-bold text-(--c-primary)">${d.priceUsd}</span>}
+                  {d.priceUsd !== null && <span className="text-[13px] font-bold text-(--c-primary)">от ${d.priceUsd}</span>}
                 </div>
                 <Seats d={d} />
                 {free > 0 ? (

@@ -433,7 +433,7 @@ export function findGroupProgram(slug: string | null | undefined): GroupProgram 
 }
 
 export function groupPriceLabel(p: Pick<GroupProgram, "priceUsd" | "priceFrom">): string {
-  return p.priceUsd === null ? "по запросу" : `${p.priceFrom ? "от " : ""}$${p.priceUsd}`
+  return p.priceUsd === null ? "по запросу" : `от $${p.priceUsd}`
 }
 
 const norm = (s: string) => s.toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").trim()

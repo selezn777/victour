@@ -248,12 +248,12 @@ function ItemEditForm({
         <div className="mt-3 flex items-baseline justify-between px-1">
           <div>
             <span className="font-heading text-2xl font-semibold text-primary">
-              {formatUsd(priceAdultUsd)}
+              от {formatUsd(priceAdultUsd)}
             </span>
             <span className="ml-1 text-sm text-muted-foreground">за человека</span>
           </div>
           <div className="text-xs text-muted-foreground">
-            Итого за {guestCount}: {formatUsd(priceAdultUsd * guestCount)}
+            Итого за {guestCount}: от {formatUsd(priceAdultUsd * guestCount)}
           </div>
         </div>
       )}

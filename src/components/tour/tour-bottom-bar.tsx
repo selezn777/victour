@@ -41,7 +41,7 @@ export function TourBottomBar({
         <div>
           <div className="text-xs text-muted-foreground">Цена за человека</div>
           <div className="font-heading text-lg font-semibold text-primary">
-            {formatUsd(priceAdultUsd)}
+            от {formatUsd(priceAdultUsd)}
           </div>
         </div>
         <Button type="button" size="lg" onClick={onCtaClick}>
