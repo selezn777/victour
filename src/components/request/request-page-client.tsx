@@ -17,6 +17,8 @@ import { formatRubFromUsd, formatUsd, formatVnd, formatVndFromUsd } from "@/lib/
 import type { SiteSettings, Surcharge } from "@/lib/site-data"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
+import { PhotoStack } from "@/components/photo-stack"
+import { PQ_PREMIUM_PHOTOS, PREMIUM_CAR_NOTE } from "@/lib/premium-cars"
 
 const CONTACT_CHANNELS = [
   { code: "whatsapp", label: "WhatsApp" },
@@ -297,6 +299,10 @@ export function RequestPageClient({
   const [tourInfo, setTourInfo] = useState<Record<string, TourPricingInfo>>({})
   const [guide, setGuide] = useState<GuideInfo | null>(null)
   const [selectedSurcharges, setSelectedSurcharges] = useState<Set<string>>(new Set())
+  // Виктор 22.11: премиум-машина на Фукуоке, доплата $50-100 на месте - в сумму
+  // не входит, только пометка гиду в пожеланиях + фото посмотреть.
+  const [premiumCar, setPremiumCar] = useState(false)
+  const [premiumPhotosOpen, setPremiumPhotosOpen] = useState(false)
   const [hotel, setHotel] = useState("")
   const [guestName, setGuestName] = useState("")
   const [contactChannel, setContactChannel] = useState<string>(CONTACT_CHANNELS[0].code)
@@ -424,6 +430,7 @@ export function RequestPageClient({
     return surcharges.filter((s) => hasNt || !NT_ONLY_SURCHARGES.has(s.code))
   }, [surcharges, items])
 
+  const hasPq = items.some((i) => isPhuQuocSlug(i.tourSlug))
   const surchargeUsd = useMemo(() => {
     let vnd = 0
     for (const s of visibleSurcharges) {
@@ -487,6 +494,7 @@ export function RequestPageClient({
         notes:
           [
             visibleSurcharges.filter((x) => selectedSurcharges.has(x.code)).map((x) => `+ ${x.name}`).join("\n"),
+            premiumCar && hasPq ? "+ Премиум-машина (доплата $50-100 на месте)" : "",
             notes.trim(),
           ]
             .filter(Boolean)
@@ -663,6 +671,35 @@ export function RequestPageClient({
                 </div>
               )}
 
+              {hasPq && (
+                <div className="p-4 sm:p-5">
+                  <label className="flex items-start justify-between gap-3 text-sm">
+                    <span className="flex min-w-0 items-start gap-2">
+                      <input
+                        type="checkbox"
+                        checked={premiumCar}
+                        onChange={() => setPremiumCar((v) => !v)}
+                        className="mt-0.5 size-4 shrink-0 rounded border-input"
+                      />
+                      <span className="min-w-0">
+                        <span className="block">✦ Премиум-машина</span>
+                        <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+                          Mercedes, Carnival VIP или VIP-минивэн. {PREMIUM_CAR_NOTE}
+                        </span>
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-right text-muted-foreground">$50-100</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setPremiumPhotosOpen(true)}
+                    className="mt-2 ml-6 text-sm font-medium text-primary underline underline-offset-4"
+                  >
+                    Посмотреть фото машин
+                  </button>
+                </div>
+              )}
+
               <div className="p-4 sm:p-5">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Сумма туров</span>
@@ -688,6 +725,25 @@ export function RequestPageClient({
                 </div>
               </div>
             </section>
+
+            {premiumPhotosOpen && (
+              <div
+                className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/85 p-4"
+                onClick={() => setPremiumPhotosOpen(false)}
+              >
+                <div className="aspect-square w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+                  <PhotoStack photos={PQ_PREMIUM_PHOTOS} alt="Премиум-машины на Фукуоке" unoptimized />
+                </div>
+                <p className="mt-4 text-center text-sm text-white/85">{PREMIUM_CAR_NOTE}</p>
+                <button
+                  type="button"
+                  onClick={() => setPremiumPhotosOpen(false)}
+                  className="mt-3 rounded-full bg-white px-5 py-2 text-sm font-semibold text-black"
+                >
+                  Закрыть
+                </button>
+              </div>
+            )}
 
             {!allConfigured && (
               <p className="mt-3 text-sm text-muted-foreground">

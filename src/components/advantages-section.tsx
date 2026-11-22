@@ -10,6 +10,7 @@ import { useVanOnRoad, VanShape } from "@/components/van-on-road"
 import { cn } from "@/lib/utils"
 import { useResort } from "@/hooks/use-resort"
 import { resortById } from "@/lib/resorts"
+import { PQ_PREMIUM_PHOTOS, PREMIUM_CAR_NOTE } from "@/lib/premium-cars"
 import type { Review } from "@/lib/reviews-data"
 
 // Квадратный блок (коллаж, стопка фото) должен вписаться в ЛЮБОЙ остаток
@@ -779,7 +780,10 @@ function PhotoSlide({
   imagePosition,
   stackImages,
   note,
+  toggle,
 }: {
+  /** Переключатель над заголовком (Фукуок: обычная / премиум машина). */
+  toggle?: React.ReactNode
   title: string
   /** Короткая акцентная строка между заголовком и описанием — тот же приём,
    * что на первом слайде (IntroSlide). */
@@ -834,6 +838,7 @@ function PhotoSlide({
           на всю ширину", что уже на IntroSlide (Виктор: "на втором и на
           третьем слайде где текст причеши" — привёл в соответствие). */}
       <div className="flex min-h-0 flex-col items-center justify-[safe_center] overflow-y-auto px-4 pt-4 pb-5 text-center sm:px-11 sm:pt-7">
+        {toggle}
         <h2 className="max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {title}
         </h2>
@@ -1564,17 +1569,55 @@ function usePreload(urls: string[]) {
   }, [urls])
 }
 
+function CarToggle({ premium, onChange }: { premium: boolean; onChange: (v: boolean) => void }) {
+  const btn = (on: boolean, label: string, v: boolean) => (
+    <button
+      type="button"
+      onClick={() => onChange(v)}
+      aria-pressed={on}
+      className={cn(
+        "rounded-full px-4 py-1.5 text-sm font-semibold transition-colors",
+        on ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground",
+      )}
+    >
+      {label}
+    </button>
+  )
+  return (
+    <div className="mb-3 inline-flex rounded-full border border-border bg-muted/60 p-1">
+      {btn(!premium, "Стандарт", false)}
+      {btn(premium, "✦ Премиум", true)}
+    </div>
+  )
+}
+
 function TransportSlide() {
   const [resort] = useResort()
   const isPhuQuoc = resortById(resort)?.area === "phuquoc"
+  const [premium, setPremium] = useState(false)
   usePreload(isPhuQuoc ? PQ_TRANSFER_PHOTOS : NT_TRANSFER_PHOTOS)
   if (isPhuQuoc) {
     // key: курорт приходит из localStorage уже после гидратации, а PhotoStack
     // держит в state список "уже показанных" фото от первого рендера (там
     // были фото Нячанга) - без смены key фото Фукуока так и не рендерились.
-    return (
+    // Виктор 22.11: переключатель Стандарт / Премиум (Mercedes, Carnival VIP,
+    // VIP-минивэны), доплата $50-100 на месте.
+    const toggle = <CarToggle premium={premium} onChange={setPremium} />
+    return premium ? (
+      <PhotoSlide
+        key="pq-premium"
+        toggle={toggle}
+        title="Премиум-машина по желанию"
+        body="Mercedes, Kia Carnival VIP с капитанскими креслами или VIP-минивэн с кожаными креслами-реклайнерами для большой компании."
+        note={PREMIUM_CAR_NOTE}
+        imageSrc={PQ_PREMIUM_PHOTOS[0]}
+        imageAlt="Премиум-машины для туров на Фукуоке"
+        stackImages={PQ_PREMIUM_PHOTOS}
+      />
+    ) : (
       <PhotoSlide
         key="pq"
+        toggle={toggle}
         title="Трансфер, после которого не нужно восстанавливаться"
         body="Ни тесноты, ни духоты, ни нервотрёпки за рулём. Просторный семиместный минивэн, климат-контроль и аккуратный, спокойный водитель."
         imageSrc={PQ_TRANSFER_PHOTOS[0]}
