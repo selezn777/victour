@@ -565,7 +565,7 @@ export function RequestPageClient({
               {CONTACT_CHANNELS.find((c) => c.code === contactChannel)?.label} в ближайшее время —
               пришлём реквизиты для предоплаты{" "}
               {formatRubFromUsd(prepaymentUsd, settings.usdRubRate, settings.rubMarkupPct)}.
-              Остальное — наличными при встрече.
+              Остальное — при встрече: наличными или рублями переводом.
             </p>
             <div className="mt-6 flex flex-col justify-center gap-2 sm:flex-row">
               <Button size="lg" nativeButton={false} render={<Link href="/trips" />}>

@@ -170,6 +170,12 @@ export function BookingConditions() {
             Подтверждение брони — <b className="text-(--c-primary)">всего за 1 час до выезда.</b>
           </span>
         </div>
+        <div className="flex gap-2.5">
+          <span className="text-[20px] leading-none">💳</span>
+          <span>
+            <b className="text-(--c-primary)">Можно платить рублями</b> - переводом на российскую карту, без обмена валюты.
+          </span>
+        </div>
       </div>
     </section>
   )
