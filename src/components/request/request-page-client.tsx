@@ -313,7 +313,7 @@ export function RequestPageClient({
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submittedBookingId, setSubmittedBookingId] = useState<string | null>(null)
-  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [step, setStep] = useState<1 | 2>(1)
   // Виктор: "не нравится, что надо сразу вводить номер, сначала надо всё
   // увидеть и потом уже пользователь сам нажмёт и введёт номер" — форма
   // (шаги 1-3, начинается с контакта) теперь раскрывается только по явному
@@ -760,7 +760,7 @@ export function RequestPageClient({
             {allConfigured && orderConfirmed && (
               <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
                 <div className="flex items-center justify-center gap-2">
-                  {[1, 2, 3].map((s) => (
+                  {[1, 2].map((s) => (
                     <span
                       key={s}
                       className={cn(
@@ -770,7 +770,7 @@ export function RequestPageClient({
                     />
                   ))}
                 </div>
-                <p className="mt-2 text-center text-xs text-muted-foreground">Шаг {step} из 3</p>
+                <p className="mt-2 text-center text-xs text-muted-foreground">Шаг {step} из 2</p>
 
                 {step === 1 && (
                   <div className="mt-4 flex flex-col gap-4">
@@ -854,38 +854,6 @@ export function RequestPageClient({
                         placeholder="Название отеля"
                       />
                     </div>
-                    <div className="flex gap-2">
-                      <Button type="button" size="lg" variant="outline" onClick={() => setStep(1)}>
-                        Назад
-                      </Button>
-                      <Button
-                        type="button"
-                        size="lg"
-                        className="flex-1"
-                        disabled={!step2Valid}
-                        onClick={() => setStep(3)}
-                      >
-                        Далее
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {step === 3 && (
-                  <div className="mt-4 flex flex-col gap-4">
-                    <div>
-                      <label className="text-sm font-medium" htmlFor="notes">Пожелания</label>
-                      <textarea
-                        id="notes"
-                        autoFocus
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        rows={3}
-                        placeholder="Необязательно"
-                        className="mt-1.5 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-base outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
-                      />
-                    </div>
-
                     <div className="rounded-lg bg-muted/60 px-3 py-3 text-sm">
                       <p className="font-medium">Что будет дальше</p>
                       <ol className="mt-2 flex flex-col gap-1.5 text-muted-foreground">
@@ -896,7 +864,7 @@ export function RequestPageClient({
                           для предоплаты.
                         </li>
                         <li>3. Вы подтверждаете бронь.</li>
-                        <li>4. Остальное — наличными при встрече.</li>
+                        <li>4. Остальное - при встрече: наличными или рублями переводом.</li>
                       </ol>
                     </div>
 
@@ -922,14 +890,14 @@ export function RequestPageClient({
                     </label>
 
                     <div className="flex gap-2">
-                      <Button type="button" size="lg" variant="outline" onClick={() => setStep(2)}>
+                      <Button type="button" size="lg" variant="outline" onClick={() => setStep(1)}>
                         Назад
                       </Button>
                       <Button
                         type="button"
                         size="lg"
                         className="flex-1"
-                        disabled={!canSubmit}
+                        disabled={!canSubmit || !step2Valid}
                         onClick={handleSubmit}
                       >
                         {submitting ? "Отправляем…" : "Отправить заявку"}
