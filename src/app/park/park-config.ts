@@ -54,8 +54,12 @@ export type ExtraOption = {
   key: string
   group?: string
   label: string
-  price?: string // за 1 человека
+  price?: string // за 1 человека (или за 1 `per`)
   english: string
+  /** Единица счёта, по умолчанию «чел.» (VIP-стол Sun Bavaria - «стол»). */
+  per?: string
+  /** Короткое пояснение под названием. */
+  hint?: string
 }
 
 // Слот выезда от отеля. Хон Там — к катеру (boat), парк — к канатке (cableCar).
@@ -201,6 +205,8 @@ const PQ_HONTHOM: Destination = {
     { id: "cable", title: "Канатка туда-обратно", price: "850K ₫", childPrice: "700K ₫", english: "Cable car round trip (adult 850K / child 700K VND)" },
     { id: "cable_lunch", title: "С обедом", price: "1 150K ₫", childPrice: "900K ₫", english: "Cable car + buffet lunch (adult 1,150K / child 900K VND)" },
     { id: "oneway_lunch", title: "В одну сторону + обед", price: "1 070K ₫", childPrice: "800K ₫", english: "Cable car one way + buffet lunch (adult 1,070K / child 800K VND)" },
+    // Виктор 22.11: WOW Pass Sun World. Platinum уже включает канатку и буфет, поэтому это отдельный билет.
+    { id: "wow_platinum", title: "WOW Pass Platinum VIP", price: "2 500K ₫", childPrice: "1 700K ₫", english: "WOW Pass PLATINUM VIP: cable car + buffet + private cabin + priority + guide (adult 2,500K / child 1-1.4 m 1,700K VND)", formNotes: ["Канатка + буфет, отдельная кабина, без очередей везде, гид, напиток и подарок", "Мест мало: только 5% гостей в день"] },
   ],
   guests: [
     { key: "infants", emoji: "👶", title: "Дети до 1 метра", note: "Бесплатно!", free: true, formLabel: "Дети до 1 м (бесплатно)", english: "Kids under 1 m (free)" },
@@ -221,6 +227,13 @@ const PQ_HONTHOM: Destination = {
     { key: "symphony_std", group: "🌅 Шоу в Sunset Town", label: "Symphony of the Sea 19:30, стандарт", price: "700K ₫", english: "Symphony of the Sea standard (700K VND)" },
     { key: "symphony_chill", group: "🌅 Шоу в Sunset Town", label: "Symphony of the Sea 19:30, chill + фуршет", price: "800K ₫", english: "Symphony of the Sea chill + snacks (800K VND)" },
     { key: "symphony_dinner", group: "🌅 Шоу в Sunset Town", label: "Symphony of the Sea 19:30, ужин + шоу", price: "1 200K ₫ (сб-вс 1 300K)", english: "Symphony of the Sea dinner + show (1,200K Sun–Fri / 1,300K Sat-Sun VND)" },
+    // Виктор 22.11: VIP-столы у моря в Sun Bavaria на шоу «Симфония моря», доплата за стол целиком
+    { key: "bavaria_vip4", group: "🍺 VIP-стол у моря, Sun Bavaria", label: "VIP-стол Sun Bavaria на 4 чел.", price: "800K ₫", per: "стол", hint: "Лучшие места у воды на шоу «Симфония моря». Доплата за весь стол, даже если вас двое", english: "Sun Bavaria VIP sea table for 4 (800K VND per table)" },
+    { key: "bavaria_vip8", group: "🍺 VIP-стол у моря, Sun Bavaria", label: "VIP-стол Sun Bavaria на 8 чел.", price: "1 600K ₫", per: "стол", english: "Sun Bavaria VIP sea table for 8 (1,600K VND per table)" },
+    { key: "bavaria_vip16", group: "🍺 VIP-стол у моря, Sun Bavaria", label: "VIP-стол Sun Bavaria на 16 чел.", price: "3 200K ₫", per: "стол", english: "Sun Bavaria VIP sea table for 16 (3,200K VND per table)" },
+    // Виктор 22.11: WOW Pass Silver/Gold - приоритет, без билета на канатку (он в основном билете)
+    { key: "wow_silver", group: "⭐ WOW Pass - без очередей", label: "WOW Pass Silver: посадка на канатку без общей очереди", price: "300K ₫", hint: "Туда и обратно, отдельный вход на посадку и высадку", english: "WOW Pass SILVER: cable car priority boarding (300K VND)" },
+    { key: "wow_gold", group: "⭐ WOW Pass - без очередей", label: "WOW Pass Gold: канатка и аттракционы без очереди", price: "700K ₫", hint: "Плюс камера хранения в аквапарке, приветственный напиток и выбор мест в ресторане", english: "WOW Pass GOLD: cable car + rides priority, locker, welcome drink (700K VND)" },
   ],
 }
 

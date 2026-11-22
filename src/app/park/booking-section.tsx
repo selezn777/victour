@@ -35,6 +35,7 @@ import {
 import { bookingSummaryRu } from "./park-texts";
 import { ADD_EXTRA_EVENT } from "./seawalking-cta";
 import { WhatsAppIcon } from "./whatsapp-icon";
+import { PqMemo } from "./pq-memo";
 import { captureFbclid, readFbc } from "@/lib/meta-click";
 import {
   buildReceipt,
@@ -42,6 +43,12 @@ import {
   receiptTotalRu,
   type Receipt,
 } from "@/lib/park-total";
+
+const WIZARD_STEPS = [
+  { title: "Билет и дата", fields: ["packageId", "date", "guests"] },
+  { title: "Трансфер", fields: ["departureTime", "hotel", "district"] },
+  { title: "Контакт и проверка", fields: ["name", "contact"] },
+] as const;
 
 type Status = "idle" | "sending" | "success" | "failed" | "rate_limited";
 
@@ -246,11 +253,37 @@ function BookingForm({
   const contact =
     contactChannel === "telegram" && telegramHandle ? telegramHandle : phone;
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (status === "sending") return;
+  // Фукуок (Виктор 22.11): бронь билетов поэтапно, как фаст-трек - билет, трансфер, контакт и проверка
+  const wizard = dest.region === "phuquoc";
+  const [step, setStep] = useState(1);
+  const vis = (n: number) => !wizard || step === n;
 
-    const payload = {
+  function goStep(n: number) {
+    setStep(n);
+    setErrors({});
+    requestAnimationFrame(() =>
+      document.getElementById("booking")?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  }
+
+  function goNext() {
+    const check = validateParkBooking(buildPayload());
+    const fields = WIZARD_STEPS[step - 1].fields as readonly string[];
+    const errs = check.ok
+      ? {}
+      : Object.fromEntries(Object.entries(check.errors).filter(([k]) => fields.includes(k)));
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      document
+        .getElementById(`park-field-${Object.keys(errs)[0]}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    goStep(step + 1);
+  }
+
+  function buildPayload() {
+    return {
       destination,
       date,
       packageId,
@@ -269,10 +302,25 @@ function BookingForm({
       ),
       comment: "",
     };
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (status === "sending") return;
+    if (wizard && step < WIZARD_STEPS.length) {
+      goNext();
+      return;
+    }
+
+    const payload = buildPayload();
     const check = validateParkBooking(payload);
     if (!check.ok) {
       setErrors(check.errors);
       const first = Object.keys(check.errors)[0];
+      if (wizard) {
+        const at = WIZARD_STEPS.findIndex((st) => (st.fields as readonly string[]).includes(first));
+        if (at >= 0 && at + 1 !== step) setStep(at + 1);
+      }
       document
         .getElementById(`park-field-${first}`)
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -338,6 +386,67 @@ function BookingForm({
   // Если хоть одно название билета в 2 строки — резервируем 2 строки у всех, цены встают в линию
   const longTitles = dest.packages.some((p) => p.title.length > 12);
 
+  const extrasBlock = dest.extras.length > 0 && (
+    <details
+      className="group rounded-md bg-white"
+      open={destination === "hontam" || destination === "pq_honthom"}
+    >
+      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 px-3.5 py-2.5 text-[14px] font-bold text-(--c-primary) [&::-webkit-details-marker]:hidden">
+        <span>
+          ➕ Доп. услуги{" "}
+          <span className="font-normal text-(--c-muted)">
+            {extrasChosen > 0
+              ? `— выбрано ${extrasChosen}`
+              : "по желанию"}
+          </span>
+        </span>
+        <span className="transition-transform group-open:rotate-180">
+          ⌄
+        </span>
+      </summary>
+      <div className="space-y-3 border-t border-(--c-bg-2) px-3 pt-2 pb-3">
+        {Object.entries(extraGroups).map(([group, items]) => (
+          <div key={group}>
+            {group && (
+              <b className="mb-1 block text-[13px] text-(--c-primary)">
+                {group}
+              </b>
+            )}
+            {items.map((x) => (
+              <div
+                key={x.key}
+                className="flex items-center justify-between gap-2 py-1.5"
+              >
+                <span className="text-[13.5px] leading-tight">
+                  {x.label}
+                  {x.price && (
+                    <span className="block text-[12px] text-(--c-muted)">
+                      <span className="whitespace-nowrap">{x.price}</span>{" "}
+                      / {x.per ?? "чел."}
+                    </span>
+                  )}
+                  {x.hint && (
+                    <span className="mt-0.5 block text-[11.5px] leading-snug text-(--c-muted)">
+                      {x.hint}
+                    </span>
+                  )}
+                </span>
+                <Stepper
+                  label={x.label}
+                  value={extras[x.key] ?? 0}
+                  onChange={(d) => changeExtra(x.key, d)}
+                />
+              </div>
+            ))}
+          </div>
+        ))}
+        <p className="text-[12px] text-(--c-muted)">
+          Укажите, на сколько человек (для VIP-стола - сколько столов).
+        </p>
+      </div>
+    </details>
+  );
+
   return (
     <section
       id="booking"
@@ -372,6 +481,28 @@ function BookingForm({
           </label>
         </div>
 
+        {wizard && (
+          <div>
+            <div className="flex items-baseline justify-between gap-3">
+              <b className="text-[18px] font-extrabold text-(--c-primary)">
+                {WIZARD_STEPS[step - 1].title}
+              </b>
+              <span className="shrink-0 text-[13px] font-semibold text-(--c-muted)">
+                Шаг {step} из {WIZARD_STEPS.length}
+              </span>
+            </div>
+            <div className="mt-2 grid grid-cols-3 gap-1.5" aria-hidden>
+              {WIZARD_STEPS.map((st, i) => (
+                <span
+                  key={st.title}
+                  className={`h-1.5 rounded-full ${i < step ? "bg-(--c-accent)" : "bg-(--c-bg-2)"}`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {vis(1) && (
         <div id="park-field-packageId">
           <span className={LABEL}>
             Билет{" "}
@@ -448,7 +579,9 @@ function BookingForm({
           </div>
           <FieldError text={errors.packageId} />
         </div>
+        )}
 
+        {vis(1) && (
         <div id="park-field-date">
           <label htmlFor="park-date" className={LABEL}>
             Дата поездки
@@ -469,8 +602,9 @@ function BookingForm({
           />
           <FieldError text={errors.date} />
         </div>
+        )}
 
-        {dest.departureMode === "free" ? (
+        {!vis(2) ? null : dest.departureMode === "free" ? (
           <div id="park-field-departureTime">
             <label htmlFor="park-time" className={LABEL}>
               Во сколько вас забрать от отеля
@@ -530,6 +664,7 @@ function BookingForm({
           </div>
         )}
 
+        {vis(1) && (
         <div id="park-field-guests">
           <span className={LABEL}>Сколько вас</span>
           <div className="divide-y divide-(--c-bg-2) rounded-md bg-white">
@@ -551,7 +686,11 @@ function BookingForm({
           </div>
           <FieldError text={errors.guests} />
         </div>
+        )}
 
+        {wizard && step === 1 && extrasBlock}
+
+        {vis(2) && (
         <div id="park-field-hotel">
           <label htmlFor="park-hotel" className={LABEL}>
             Отель, откуда забрать
@@ -564,8 +703,9 @@ function BookingForm({
           />
           <FieldError text={errors.hotel} />
         </div>
+        )}
 
-        {dest.districts && (
+        {vis(2) && dest.districts && (
           <div id="park-field-district">
             <span className={LABEL}>Район отеля — цена трансфера</span>
             <div className="space-y-2">
@@ -601,6 +741,7 @@ function BookingForm({
           </div>
         )}
 
+        {vis(3) && (
         <div id="park-field-name">
           <label htmlFor="park-name" className={LABEL}>
             Как к вам обращаться
@@ -616,7 +757,9 @@ function BookingForm({
           />
           <FieldError text={errors.name} />
         </div>
+        )}
 
+        {vis(3) && (
         <div id="park-field-contact">
           <span className={LABEL}>Куда вам написать</span>
           <div className="mb-2 grid grid-cols-3 gap-1.5">
@@ -698,72 +841,22 @@ function BookingForm({
           )}
           <FieldError text={errors.contact} />
         </div>
-
-        {dest.extras.length > 0 && (
-          <details
-            className="group rounded-md bg-white"
-            open={destination === "hontam" || destination === "pq_honthom"}
-          >
-            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 px-3.5 py-2.5 text-[14px] font-bold text-(--c-primary) [&::-webkit-details-marker]:hidden">
-              <span>
-                ➕ Доп. услуги{" "}
-                <span className="font-normal text-(--c-muted)">
-                  {extrasChosen > 0
-                    ? `— выбрано ${extrasChosen}`
-                    : "по желанию"}
-                </span>
-              </span>
-              <span className="transition-transform group-open:rotate-180">
-                ⌄
-              </span>
-            </summary>
-            <div className="space-y-3 border-t border-(--c-bg-2) px-3 pt-2 pb-3">
-              {Object.entries(extraGroups).map(([group, items]) => (
-                <div key={group}>
-                  {group && (
-                    <b className="mb-1 block text-[13px] text-(--c-primary)">
-                      {group}
-                    </b>
-                  )}
-                  {items.map((x) => (
-                    <div
-                      key={x.key}
-                      className="flex items-center justify-between gap-2 py-1.5"
-                    >
-                      <span className="text-[13.5px] leading-tight">
-                        {x.label}
-                        {x.price && (
-                          <span className="block text-[12px] text-(--c-muted)">
-                            <span className="whitespace-nowrap">{x.price}</span>{" "}
-                            / чел.
-                          </span>
-                        )}
-                      </span>
-                      <Stepper
-                        label={x.label}
-                        value={extras[x.key] ?? 0}
-                        onChange={(d) => changeExtra(x.key, d)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))}
-              <p className="text-[12px] text-(--c-muted)">
-                Укажите, на сколько человек.
-              </p>
-            </div>
-          </details>
         )}
 
-        <ReceiptBox
-          receipt={buildReceipt({
-            destination,
-            packageId: packageId ?? "",
-            guests,
-            extras,
-            district: dest.districts ? district : null,
-          })}
-        />
+        {!wizard && extrasBlock}
+
+
+        {(!wizard || step !== 2) && (
+          <ReceiptBox
+            receipt={buildReceipt({
+              destination,
+              packageId: packageId ?? "",
+              guests,
+              extras,
+              district: dest.districts ? district : null,
+            })}
+          />
+        )}
 
         {status === "failed" && (
           <SendProblem text="Не получилось отправить заявку. Напишите нам в WhatsApp — забронируем вручную." />
@@ -772,13 +865,28 @@ function BookingForm({
           <SendProblem text="Слишком много заявок подряд. Попробуйте позже или напишите нам в WhatsApp." />
         )}
 
-        <button
-          type="submit"
-          disabled={status === "sending"}
-          className="h-14 w-full rounded-md bg-(--c-accent) text-[16px] font-extrabold text-white shadow-[0_8px_20px_rgb(0_0_0/0.18)] transition active:scale-[0.99] disabled:opacity-60"
-        >
-          {status === "sending" ? "Отправляем…" : dest.submitLabel}
-        </button>
+        <div className="flex gap-2">
+          {wizard && step > 1 && (
+            <button
+              type="button"
+              onClick={() => goStep(step - 1)}
+              className="h-14 shrink-0 rounded-md border-2 border-(--c-border) bg-white px-5 text-[15px] font-bold text-(--c-ink)"
+            >
+              Назад
+            </button>
+          )}
+          <button
+            type="submit"
+            disabled={status === "sending"}
+            className="h-14 w-full rounded-md bg-(--c-accent) text-[16px] font-extrabold text-white shadow-[0_8px_20px_rgb(0_0_0/0.18)] transition active:scale-[0.99] disabled:opacity-60"
+          >
+            {status === "sending"
+              ? "Отправляем…"
+              : wizard && step < WIZARD_STEPS.length
+                ? "Далее"
+                : dest.submitLabel}
+          </button>
+        </div>
       </form>
 
       <div className="mt-3.5 rounded-md bg-white/12 px-4 py-3 text-[14px]">
@@ -789,6 +897,7 @@ function BookingForm({
       {status === "success" && success && (
         <SuccessScreen
           {...success}
+          destination={destination}
           promoTours={dest.region === "phuquoc" ? PROMO_TOURS_PQ : PROMO_TOURS}
         />
       )}
@@ -952,9 +1061,11 @@ function SuccessScreen({
   waText,
   token,
   promoTours,
+  destination,
 }: {
   waText: string;
   token: string | null;
+  destination: DestinationId;
   promoTours: { slug: string; title: string; imageSrc: string }[];
 }) {
   const router = useRouter();
@@ -1080,6 +1191,8 @@ function SuccessScreen({
             🧳 Моя поездка: детали и изменения
           </Link>
         )}
+
+        {DESTINATIONS[destination].region === "phuquoc" && <PqMemo destination={destination} />}
 
         <h3 className="mt-5 mb-3 px-1 font-(family-name:--font-park-serif) text-[20px] leading-snug font-bold text-(--c-primary)">
           Пока ждёте — посмотрите наши авторские туры
