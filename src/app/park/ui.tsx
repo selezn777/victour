@@ -173,7 +173,7 @@ export function BookingConditions() {
         <div className="flex gap-2.5">
           <span className="text-[20px] leading-none">💳</span>
           <span>
-            <b className="text-(--c-primary)">Можно платить рублями</b> - переводом на российскую карту, без обмена валюты.
+            <b className="text-(--c-primary)">Можно платить рублями</b> - переводом на российскую карту, без обмена валюты. Курс уточняйте при оплате.
           </span>
         </div>
       </div>
