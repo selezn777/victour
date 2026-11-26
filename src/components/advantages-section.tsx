@@ -10,7 +10,7 @@ import { useVanOnRoad, VanShape } from "@/components/van-on-road"
 import { cn } from "@/lib/utils"
 import { useResort } from "@/hooks/use-resort"
 import { resortById } from "@/lib/resorts"
-import { PQ_PREMIUM_PHOTOS, PREMIUM_CAR_NOTE } from "@/lib/premium-cars"
+import { CAR_CLASSES, carClassById, useCarClass, type CarClassId } from "@/lib/premium-cars"
 import type { Review } from "@/lib/reviews-data"
 
 // Квадратный блок (коллаж, стопка фото) должен вписаться в ЛЮБОЙ остаток
@@ -1524,16 +1524,6 @@ function QuoteSlide({
   )
 }
 
-// Трансфер: на Фукуоке свои машины - семиместные Toyota Veloz / Mitsubishi
-// Xpander, без кресел с массажем (Виктор 2026-11-09: "у нас нет пока здесь
-// таких машин на острове" - убрать из текста), фото под них. В Нячанге и
-// Камрани - прежний премиальный минивэн.
-// v2: машины с вьетнамскими номерами (Виктор прислал свои фото, прежние
-// "тайские/дубайские" убраны; салон с правым рулём тоже - во Вьетнаме левый).
-const PQ_TRANSFER_PHOTOS = [1, 2, 3, 4, 5, 6, 7].map(
-  (i) => `/images/hero/pq-transfer-v2-${String(i).padStart(2, "0")}.jpg`,
-)
-
 // Фото трансфера прогреваем сразу при открытии главной (пока гость на первом
 // слайде), чтобы ко второму слайду стопка уже была с картинками.
 // Греем фото стопки по порядку, по два за раз: верхние карточки приходят первыми, а не
@@ -1559,57 +1549,45 @@ function usePreload(urls: string[]) {
   }, [urls])
 }
 
-function CarToggle({ premium, onChange }: { premium: boolean; onChange: (v: boolean) => void }) {
-  const btn = (on: boolean, label: string, v: boolean) => (
-    <button
-      type="button"
-      onClick={() => onChange(v)}
-      aria-pressed={on}
-      className={cn(
-        "rounded-full px-4 py-1.5 text-sm font-semibold transition-colors",
-        on ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground",
-      )}
-    >
-      {label}
-    </button>
-  )
+function CarToggle({ value, onChange }: { value: CarClassId; onChange: (v: CarClassId) => void }) {
   return (
     <div className="mb-3 inline-flex rounded-full border border-border bg-muted/60 p-1">
-      {btn(!premium, "Стандарт", false)}
-      {btn(premium, "✦ Премиум", true)}
+      {CAR_CLASSES.map((c) => (
+        <button
+          key={c.id}
+          type="button"
+          onClick={() => onChange(c.id)}
+          aria-pressed={value === c.id}
+          className={cn(
+            "rounded-full px-2.5 py-1.5 text-[13px] font-semibold whitespace-nowrap transition-colors sm:px-4 sm:text-sm",
+            value === c.id ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground",
+          )}
+        >
+          {c.id === "standard" ? c.label : `✦ ${c.label}`}
+        </button>
+      ))}
     </div>
   )
 }
 
-// Виктор 26.11: «Авто» на всех направлениях как на Фукуоке - те же машины
-// и фото, переключатель Стандарт / Премиум. Обе стопки прогреваем сразу
-// (стандарт первым), иначе при переключении на Премиум был серый экран.
-const ALL_CAR_PHOTOS = [...PQ_TRANSFER_PHOTOS, ...PQ_PREMIUM_PHOTOS]
+// Виктор 26.11: «Авто» на всех направлениях одинаковое, три категории машин.
+// Выбор запоминается и виден в чеке заявки; цену на главной не показываем (Виктор 26.11), только в заявке. Все стопки прогреваем сразу
+// (стандарт первым), иначе при переключении был серый экран.
+const ALL_CAR_PHOTOS = CAR_CLASSES.flatMap((c) => c.photos)
 
 function TransportSlide() {
-  const [premium, setPremium] = useState(false)
+  const [carId, setCarId] = useCarClass()
+  const car = carClassById(carId)
   usePreload(ALL_CAR_PHOTOS)
-  const toggle = <CarToggle premium={premium} onChange={setPremium} />
-  return premium ? (
+  return (
     <PhotoSlide
-      key="premium"
-      toggle={toggle}
-      title="Премиум-машина по желанию"
-      body="Mercedes, Kia Carnival VIP с капитанскими креслами или VIP-минивэн с кожаными креслами-реклайнерами для большой компании."
-      note={PREMIUM_CAR_NOTE}
-      imageSrc={PQ_PREMIUM_PHOTOS[0]}
-      imageAlt="Премиум-машины для туров"
-      stackImages={PQ_PREMIUM_PHOTOS}
-    />
-  ) : (
-    <PhotoSlide
-      key="standard"
-      toggle={toggle}
-      title="Трансфер, после которого не нужно восстанавливаться"
-      body="Ни тесноты, ни духоты, ни нервотрёпки за рулём. Просторный семиместный минивэн, климат-контроль и аккуратный, спокойный водитель."
-      imageSrc={PQ_TRANSFER_PHOTOS[0]}
-      imageAlt="Семиместный минивэн для трансфера"
-      stackImages={PQ_TRANSFER_PHOTOS}
+      key={car.id}
+      toggle={<CarToggle value={car.id} onChange={setCarId} />}
+      title={car.title}
+      body={car.body}
+      imageSrc={car.photos[0]}
+      imageAlt={car.title}
+      stackImages={car.photos}
     />
   )
 }

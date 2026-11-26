@@ -18,7 +18,7 @@ import type { SiteSettings, Surcharge } from "@/lib/site-data"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import { PhotoStack } from "@/components/photo-stack"
-import { PQ_PREMIUM_PHOTOS, PREMIUM_CAR_NOTE } from "@/lib/premium-cars"
+import { CAR_CLASSES, carClassById, carPriceNote, useCarClass, type CarClassId } from "@/lib/premium-cars"
 
 const CONTACT_CHANNELS = [
   { code: "whatsapp", label: "WhatsApp" },
@@ -301,10 +301,11 @@ export function RequestPageClient({
   const [tourInfo, setTourInfo] = useState<Record<string, TourPricingInfo>>({})
   const [guide, setGuide] = useState<GuideInfo | null>(null)
   const [selectedSurcharges, setSelectedSurcharges] = useState<Set<string>>(new Set())
-  // Виктор 22.11: премиум-машина на Фукуоке, доплата $50-100 на месте - в сумму
-  // не входит, только пометка гиду в пожеланиях + фото посмотреть.
-  const [premiumCar, setPremiumCar] = useState(false)
-  const [premiumPhotosOpen, setPremiumPhotosOpen] = useState(false)
+  // Машина (Виктор 26.11): 3 категории, выбор общий с главной; доплата на
+  // компанию за каждый тур, входит в сумму заявки. Видно в чеке, можно сменить.
+  const [carId, setCarId] = useCarClass()
+  const car = carClassById(carId)
+  const [carPhotosOpen, setCarPhotosOpen] = useState<CarClassId | null>(null)
   const [hotel, setHotel] = useState("")
   const [guestName, setGuestName] = useState("")
   const [contactChannel, setContactChannel] = useState<string>(CONTACT_CHANNELS[0].code)
@@ -438,8 +439,8 @@ export function RequestPageClient({
     for (const s of visibleSurcharges) {
       if (selectedSurcharges.has(s.code)) vnd += s.amountVnd * surchargeMultiplier(s.unit, items)
     }
-    return vnd / settings.usdVndRate
-  }, [visibleSurcharges, selectedSurcharges, settings.usdVndRate, items])
+    return vnd / settings.usdVndRate + car.priceUsd * items.length
+  }, [visibleSurcharges, selectedSurcharges, settings.usdVndRate, items, car.priceUsd])
 
   const totals = useMemo(
     () => calculatePackageTotal({ itemsSubtotalUsd, surchargeUsd }),
@@ -496,7 +497,7 @@ export function RequestPageClient({
         notes:
           [
             visibleSurcharges.filter((x) => selectedSurcharges.has(x.code)).map((x) => `+ ${x.name}`).join("\n"),
-            premiumCar && hasItems ? "+ Премиум-машина (доплата $50-100 на месте)" : "",
+            car.priceUsd && hasItems ? `+ Машина: ${car.label} (${carPriceNote(car)}, туров: ${items.length})` : "",
             notes.trim(),
           ]
             .filter(Boolean)
@@ -675,30 +676,41 @@ export function RequestPageClient({
 
               {hasItems && (
                 <div className="p-4 sm:p-5">
-                  <label className="flex items-start justify-between gap-3 text-sm">
-                    <span className="flex min-w-0 items-start gap-2">
-                      <input
-                        type="checkbox"
-                        checked={premiumCar}
-                        onChange={() => setPremiumCar((v) => !v)}
-                        className="mt-0.5 size-4 shrink-0 rounded border-input"
-                      />
-                      <span className="min-w-0">
-                        <span className="block">✦ Премиум-машина</span>
-                        <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
-                          Mercedes, Carnival VIP или VIP-минивэн. {PREMIUM_CAR_NOTE}
+                  <div className="mb-2 text-sm font-medium">Машина</div>
+                  <div className="space-y-2">
+                    {CAR_CLASSES.map((c) => (
+                      <label key={c.id} className="flex items-start justify-between gap-3 text-sm">
+                        <span className="flex min-w-0 items-start gap-2">
+                          <input
+                            type="radio"
+                            name="car-class"
+                            checked={car.id === c.id}
+                            onChange={() => setCarId(c.id)}
+                            className="mt-0.5 size-4 shrink-0 border-input"
+                          />
+                          <span className="min-w-0">
+                            <span className="block">{c.id === "standard" ? c.label : `✦ ${c.label}`}</span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setCarPhotosOpen(c.id)
+                              }}
+                              className="mt-0.5 text-xs font-medium text-primary underline underline-offset-4"
+                            >
+                              Фото машин
+                            </button>
+                          </span>
                         </span>
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-right text-muted-foreground">$50-100</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setPremiumPhotosOpen(true)}
-                    className="mt-2 ml-6 text-sm font-medium text-primary underline underline-offset-4"
-                  >
-                    Посмотреть фото машин
-                  </button>
+                        <span className="shrink-0 text-right text-muted-foreground">
+                          {c.priceUsd ? `+${formatUsd(c.priceUsd * items.length)}` : "входит"}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {items.length > 1 && (
+                    <p className="mt-2 text-xs text-muted-foreground">Доплата за машину считается за каждый тур в заявке.</p>
+                  )}
                 </div>
               )}
 
@@ -728,18 +740,20 @@ export function RequestPageClient({
               </div>
             </section>
 
-            {premiumPhotosOpen && (
+            {carPhotosOpen && (
               <div
                 className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/85 p-4"
-                onClick={() => setPremiumPhotosOpen(false)}
+                onClick={() => setCarPhotosOpen(null)}
               >
                 <div className="aspect-square w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-                  <PhotoStack photos={PQ_PREMIUM_PHOTOS} alt="Премиум-машины" unoptimized />
+                  <PhotoStack key={carPhotosOpen} photos={carClassById(carPhotosOpen).photos} alt={carClassById(carPhotosOpen).label} unoptimized />
                 </div>
-                <p className="mt-4 text-center text-sm text-white/85">{PREMIUM_CAR_NOTE}</p>
+                <p className="mt-4 text-center text-sm text-white/85">
+                  {carClassById(carPhotosOpen).label}: {carPriceNote(carClassById(carPhotosOpen))}
+                </p>
                 <button
                   type="button"
-                  onClick={() => setPremiumPhotosOpen(false)}
+                  onClick={() => setCarPhotosOpen(null)}
                   className="mt-3 rounded-full bg-white px-5 py-2 text-sm font-semibold text-black"
                 >
                   Закрыть
