@@ -1533,16 +1533,6 @@ function QuoteSlide({
 const PQ_TRANSFER_PHOTOS = [1, 2, 3, 4, 5, 6, 7].map(
   (i) => `/images/hero/pq-transfer-v2-${String(i).padStart(2, "0")}.jpg`,
 )
-const NT_TRANSFER_PHOTOS = [
-  "/images/hero/premium-van-exterior.jpg",
-  "/images/hero/premium-van-interior-5.jpg",
-  "/images/hero/premium-van-interior-6.jpg",
-  "/images/hero/premium-van-interior-7.jpg",
-  "/images/hero/premium-van-interior-8.jpg",
-  "/images/hero/premium-van-exterior-2.jpg",
-  "/images/hero/premium-van-exterior-3.jpg",
-  "/images/hero/premium-van-interior-9.jpg",
-]
 
 // Фото трансфера прогреваем сразу при открытии главной (пока гость на первом
 // слайде), чтобы ко второму слайду стопка уже была с картинками.
@@ -1591,53 +1581,35 @@ function CarToggle({ premium, onChange }: { premium: boolean; onChange: (v: bool
   )
 }
 
+// Виктор 26.11: «Авто» на всех направлениях как на Фукуоке - те же машины
+// и фото, переключатель Стандарт / Премиум. Обе стопки прогреваем сразу
+// (стандарт первым), иначе при переключении на Премиум был серый экран.
+const ALL_CAR_PHOTOS = [...PQ_TRANSFER_PHOTOS, ...PQ_PREMIUM_PHOTOS]
+
 function TransportSlide() {
-  const [resort] = useResort()
-  const isPhuQuoc = resortById(resort)?.area === "phuquoc"
   const [premium, setPremium] = useState(false)
-  usePreload(isPhuQuoc ? PQ_TRANSFER_PHOTOS : NT_TRANSFER_PHOTOS)
-  if (isPhuQuoc) {
-    // key: курорт приходит из localStorage уже после гидратации, а PhotoStack
-    // держит в state список "уже показанных" фото от первого рендера (там
-    // были фото Нячанга) - без смены key фото Фукуока так и не рендерились.
-    // Виктор 22.11: переключатель Стандарт / Премиум (Mercedes, Carnival VIP,
-    // VIP-минивэны), доплата $50-100 на месте.
-    const toggle = <CarToggle premium={premium} onChange={setPremium} />
-    return premium ? (
-      <PhotoSlide
-        key="pq-premium"
-        toggle={toggle}
-        title="Премиум-машина по желанию"
-        body="Mercedes, Kia Carnival VIP с капитанскими креслами или VIP-минивэн с кожаными креслами-реклайнерами для большой компании."
-        note={PREMIUM_CAR_NOTE}
-        imageSrc={PQ_PREMIUM_PHOTOS[0]}
-        imageAlt="Премиум-машины для туров на Фукуоке"
-        stackImages={PQ_PREMIUM_PHOTOS}
-      />
-    ) : (
-      <PhotoSlide
-        key="pq"
-        toggle={toggle}
-        title="Трансфер, после которого не нужно восстанавливаться"
-        body="Ни тесноты, ни духоты, ни нервотрёпки за рулём. Просторный семиместный минивэн, климат-контроль и аккуратный, спокойный водитель."
-        imageSrc={PQ_TRANSFER_PHOTOS[0]}
-        imageAlt="Семиместный минивэн для трансфера на Фукуоке"
-        stackImages={PQ_TRANSFER_PHOTOS}
-      />
-    )
-  }
-  return (
+  usePreload(ALL_CAR_PHOTOS)
+  const toggle = <CarToggle premium={premium} onChange={setPremium} />
+  return premium ? (
     <PhotoSlide
-      key="nt"
+      key="premium"
+      toggle={toggle}
+      title="Премиум-машина по желанию"
+      body="Mercedes, Kia Carnival VIP с капитанскими креслами или VIP-минивэн с кожаными креслами-реклайнерами для большой компании."
+      note={PREMIUM_CAR_NOTE}
+      imageSrc={PQ_PREMIUM_PHOTOS[0]}
+      imageAlt="Премиум-машины для туров"
+      stackImages={PQ_PREMIUM_PHOTOS}
+    />
+  ) : (
+    <PhotoSlide
+      key="standard"
+      toggle={toggle}
       title="Трансфер, после которого не нужно восстанавливаться"
-      body="Ни тесноты, ни духоты, ни нервотрёпки за рулём. Комфортный минивэн, климат-контроль и аккуратный, спокойный водитель."
-      // Виктор 2026-11-11: цены снизили, а VIP-машина с кожаными креслами
-      // дороже ~на $50 - теперь это допуслуга, а не стандарт.
-      note="По желанию VIP-минивэн с кожаными массажными креслами: +$50 на компанию"
-      imageSrc="/images/hero/premium-van-interior.jpg"
-      imageAlt="Салон VIP-минивэна с кожаными креслами"
-      imagePosition="30% 50%"
-      stackImages={NT_TRANSFER_PHOTOS}
+      body="Ни тесноты, ни духоты, ни нервотрёпки за рулём. Просторный семиместный минивэн, климат-контроль и аккуратный, спокойный водитель."
+      imageSrc={PQ_TRANSFER_PHOTOS[0]}
+      imageAlt="Семиместный минивэн для трансфера"
+      stackImages={PQ_TRANSFER_PHOTOS}
     />
   )
 }

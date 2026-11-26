@@ -51,7 +51,9 @@ function isoDatePlusOne(iso: string, days = 1): string {
 //  чтобы сами оплачивали и выбирали").
 // Доплаты, которые есть только в Нячанге/Камрани (VIP-минивэн, дальний
 // трансфер), не показываем в заявке только из туров Фукуока - и наоборот.
-const NT_ONLY_SURCHARGES = new Set(["long_transfer_cam_ranh_amiana", "vip_van_nt"])
+const NT_ONLY_SURCHARGES = new Set(["long_transfer_cam_ranh_amiana"])
+// VIP-минивэн Нячанга заменён общей премиум-машиной (Виктор 26.11: «Авто» везде как на Фукуоке)
+const HIDDEN_SURCHARGES = new Set(["vip_van_nt"])
 const SURCHARGE_HINTS: Record<string, string> = {
   lunch_prebook: "Без галочки обед оплачиваете на месте сами и выбираете что хотите",
   vip_van_nt: "Кожаные массажные кресла, на всю компанию",
@@ -427,10 +429,10 @@ export function RequestPageClient({
 
   const visibleSurcharges = useMemo(() => {
     const hasNt = items.some((i) => !isPhuQuocSlug(i.tourSlug))
-    return surcharges.filter((s) => hasNt || !NT_ONLY_SURCHARGES.has(s.code))
+    return surcharges.filter((s) => !HIDDEN_SURCHARGES.has(s.code) && (hasNt || !NT_ONLY_SURCHARGES.has(s.code)))
   }, [surcharges, items])
 
-  const hasPq = items.some((i) => isPhuQuocSlug(i.tourSlug))
+  const hasItems = items.length > 0
   const surchargeUsd = useMemo(() => {
     let vnd = 0
     for (const s of visibleSurcharges) {
@@ -494,7 +496,7 @@ export function RequestPageClient({
         notes:
           [
             visibleSurcharges.filter((x) => selectedSurcharges.has(x.code)).map((x) => `+ ${x.name}`).join("\n"),
-            premiumCar && hasPq ? "+ Премиум-машина (доплата $50-100 на месте)" : "",
+            premiumCar && hasItems ? "+ Премиум-машина (доплата $50-100 на месте)" : "",
             notes.trim(),
           ]
             .filter(Boolean)
@@ -671,7 +673,7 @@ export function RequestPageClient({
                 </div>
               )}
 
-              {hasPq && (
+              {hasItems && (
                 <div className="p-4 sm:p-5">
                   <label className="flex items-start justify-between gap-3 text-sm">
                     <span className="flex min-w-0 items-start gap-2">
@@ -732,7 +734,7 @@ export function RequestPageClient({
                 onClick={() => setPremiumPhotosOpen(false)}
               >
                 <div className="aspect-square w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-                  <PhotoStack photos={PQ_PREMIUM_PHOTOS} alt="Премиум-машины на Фукуоке" unoptimized />
+                  <PhotoStack photos={PQ_PREMIUM_PHOTOS} alt="Премиум-машины" unoptimized />
                 </div>
                 <p className="mt-4 text-center text-sm text-white/85">{PREMIUM_CAR_NOTE}</p>
                 <button
