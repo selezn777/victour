@@ -20,6 +20,9 @@ export type CatalogTour = {
   /** Размер группы, для которого действует priceFromUsd (нужен для доплаты
    *  Камрани, которая считается на всю группу, см. resorts.ts). */
   priceFromGuests: number
+  /** Средняя оценка и число отзывов (0 - отзывов нет). */
+  rating: number
+  reviewCount: number
 }
 
 export type SiteSettings = {
@@ -255,7 +258,7 @@ export async function getHomepageData(): Promise<{
   const [toursRes, settingsRes, guideRes] = await Promise.all([
     supabase
       .from("tours")
-      .select("id, slug, title, short_description, duration_label, hero_image_url, sort_order, pricing_tiers(price_adult_usd, guest_count)")
+      .select("id, slug, title, short_description, duration_label, hero_image_url, sort_order, pricing_tiers(price_adult_usd, guest_count), reviews(rating)")
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
     supabase.from("settings").select("key, value"),
@@ -297,6 +300,10 @@ export async function getHomepageData(): Promise<{
       heroImageUrl: row.hero_image_url,
       priceFromUsd: cheapest?.price_adult_usd ?? 0,
       priceFromGuests: cheapest?.guest_count ?? 1,
+      ...(() => {
+        const rs = ((row as { reviews?: { rating: number }[] }).reviews ?? [])
+        return { reviewCount: rs.length, rating: rs.length ? rs.reduce((s, r) => s + r.rating, 0) / rs.length : 0 }
+      })(),
     }
   })
 

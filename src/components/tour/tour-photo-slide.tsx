@@ -1,5 +1,6 @@
 "use client"
 
+import { RatingBadge } from "@/components/rating-badge"
 import { useRef, useState } from "react"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Pagination } from "swiper/modules"
@@ -30,7 +31,7 @@ function cropPositionFor(url: string) {
   return Object.entries(PHOTO_CROP_POSITIONS).find(([key]) => url.includes(key))?.[1]
 }
 
-export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
+export function TourPhotoSlide({ tour, rating }: { tour: TourDetail; rating?: { rating: number; count: number } }) {
   const [active, setActive] = useState(0)
   const swiperRef = useRef<SwiperType | null>(null)
   // Тап по фото открывает полноэкранный просмотр (PhotoLightbox), после закрытия
@@ -134,6 +135,7 @@ export function TourPhotoSlide({ tour }: { tour: TourDetail }) {
         }`}
       >
         <span className="text-xs font-medium tracking-widest text-primary uppercase">{tour.durationLabel}</span>
+        {rating && <RatingBadge rating={rating.rating} count={rating.count} className="mt-1.5" />}
         <h1 className="mt-2 max-w-xl font-heading text-2xl leading-[1.15] font-semibold sm:text-4xl">
           {tour.title}
         </h1>

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import { formatUsd } from "@/lib/format"
 import { usePackage } from "@/hooks/use-package"
 import type { CatalogTour } from "@/lib/site-data"
+import { RatingBadge } from "@/components/rating-badge"
 
 /** Бестселлеры: звезда и плашка на карточке в каталоге (Виктор 14.11: Юг 2.0 продаём в первую очередь) */
 const BESTSELLERS = new Set(["phuquoc-yug2"])
@@ -89,6 +90,7 @@ export function TourCard({
               </span>
             )}
             <span className="text-xs tracking-wide text-white/70 uppercase">{tour.durationLabel}</span>
+            <RatingBadge rating={tour.rating} count={tour.reviewCount} className="text-xs text-white" />
           </div>
           <h3
             className={cn(

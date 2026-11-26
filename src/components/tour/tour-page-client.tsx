@@ -10,6 +10,7 @@ import type { Swiper as SwiperType } from "swiper/types"
 import { SlideDeck } from "@/components/slide-deck"
 import { TourHeader } from "@/components/tour/tour-header"
 import { TourPhotoSlide } from "@/components/tour/tour-photo-slide"
+import { ratingOf } from "@/components/rating-badge"
 import { TourItinerarySlide } from "@/components/tour/tour-itinerary-slide"
 import { TourAboutSlide } from "@/components/tour/tour-about-slide"
 import { TourIncludesSlide } from "@/components/tour/tour-includes-slide"
@@ -169,7 +170,7 @@ export function TourPageClient({
           setActiveSlideIndex(index)
         }}
         slides={[
-          <TourPhotoSlide key="photo" tour={tour} />,
+          <TourPhotoSlide key="photo" tour={tour} rating={ratingOf(reviews)} />,
           <TourAboutSlide key="about" tour={tour} />,
           ...itinerarySlides,
           <TourIncludesSlide
